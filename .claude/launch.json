@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "dev-e2e",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:e2e"],
+      "port": 3001
     }
   ]
 }

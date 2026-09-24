@@ -6,15 +6,20 @@ import type { CloseDayState, CloseDayValues } from "@/app/actions/closing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { splitTips, type ClosingRow } from "@/lib/closing";
+import { payField, splitTips, type ClosingRow } from "@/lib/closing";
 import { formatMoney, parseMoney, type Currency } from "@/lib/money";
 import type { DayClosing } from "@/lib/workdays";
+
+export type CloseDayRow = ClosingRow & {
+  /** Pago guardado (tras reabrir) o, si no hay, el último pago del empleado */
+  defaultPay: number | null;
+};
 
 type Props = {
   action: (state: CloseDayState, formData: FormData) => Promise<CloseDayState>;
   currency: Currency;
   /** Asistencia con los estados actuales (incluye cambios aún no confirmados) */
-  rows: ClosingRow[];
+  rows: CloseDayRow[];
   saved: DayClosing | null;
 };
 
@@ -32,6 +37,9 @@ export function CloseDayPanel({ action, currency, rows, saved }: Props) {
     totalSales: saved?.totalSales != null ? formatPlain(saved.totalSales, currency) : "",
     tipsTotal: saved?.tipsTotal != null ? formatPlain(saved.tipsTotal, currency) : "",
     note: saved?.note ?? "",
+    pays: Object.fromEntries(
+      rows.map((r) => [r.employeeId, r.defaultPay != null ? formatPlain(r.defaultPay, currency) : ""])
+    ),
   };
 
   return (
@@ -39,7 +47,8 @@ export function CloseDayPanel({ action, currency, rows, saved }: Props) {
       <div>
         <h2 className="font-medium">Cierre del día</h2>
         <p className="text-sm text-muted-foreground">
-          Anota la venta y las propinas. Al cerrar, las propinas se reparten en partes iguales entre quienes trabajaron.
+          Anota la venta, las propinas y el pago del día de cada empleado. Las propinas se reparten en partes
+          iguales entre quienes trabajaron.
         </p>
       </div>
       {/* key: remonta los campos con lo enviado cuando la acción devuelve un error */}
@@ -59,22 +68,25 @@ function CloseDayFields({
 }: {
   initial: CloseDayValues;
   currency: Currency;
-  rows: ClosingRow[];
+  rows: CloseDayRow[];
   state: CloseDayState;
   pending: boolean;
 }) {
   const [sales, setSales] = useState(initial.totalSales);
   const [tips, setTips] = useState(initial.tipsTotal);
+  const [pays, setPays] = useState(initial.pays);
 
   const tipsMinor = tips.trim() === "" ? 0 : parseMoney(tips, currency.decimals);
   const pendingCount = rows.filter((r) => r.status === "PENDING").length;
   const shares = tipsMinor === null ? [] : splitTips(tipsMinor, rows);
-  const noWorkers = (tipsMinor ?? 0) > 0 && shares.length === 0;
+  const tipOf = new Map(shares.map((s) => [s.employeeId, s.amount]));
+  const workers = rows.filter((r) => r.status === "WORKED");
+  const noWorkers = (tipsMinor ?? 0) > 0 && workers.length === 0;
 
   // Da formato de miles al salir del campo, si el monto es válido.
-  const tidy = (value: string, set: (v: string) => void) => {
+  const tidy = (value: string) => {
     const minor = parseMoney(value, currency.decimals);
-    if (minor !== null) set(formatPlain(minor, currency));
+    return minor === null ? value : formatPlain(minor, currency);
   };
 
   return (
@@ -82,27 +94,62 @@ function CloseDayFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField
           id="totalSales"
-          label="Venta total del día"
+          decimal={currency.decimals > 0}
+          label={`Venta total del día (${currency.code})`}
           value={sales}
           onChange={setSales}
-          onBlur={() => tidy(sales, setSales)}
-          currency={currency}
+          onBlur={() => setSales(tidy(sales))}
           error={state?.errors?.totalSales}
           required
         />
         <MoneyField
           id="tipsTotal"
-          label="Propinas"
+          decimal={currency.decimals > 0}
+          label={`Propinas (${currency.code})`}
           value={tips}
           onChange={setTips}
-          onBlur={() => tidy(tips, setTips)}
-          currency={currency}
+          onBlur={() => setTips(tidy(tips))}
           error={state?.errors?.tipsTotal ?? (tipsMinor === null ? "Monto inválido" : undefined)}
           placeholder="0"
         />
       </div>
 
-      <TipPreview shares={shares} total={tipsMinor ?? 0} currency={currency} />
+      {workers.length > 0 && (
+        <fieldset className="grid gap-2">
+          <legend className="mb-1 text-sm font-medium">Pago del día</legend>
+          {tipsMinor !== null && tipsMinor > 0 && <TipLine shares={shares} total={tipsMinor} currency={currency} />}
+          <ul className="divide-y rounded-lg border">
+            {workers.map((w) => {
+              const payMinor = parseMoney(pays[w.employeeId] ?? "", currency.decimals);
+              const tip = tipOf.get(w.employeeId) ?? 0;
+              const error = state?.errors?.pays?.[w.employeeId];
+              return (
+                <li key={w.employeeId} className="grid gap-2 px-3 py-2 sm:grid-cols-[1fr_9rem_auto] sm:items-center sm:gap-4">
+                  <span className="truncate font-medium">{w.name}</span>
+                  <MoneyField
+                    id={payField(w.employeeId)}
+                    label={`Pago del día de ${w.name}`}
+                    hideLabel
+                    decimal={currency.decimals > 0}
+                    value={pays[w.employeeId] ?? ""}
+                    onChange={(v) => setPays((p) => ({ ...p, [w.employeeId]: v }))}
+                    onBlur={() => setPays((p) => ({ ...p, [w.employeeId]: tidy(p[w.employeeId] ?? "") }))}
+                    error={error}
+                    placeholder="0"
+                    required
+                  />
+                  <span className="text-sm text-muted-foreground tabular-nums sm:text-right">
+                    + propina {formatMoney(tip, currency)} ={" "}
+                    <span className="font-semibold text-foreground">
+                      {payMinor === null ? "—" : formatMoney(payMinor + tip, currency)}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
+      )}
 
       <div className="grid gap-2">
         <Label htmlFor="note">Nota del día</Label>
@@ -133,25 +180,28 @@ function CloseDayFields({
 function MoneyField({
   id,
   label,
-  currency,
+  hideLabel,
+  decimal,
   error,
   onChange,
   ...props
 }: {
   id: string;
   label: string;
+  hideLabel?: boolean;
+  /** La moneda usa centavos (teclado decimal en el celular) */
+  decimal?: boolean;
   value: string;
   onChange: (v: string) => void;
   onBlur: () => void;
-  currency: Currency;
   error?: string;
   required?: boolean;
   placeholder?: string;
 }) {
   return (
     <div className="grid content-start gap-2">
-      <Label htmlFor={id}>
-        {label} ({currency.code})
+      <Label htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
+        {label}
       </Label>
       <div className="relative">
         <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
@@ -160,7 +210,7 @@ function MoneyField({
         <Input
           id={id}
           name={id}
-          inputMode={currency.decimals ? "decimal" : "numeric"}
+          inputMode={decimal ? "decimal" : "numeric"}
           autoComplete="off"
           className="pl-6 tabular-nums"
           aria-invalid={!!error}
@@ -173,37 +223,27 @@ function MoneyField({
   );
 }
 
-function TipPreview({
+function TipLine({
   shares,
   total,
   currency,
 }: {
-  shares: { employeeId: string; name: string; amount: number }[];
+  shares: { amount: number }[];
   total: number;
   currency: Currency;
 }) {
-  if (total === 0 || shares.length === 0) return null;
+  if (shares.length === 0) return null;
   const amounts = shares.map((s) => s.amount);
   const min = Math.min(...amounts);
   const max = Math.max(...amounts);
   const perPerson =
     min === max ? formatMoney(min, currency) : `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
-
   return (
-    <div className="grid gap-2 rounded-lg bg-muted/60 p-3 text-sm">
-      <p>
-        {formatMoney(total, currency)} entre {shares.length} {shares.length === 1 ? "persona" : "personas"}:{" "}
-        <span className="font-semibold">{perPerson}</span> c/u
-      </p>
-      <ul className="grid gap-x-6 gap-y-1 text-muted-foreground sm:grid-cols-2">
-        {shares.map((s) => (
-          <li key={s.employeeId} className="flex justify-between gap-2">
-            <span className="truncate">{s.name}</span>
-            <span className="tabular-nums text-foreground">{formatMoney(s.amount, currency)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <p className="text-sm text-muted-foreground">
+      Propinas: {formatMoney(total, currency)} entre {shares.length}{" "}
+      {shares.length === 1 ? "persona" : "personas"} → <span className="font-medium text-foreground">{perPerson}</span>{" "}
+      c/u
+    </p>
   );
 }
 

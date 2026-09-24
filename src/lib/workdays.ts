@@ -15,6 +15,8 @@ export type DayRow = {
   position: string | null;
   status: AttendanceStatus;
   note: string | null;
+  /** Pago del día guardado (unidades mínimas); null si aún no se captura */
+  dailyPay: number | null;
 };
 
 /** Datos del cierre. En días abiertos trae lo capturado antes de una reapertura. */
@@ -32,6 +34,8 @@ export type DayView = {
   mode: "open" | "closed" | "future";
   rows: DayRow[];
   closing: DayClosing | null;
+  /** Último pago del día registrado por empleado, para sugerirlo al cerrar */
+  suggestedPay: Record<string, number>;
 };
 
 /** Empleados que deben aparecer en la fecha: activos y ya contratados. */
@@ -94,6 +98,7 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
       id: true,
       status: true,
       note: true,
+      dailyPay: true,
       employee: { select: { id: true, name: true, position: true } },
     },
     orderBy: { employee: { name: "asc" } },
@@ -105,11 +110,26 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
     position: a.employee.position,
     status: a.status,
     note: a.note,
+    dailyPay: fromDecimal(a.dailyPay, CURRENCY.decimals),
   }));
 }
 
+/** Último pago del día de cada empleado en días anteriores a `date`. */
+async function lastPays(employeeIds: string[], date: Date) {
+  if (!employeeIds.length) return {};
+  const last = await db.attendance.findMany({
+    where: { employeeId: { in: employeeIds }, dailyPay: { not: null }, workDay: { date: { lt: date } } },
+    orderBy: { workDay: { date: "desc" } },
+    distinct: ["employeeId"],
+    select: { employeeId: true, dailyPay: true },
+  });
+  return Object.fromEntries(last.map((a) => [a.employeeId, fromDecimal(a.dailyPay, CURRENCY.decimals)!]));
+}
+
 export async function getDayView(iso: ISODate): Promise<DayView> {
-  if (iso > today()) return { date: iso, mode: "future", rows: await previewRows(iso), closing: null };
+  if (iso > today()) {
+    return { date: iso, mode: "future", rows: await previewRows(iso), closing: null, suggestedPay: {} };
+  }
 
   const { id } = await openWorkDay(iso);
   const [day, rows] = await Promise.all([
@@ -119,11 +139,14 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
     }),
     loadDayRows(db, id),
   ]);
+  const mode = day.status === ("CLOSED" satisfies DayStatus) ? "closed" : "open";
+  const suggestedPay = mode === "open" ? await lastPays(rows.map((r) => r.employeeId), day.date) : {};
 
   const d = CURRENCY.decimals;
   return {
     date: iso,
-    mode: day.status === ("CLOSED" satisfies DayStatus) ? "closed" : "open",
+    mode,
+    suggestedPay,
     rows,
     closing: {
       totalSales: fromDecimal(day.totalSales, d),
@@ -152,5 +175,6 @@ async function previewRows(iso: ISODate): Promise<DayRow[]> {
     position: e.position,
     status: initialStatus(e.restDays, iso, toRanges(e.timeOff)),
     note: null,
+    dailyPay: null,
   }));
 }

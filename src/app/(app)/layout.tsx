@@ -8,8 +8,8 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
-          <Link href="/" className="font-semibold">
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 sm:gap-4">
+          <Link href="/" className="hidden font-semibold sm:inline">
             Simba
           </Link>
           <NavLinks />

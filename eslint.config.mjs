@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build del servidor de pruebas (npm run dev:e2e) y cliente generado de Prisma
+    ".next-e2e/**",
+    "src/generated/**",
   ]),
 ]);
 

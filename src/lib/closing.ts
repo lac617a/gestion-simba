@@ -1,4 +1,5 @@
 import type { AttendanceStatus } from "@/generated/prisma/enums";
+import { parseMoney } from "@/lib/money";
 
 export type ClosingRow = { employeeId: string; name: string; status: AttendanceStatus };
 export type TipShareCalc = { employeeId: string; name: string; amount: number };
@@ -20,6 +21,31 @@ export function splitTips(total: number, rows: ClosingRow[]): TipShareCalc[] {
     name: w.name,
     amount: base + (i < remainder ? 1 : 0),
   }));
+}
+
+/** Nombre del campo del formulario con el pago del día de un empleado. */
+export const payField = (employeeId: string) => `pay_${employeeId}`;
+
+export type PaysResult =
+  | { ok: true; pays: Map<string, number> }
+  | { ok: false; errors: Record<string, string> };
+
+/**
+ * Lee el pago del día de cada empleado que trabajó (RF-7). Es obligatorio
+ * (puede ser 0); los demás estados no se pagan.
+ */
+export function parsePays(rows: ClosingRow[], raw: (field: string) => string, decimals: number): PaysResult {
+  const pays = new Map<string, number>();
+  const errors: Record<string, string> = {};
+  for (const r of rows) {
+    if (r.status !== "WORKED") continue;
+    const value = raw(payField(r.employeeId)).trim();
+    const minor = value === "" ? null : parseMoney(value, decimals);
+    if (value === "") errors[r.employeeId] = "Escribe el pago del día";
+    else if (minor === null) errors[r.employeeId] = "Monto inválido";
+    else pays.set(r.employeeId, minor);
+  }
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, pays };
 }
 
 export type CloseCheck =

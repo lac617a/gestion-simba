@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { countByStatus, initialStatus, parseTimeOffForm, type TimeOffRange } from "./attendance";
-import { addDays, isISODate, todayISO, weekdayOf } from "./dates";
+import { addDays, formatDateRange, isISODate, todayISO, weekdayOf } from "./dates";
 
 describe("dates", () => {
   it("todayISO usa la zona del restaurante", () => {
@@ -20,6 +20,11 @@ describe("dates", () => {
   it("addDays cruza meses y años", () => {
     expect(addDays("2026-01-31", 1)).toBe("2026-02-01");
     expect(addDays("2026-01-01", -1)).toBe("2025-12-31");
+  });
+
+  it("formatDateRange compacta el mismo mes", () => {
+    expect(formatDateRange("2026-09-21", "2026-09-27")).toBe("21 a 27 de sept de 2026");
+    expect(formatDateRange("2026-09-28", "2026-10-04")).toContain("oct");
   });
 
   it("weekdayOf e isISODate", () => {

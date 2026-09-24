@@ -84,6 +84,8 @@ model Attendance {
   employeeId String
   status     AttendanceStatus @default(PENDING)
   note       String?
+  /// Pago del día (solo si trabajó). Se captura al cerrar el día.
+  dailyPay   Decimal?         @db.Decimal(14, 2)
   updatedAt  DateTime         @updatedAt
   workDay    WorkDay          @relation(fields: [workDayId], references: [id], onDelete: Cascade)
   employee   Employee         @relation(fields: [employeeId], references: [id])

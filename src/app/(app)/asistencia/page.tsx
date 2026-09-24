@@ -46,6 +46,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
       {view.mode === "closed" && view.closing && (
         <ClosedSummary
           closing={view.closing}
+          rows={view.rows}
           currency={CURRENCY}
           closedAtLabel={view.closing.closedAt ? `cerrado ${closedAtFormat.format(new Date(view.closing.closedAt))}` : null}
           reopenAction={reopenDay.bind(null, date)}
@@ -67,7 +68,12 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
           editable={view.mode === "open"}
           closing={
             view.mode === "open"
-              ? { action: closeDay.bind(null, date), currency: CURRENCY, saved: view.closing }
+              ? {
+                  action: closeDay.bind(null, date),
+                  currency: CURRENCY,
+                  saved: view.closing,
+                  suggestedPay: view.suggestedPay,
+                }
               : undefined
           }
         />

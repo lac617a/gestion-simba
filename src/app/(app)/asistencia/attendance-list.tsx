@@ -30,6 +30,7 @@ type Props = {
     action: (state: CloseDayState, formData: FormData) => Promise<CloseDayState>;
     currency: Currency;
     saved: DayClosing | null;
+    suggestedPay: Record<string, number>;
   };
 };
 
@@ -140,7 +141,12 @@ export function AttendanceList({ date, rows, editable, closing }: Props) {
           action={closing.action}
           currency={closing.currency}
           saved={closing.saved}
-          rows={rows.map((r) => ({ employeeId: r.employeeId, name: r.name, status: statuses[r.employeeId] }))}
+          rows={rows.map((r) => ({
+            employeeId: r.employeeId,
+            name: r.name,
+            status: statuses[r.employeeId],
+            defaultPay: r.dailyPay ?? closing.suggestedPay[r.employeeId] ?? null,
+          }))}
         />
       )}
     </div>

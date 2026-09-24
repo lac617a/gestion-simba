@@ -31,6 +31,7 @@ Abre http://localhost:3000 y entra con el admin.
 | `APP_TIMEZONE` | Zona del restaurante (define qué día es "hoy"). Por defecto `America/Bogota` |
 | `DAY_CUTOFF_HOUR` | Hora en que termina el día de trabajo (0 = medianoche) |
 | `APP_CURRENCY` | Moneda (`COP` = pesos enteros; `USD`/`PEN` con centavos) |
+| `PAY_WEEK_START` | Día en que empieza la semana de pago (0 = domingo … 6 = sábado; 1 = lunes) |
 | `DATABASE_POOL_MAX` | Pon `1` con la BD local de `prisma dev`, que no soporta conexiones en paralelo. Vacío en producción |
 
 ## Scripts
@@ -43,6 +44,7 @@ Abre http://localhost:3000 y entra con el admin.
 | `npm run db:seed` | Crea el usuario admin |
 | `npm run db:studio` | Explorador visual de la BD |
 | `npm test` | Pruebas unitarias |
+| `npm run dev:e2e` | Servidor de pruebas en el puerto 3001 contra una BD aparte (ver abajo) |
 | `npm run lint` / `npm run build` | Lint y build de producción |
 
 ## Estructura
@@ -57,8 +59,21 @@ src/lib/dates.ts            fechas de calendario (YYYY-MM-DD) y "hoy" según zon
 src/lib/attendance.ts       estados de asistencia, estado inicial del día, validación de días libres
 src/lib/workdays.ts         abrir un día y armar la vista de asistencia
 src/lib/money.ts            montos en unidades enteras, parseo y formato (COP)
-src/lib/closing.ts          reglas de cierre y reparto de propinas
+src/lib/closing.ts          reglas de cierre, reparto de propinas y pago del día
+src/lib/payroll.ts          resumen de pagos por empleado, semana de pago, CSV
 src/app/actions/            Server Actions (auth, empleados, asistencia, días libres, cierre)
 src/app/login/              pantalla de login
 src/app/(app)/              pantallas autenticadas (layout con navegación)
+```
+
+## Probar sin tocar los datos reales
+
+El servidor de pruebas usa otra BD local y otra carpeta de build, así que corre junto a `npm run dev`:
+
+```bash
+npx prisma dev --name gestion-simba-test --detach    # una vez; anota el puerto TCP
+# crea .env.e2e con DATABASE_URL de esa BD y DATABASE_POOL_MAX=1
+DATABASE_URL=<url de pruebas> npx prisma migrate deploy
+DATABASE_URL=<url de pruebas> npm run db:seed
+npm run dev:e2e                                      # http://localhost:3001
 ```

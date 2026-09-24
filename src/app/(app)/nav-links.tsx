@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/asistencia", label: "Asistencia" },
+  { href: "/pagos", label: "Pagos" },
   { href: "/empleados", label: "Empleados" },
 ];
 
@@ -21,7 +22,7 @@ export function NavLinks() {
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-md px-3 py-1.5 text-muted-foreground hover:text-foreground",
+              "rounded-md px-2 py-1.5 text-muted-foreground hover:text-foreground sm:px-3",
               active && "bg-muted text-foreground"
             )}
           >

@@ -16,19 +16,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { formatMoney, type Currency } from "@/lib/money";
-import type { DayClosing } from "@/lib/workdays";
+import type { DayClosing, DayRow } from "@/lib/workdays";
 
 type Props = {
   closing: DayClosing;
+  rows: DayRow[];
   currency: Currency;
   /** "10:42 p. m." en la zona del restaurante */
   closedAtLabel: string | null;
   reopenAction: () => Promise<void>;
 };
 
-export function ClosedSummary({ closing, currency, closedAtLabel, reopenAction }: Props) {
+export function ClosedSummary({ closing, rows, currency, closedAtLabel, reopenAction }: Props) {
   const [pending, startTransition] = useTransition();
   const money = (v: number | null) => formatMoney(v ?? 0, currency);
+  const tipOf = new Map(closing.shares.map((s) => [s.employeeId, s.amount]));
+  const payouts = rows
+    .filter((r) => r.status === "WORKED")
+    .map((r) => ({ employeeId: r.employeeId, name: r.name, pay: r.dailyPay, tip: tipOf.get(r.employeeId) ?? 0 }));
 
   return (
     <section className="grid gap-4 rounded-lg border p-4">
@@ -43,17 +48,31 @@ export function ClosedSummary({ closing, currency, closedAtLabel, reopenAction }
         <Stat label="Propinas" value={money(closing.tipsTotal)} />
       </dl>
 
-      {closing.shares.length > 0 && (
+      {payouts.length > 0 && (
         <div className="grid gap-2">
-          <h3 className="text-sm font-medium">Reparto de propinas</h3>
-          <ul className="divide-y rounded-lg border text-sm">
-            {closing.shares.map((s) => (
-              <li key={s.employeeId} className="flex justify-between gap-2 px-3 py-2">
-                <span className="truncate">{s.name}</span>
-                <span className="font-medium tabular-nums">{formatMoney(s.amount, currency)}</span>
-              </li>
-            ))}
-          </ul>
+          <h3 className="text-sm font-medium">Pagos del día</h3>
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-normal">Empleado</th>
+                  <th className="px-3 py-2 text-right font-normal">Pago</th>
+                  <th className="px-3 py-2 text-right font-normal">Propina</th>
+                  <th className="px-3 py-2 text-right font-normal">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y tabular-nums">
+                {payouts.map((p) => (
+                  <tr key={p.employeeId}>
+                    <td className="max-w-40 truncate px-3 py-2">{p.name}</td>
+                    <td className="px-3 py-2 text-right">{p.pay === null ? "—" : money(p.pay)}</td>
+                    <td className="px-3 py-2 text-right">{money(p.tip)}</td>
+                    <td className="px-3 py-2 text-right font-medium">{money((p.pay ?? 0) + p.tip)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

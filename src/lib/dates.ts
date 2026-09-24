@@ -72,3 +72,8 @@ export function formatLongDate(iso: ISODate) {
 export function formatShortDate(iso: ISODate) {
   return shortFormat.format(isoToDate(iso));
 }
+
+/** Rango compacto: "21–27 de sept de 2026", "28 de sept – 4 de oct de 2026" */
+export function formatDateRange(from: ISODate, to: ISODate) {
+  return shortFormat.formatRange(isoToDate(from), isoToDate(to));
+}

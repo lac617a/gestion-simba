@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1, F2 y F3 completadas
+- **Estado:** F1, F2, F3 y F3b completadas
 
 ---
 
@@ -255,7 +255,7 @@ model TipShare {
 | F1 ✅ | Setup del proyecto (Next.js, Prisma, BD), login del admin, CRUD de empleados. |
 | F2 ✅ | Asistencia diaria, descanso fijo pre-marcado, días libres por adelantado. |
 | F3 ✅ | Cierre del día, propinas y reparto (con pruebas unitarias). |
-| F3b | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
+| F3b ✅ | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
 | F4 | Pantalla "Hoy", reportes y exportación CSV. |
 | F5 | Deploy en Vercel + BD en producción. |
 

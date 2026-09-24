@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { checkClose } from "@/lib/closing";
+import { checkClose, parsePays } from "@/lib/closing";
 import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { db } from "@/lib/db";
@@ -9,25 +9,35 @@ import { isISODate, isoToDate } from "@/lib/dates";
 import { parseMoney, toDecimalString } from "@/lib/money";
 import { loadDayRows, openWorkDay } from "@/lib/workdays";
 
-export type CloseDayValues = { totalSales: string; tipsTotal: string; note: string };
+export type CloseDayValues = {
+  totalSales: string;
+  tipsTotal: string;
+  note: string;
+  /** Pago del día escrito por empleado (employeeId → texto) */
+  pays: Record<string, string>;
+};
 export type CloseDayState =
   | {
-      errors?: Partial<Record<keyof CloseDayValues, string>>;
+      errors?: Partial<Record<"totalSales" | "tipsTotal", string>> & { pays?: Record<string, string> };
       message?: string;
       values?: CloseDayValues;
     }
   | undefined;
 
 /**
- * Cierra el día: guarda venta y propinas, calcula y guarda el reparto.
- * Todo en una transacción, y solo si el día sigue abierto.
+ * Cierra el día: guarda venta, propinas y el pago del día de cada empleado,
+ * y calcula y guarda el reparto. Todo en una transacción, y solo si el día sigue abierto.
  */
 export async function closeDay(date: string, _prev: CloseDayState, formData: FormData): Promise<CloseDayState> {
   await verifySession();
+  const raw = (field: string) => String(formData.get(field) ?? "");
   const values: CloseDayValues = {
-    totalSales: String(formData.get("totalSales") ?? "").trim(),
-    tipsTotal: String(formData.get("tipsTotal") ?? "").trim(),
-    note: String(formData.get("note") ?? "").trim().slice(0, 300),
+    totalSales: raw("totalSales").trim(),
+    tipsTotal: raw("tipsTotal").trim(),
+    note: raw("note").trim().slice(0, 300),
+    pays: Object.fromEntries(
+      [...formData.keys()].filter((k) => k.startsWith("pay_")).map((k) => [k.slice(4), raw(k)])
+    ),
   };
   const fail = (s: Omit<NonNullable<CloseDayState>, "values">): CloseDayState => ({ ...s, values });
 
@@ -49,6 +59,8 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
     const rows = await loadDayRows(tx, workDayId);
     const check = checkClose(rows, tipsTotal!);
     if (!check.ok) return check;
+    const pays = parsePays(rows, raw, d);
+    if (!pays.ok) return { ok: false as const, error: "Revisa el pago del día de cada empleado.", payErrors: pays.errors };
 
     const { count } = await tx.workDay.updateMany({
       where: { id: workDayId, status: "OPEN" },
@@ -72,10 +84,24 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
         })),
       });
     }
+
+    // Solo "Trabajó" se paga: se limpia el pago de quien cambió de estado tras reabrir.
+    await tx.attendance.updateMany({
+      where: { workDayId, status: { not: "WORKED" } },
+      data: { dailyPay: null },
+    });
+    for (const [employeeId, amount] of pays.pays) {
+      await tx.attendance.update({
+        where: { workDayId_employeeId: { workDayId, employeeId } },
+        data: { dailyPay: toDecimalString(amount, d) },
+      });
+    }
     return check;
   });
 
-  if (!result.ok) return fail({ message: result.error });
+  if (!result.ok) {
+    return fail({ message: result.error, errors: "payErrors" in result ? { pays: result.payErrors } : undefined });
+  }
   revalidatePath("/asistencia");
   return undefined;
 }
