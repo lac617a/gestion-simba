@@ -16,8 +16,8 @@ _Última actualización: 2026-09-24_
 | T1 · Inputs de moneda con librería | ✅ | `e328c56` |
 | F5 · Deploy (Vercel + Neon) | ✅ en producción | `b5b7311` |
 | F6 · Días de cierre (lunes) y festivos de Colombia | ✅ en producción | `2985038` |
-| F7 · Configuración + límite de intentos de login | ✅ código · ⏳ **publicar** (ver abajo) | "F7: configuración…" |
-| Logo de Simba (favicon, app instalable, encabezado, login) | ✅ código · ⏳ publicar junto con F7 | "Logo de Simba…" |
+| F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
+| Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -37,7 +37,7 @@ npm test                                    # pruebas unitarias
 
 - [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
 - [x] ~~Publicar F6~~ — publicado.
-- [ ] **Publicar F7**: aplicar la migración `configuracion_y_login` en Neon y luego `git push` (DEPLOY.md §6).
+- [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 
 ---
 
@@ -122,8 +122,18 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 
 ## Backlog / ideas
 
-- Marcar una semana como **pagada** en `/pagos`.
+**Funciones**
+- Marcar una semana como **pagada** en `/pagos` (qué se le pagó a quién y cuándo).
+- **Gráfico** de ventas por día en Reportes.
+- Logo en mayor resolución o vector para que el ícono de 512 px quede nítido.
+
+**Decisiones del usuario (sin código)**
+- Plan de Vercel: Hobby es para uso no comercial; evaluar Pro.
+- Respaldos: el plan gratis de Neon guarda poco historial; ¿exportación periódica?
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
+
+**Técnico**
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (84).
 
 ## Notas técnicas conocidas
 
