@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   attendanceCsv,
   salesCsv,
+  salesSeries,
   summarizeAttendance,
   summarizeSales,
   summarizeTips,
@@ -32,6 +33,31 @@ describe("summarizeSales", () => {
     const csv = salesCsv(summarizeSales([{ date: "2026-09-21", totalSales: 900_000, tipsTotal: 90_000, workers: 2 }]), period, 0);
     expect(csv).toContain("2026-09-21;900000;90000;2");
     expect(csv).toContain("Promedio por día;900000;;");
+  });
+});
+
+describe("salesSeries", () => {
+  const day = (date: string, totalSales: number) => ({ date, totalSales, tipsTotal: totalSales / 10, workers: 3 });
+
+  it("una barra por día, con huecos para días sin cierre", () => {
+    const s = salesSeries([day("2026-09-21", 100), day("2026-09-23", 300)], "2026-09-21", "2026-09-24");
+    expect(s.unit).toBe("day");
+    expect(s.bins.map((b) => [b.from, b.sales, b.closedDays])).toEqual([
+      ["2026-09-21", 100, 1],
+      ["2026-09-22", 0, 0],
+      ["2026-09-23", 300, 1],
+      ["2026-09-24", 0, 0],
+    ]);
+  });
+
+  it("rangos largos se agrupan por semana (la última puede ser corta)", () => {
+    const days = [day("2026-01-01", 10), day("2026-01-07", 20), day("2026-01-08", 5), day("2026-03-15", 7)];
+    const s = salesSeries(days, "2026-01-01", "2026-03-15"); // 74 días
+    expect(s.unit).toBe("week");
+    expect(s.bins[0]).toMatchObject({ from: "2026-01-01", to: "2026-01-07", sales: 30, closedDays: 2 });
+    expect(s.bins[1]).toMatchObject({ from: "2026-01-08", sales: 5 });
+    expect(s.bins.at(-1)).toMatchObject({ from: "2026-03-12", to: "2026-03-15", sales: 7 });
+    expect(s.bins).toHaveLength(11);
   });
 });
 

@@ -1,7 +1,7 @@
 import type { AttendanceStatus } from "@/generated/prisma/enums";
 import { STATUS_LABEL } from "@/lib/attendance";
 import { moneyCell, toCsv } from "@/lib/csv";
-import type { ISODate } from "@/lib/dates";
+import { addDays, daysBetween, type ISODate } from "@/lib/dates";
 import type { Period } from "@/lib/periods";
 
 const byName = (a: { name: string }, b: { name: string }) =>
@@ -33,6 +33,37 @@ export function summarizeSales(days: SalesDay[]): SalesSummary {
     avgSales: sorted.length ? Math.round(totalSales / sorted.length) : 0,
     best,
   };
+}
+
+/** Una barra del gráfico de ventas: un día, o una semana en rangos largos. */
+export type SalesBin = { from: ISODate; to: ISODate; sales: number; tips: number; closedDays: number };
+
+/** Más de estos días en el rango → barras por semana. */
+export const MAX_DAILY_BARS = 62;
+
+/**
+ * Serie para el gráfico: una barra por cada día del rango (con o sin venta,
+ * para que los huecos se vean) o por semana si el rango es largo.
+ */
+export function salesSeries(days: SalesDay[], from: ISODate, to: ISODate): { unit: "day" | "week"; bins: SalesBin[] } {
+  const byDate = new Map(days.map((d) => [d.date, d]));
+  const length = daysBetween(from, to) + 1;
+  const unit = length > MAX_DAILY_BARS ? "week" : "day";
+  const size = unit === "week" ? 7 : 1;
+  const bins: SalesBin[] = [];
+  for (let start = from; start <= to; start = addDays(start, size)) {
+    const end = unit === "week" && addDays(start, 6) < to ? addDays(start, 6) : unit === "week" ? to : start;
+    const bin: SalesBin = { from: start, to: end, sales: 0, tips: 0, closedDays: 0 };
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      const day = byDate.get(d);
+      if (!day) continue;
+      bin.sales += day.totalSales;
+      bin.tips += day.tipsTotal;
+      bin.closedDays++;
+    }
+    bins.push(bin);
+  }
+  return { unit, bins };
 }
 
 // ---------- Propinas por empleado ----------

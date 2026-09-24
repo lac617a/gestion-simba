@@ -18,6 +18,7 @@ _Última actualización: 2026-09-24_
 | F6 · Días de cierre (lunes) y festivos de Colombia | ✅ en producción | `2985038` |
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
+| F8 · Pagos realizados + gráfico de ventas | ✅ código · ⏳ **publicar** | `a294a55` + "Reportes: gráfico…" |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -38,6 +39,8 @@ npm test                                    # pruebas unitarias
 - [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
+- [ ] **Publicar F8**: aplicar la migración `pagos_realizados` en Neon y luego `git push`.
+- [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
 
 ---
 
@@ -123,9 +126,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 ## Backlog / ideas
 
 **Funciones**
-- Marcar una semana como **pagada** en `/pagos` (qué se le pagó a quién y cuándo).
-- **Gráfico** de ventas por día en Reportes.
-- Logo en mayor resolución o vector para que el ícono de 512 px quede nítido.
+- Logo en mayor resolución o vector para que el ícono de 512 px quede nítido (falta el archivo).
 
 **Decisiones del usuario (sin código)**
 - Plan de Vercel: Hobby es para uso no comercial; evaluar Pro.

@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F7 completadas; en producción (Vercel + Neon)
+- **Estado:** F1–F8 completadas; en producción (Vercel + Neon) hasta F7
 
 ---
 
@@ -136,6 +136,19 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
   - **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
   - **Restaurante:** día de inicio de la semana de pago y días de cierre. Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
 - **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
+
+### RF-11 · Pagos realizados
+- En **Pagos**, cada empleado muestra su estado en el periodo: **Pagado**, **Pagado en parte** o **Pendiente**.
+- **Marcar pagado** (por empleado) o **Marcar todos como pagados**: registra un pago por el rango de fechas visto, con el monto total de ese momento. Pide confirmación y avisa si hay días sin cerrar.
+- Un pago cubre días, no un periodo fijo: si se paga por semanas y luego se mira el mes, se ve qué parte está pagada.
+- No se pueden registrar dos pagos del mismo empleado sobre las mismas fechas.
+- Si después de pagar cambian los montos de esos días (se reabrió un día), la diferencia aparece en "Por pagar" con aviso y botón **Registrar diferencia**.
+- **Deshacer** elimina un pago registrado por error.
+- Totales del periodo: Total, Pagado y Por pagar. Hoy muestra lo pendiente de la semana. El CSV incluye Pagado, Pendiente y Estado.
+
+### RF-12 · Gráfico de ventas
+- En **Reportes → Ventas**, gráfico de columnas de venta por día (por semana si el rango pasa de 62 días), hasta hoy.
+- Los días sin cierre quedan como hueco; se marca el valor del mejor día; al pasar o tocar una barra se ve fecha, venta y propinas. La tabla de abajo sigue siendo el detalle.
 
 ## 5. Reglas de negocio
 
@@ -278,6 +291,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F5 ✅ | Deploy en Vercel + BD en producción. |
 | F6 ✅ | Días de cierre (lunes) y festivos de Colombia, con excepciones manuales (RF-9). |
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
+| F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 
 ## 11. Preguntas abiertas
 

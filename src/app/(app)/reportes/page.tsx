@@ -3,12 +3,13 @@ import Link from "next/link";
 import { PeriodNav } from "@/components/period-nav";
 import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { STATUS_LABEL } from "@/lib/attendance";
-import { CURRENCY } from "@/lib/config";
+import { SalesChart } from "@/components/sales-chart";
+import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { formatDayShort, formatShortDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
-import { ATTENDANCE_COLUMNS } from "@/lib/reports";
+import { ATTENDANCE_COLUMNS, salesSeries } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
 
 export const metadata: Metadata = { title: "Reportes · Gestión Simba" };
@@ -28,6 +29,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
   const money = (v: number) => formatMoney(v, CURRENCY);
   const csv = (tipo: string) => `/reportes/csv?tipo=${tipo}&desde=${period.from}&hasta=${period.to}`;
   const columns = ATTENDANCE_COLUMNS.filter((s) => s !== "PENDING" || attendance.totals.PENDING > 0);
+  const chartTo = period.to < today() ? period.to : today();
+  const series = salesSeries(sales.days, period.from, chartTo < period.from ? period.from : chartTo);
 
   return (
     <div className="grid gap-6">
@@ -60,6 +63,14 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
             hint={sales.best ? formatShortDate(sales.best.date) : undefined}
           />
         </dl>
+        {sales.days.length > 0 && (
+          <figure className="grid min-w-0 gap-2 rounded-lg border p-3">
+            <figcaption className="text-sm font-medium">
+              Venta por {series.unit === "day" ? "día" : "semana"}
+            </figcaption>
+            <SalesChart bins={series.bins} unit={series.unit} currency={CURRENCY} />
+          </figure>
+        )}
         {sales.days.length === 0 ? (
           <Empty>No hay días cerrados en este periodo.</Empty>
         ) : (
