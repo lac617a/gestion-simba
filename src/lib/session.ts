@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 export const SESSION_COOKIE = "session";
 const SESSION_DAYS = 7;
 
-type SessionPayload = { userId: string };
+/** v = User.sessionVersion al crear la sesión; si cambia, la cookie deja de valer. */
+type SessionPayload = { userId: string; v: number };
 
 function getKey() {
   const secret = process.env.SESSION_SECRET;
@@ -25,15 +26,17 @@ export async function decrypt(token: string | undefined): Promise<SessionPayload
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getKey(), { algorithms: ["HS256"] });
-    return typeof payload.userId === "string" ? { userId: payload.userId } : null;
+    if (typeof payload.userId !== "string") return null;
+    // Las cookies emitidas antes de existir la versión cuentan como versión 0.
+    return { userId: payload.userId, v: typeof payload.v === "number" ? payload.v : 0 };
   } catch {
     return null;
   }
 }
 
-export async function createSession(userId: string) {
+export async function createSession(userId: string, sessionVersion: number) {
   const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  const token = await encrypt({ userId });
+  const token = await encrypt({ userId, v: sessionVersion });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

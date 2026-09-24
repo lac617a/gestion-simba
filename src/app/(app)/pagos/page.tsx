@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Pagos · Gestión Simba" };
 export default async function PayrollPage({ searchParams }: PageProps<"/pagos">) {
   await verifySession();
   const { desde, hasta } = await searchParams;
-  const period = periodFromParams(desde, hasta);
+  const period = await periodFromParams(desde, hasta);
   const { summary, unclosedDays } = await getPayroll(period);
   const money = (v: number) => formatMoney(v, CURRENCY);
 
@@ -26,7 +26,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
         <CsvButton href={`/pagos/csv?desde=${period.from}&hasta=${period.to}`} />
       </div>
 
-      <PeriodNav basePath="/pagos" period={period} presets={periodPresets()} />
+      <PeriodNav basePath="/pagos" period={period} presets={await periodPresets()} />
 
       <UnclosedWarning days={unclosedDays} what="sus pagos y propinas todavía no cuentan." />
 

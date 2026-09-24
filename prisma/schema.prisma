@@ -8,9 +8,31 @@ datasource db {
 }
 
 model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  passwordHash String
+  id             String @id @default(cuid())
+  email          String @unique
+  passwordHash   String
+  /// Se incrementa al cambiar la contraseña o cerrar sesión en todos lados:
+  /// invalida las cookies de sesión emitidas antes.
+  sessionVersion Int    @default(0)
+}
+
+/// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
+/// Si no existe, se usan los valores de las variables de entorno.
+model AppSettings {
+  id             Int      @id @default(1)
+  /// Día en que empieza la semana de pago (0 = domingo … 6 = sábado)
+  payWeekStart   Int
+  /// Días en que el restaurante cierra; si es festivo abre y cierra al día siguiente
+  closedWeekdays Int[]
+  updatedAt      DateTime @updatedAt
+}
+
+/// Intentos fallidos de inicio de sesión, por conexión (ip:...) o por correo (email:...).
+model LoginThrottle {
+  key            String    @id
+  failures       Int
+  firstFailureAt DateTime
+  lockedUntil    DateTime?
 }
 
 enum AttendanceStatus {

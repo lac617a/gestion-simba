@@ -22,7 +22,7 @@ const SECTIONS = [
 export default async function ReportsPage({ searchParams }: PageProps<"/reportes">) {
   await verifySession();
   const { desde, hasta } = await searchParams;
-  const period = periodFromParams(desde, hasta);
+  const period = await periodFromParams(desde, hasta);
   const { sales, tips, attendance, unclosedDays } = await getReports(period);
 
   const money = (v: number) => formatMoney(v, CURRENCY);
@@ -33,7 +33,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
     <div className="grid gap-6">
       <div className="grid gap-5">
         <h1 className="text-2xl font-semibold">Reportes</h1>
-        <PeriodNav basePath="/reportes" period={period} presets={periodPresets()} />
+        <PeriodNav basePath="/reportes" period={period} presets={await periodPresets()} />
         <UnclosedWarning days={unclosedDays} what="sus ventas y propinas todavía no cuentan." />
         <nav className="flex gap-2 text-sm" aria-label="Secciones">
           {SECTIONS.map((s) => (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, SettingsIcon } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { BottomNav, NavLinks } from "./nav-links";
@@ -13,7 +13,18 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             Simba
           </Link>
           <NavLinks />
-          <form action={logout} className="ml-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            aria-label="Configuración"
+            render={<Link href="/configuracion" />}
+            nativeButton={false}
+          >
+            <SettingsIcon />
+            <span className="hidden sm:inline">Configuración</span>
+          </Button>
+          <form action={logout}>
             <Button type="submit" variant="ghost" size="sm" aria-label="Cerrar sesión">
               <LogOutIcon />
               <span className="hidden sm:inline">Salir</span>

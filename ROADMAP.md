@@ -15,7 +15,9 @@ _Última actualización: 2026-09-24_
 | F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | `6484c51` |
 | T1 · Inputs de moneda con librería | ✅ | `e328c56` |
 | F5 · Deploy (Vercel + Neon) | ✅ en producción | `b5b7311` |
-| F6 · Días de cierre (lunes) y festivos de Colombia | ✅ código · ⏳ **publicar** (ver abajo) | "F6: días de cierre…" |
+| F6 · Días de cierre (lunes) y festivos de Colombia | ✅ en producción | `2985038` |
+| F7 · Configuración + límite de intentos de login | ✅ código · ⏳ **publicar** (ver abajo) | "F7: configuración…" |
+| Logo de Simba (ícono, app instalable, encabezado) | ⏭️ en curso | — |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -34,7 +36,17 @@ npm test                                    # pruebas unitarias
 ## Pendientes de datos (los hace el usuario)
 
 - [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
-- [ ] **Publicar F6**: aplicar la migración `dias_de_cierre` en Neon y luego `git push` (pasos en la respuesta del 2026-09-24 y en DEPLOY.md §6).
+- [x] ~~Publicar F6~~ — publicado.
+- [ ] **Publicar F7**: aplicar la migración `configuracion_y_login` en Neon y luego `git push` (DEPLOY.md §6).
+
+---
+
+## F7 · Configuración y seguridad ✅
+
+- `/configuracion`: cuenta (correo/contraseña con contraseña actual), cerrar otras sesiones, ajustes del restaurante (inicio de semana de pago, días de cierre) guardados en `AppSettings`.
+- Sesiones con versión (`User.sessionVersion` en la cookie); `verifySession` la compara con la BD y manda a `/salir` si no coincide. Las cookies anteriores cuentan como versión 0.
+- Límite de intentos de login en `LoginThrottle` (`src/lib/throttle.ts`, `src/lib/auth.ts`).
+- Arreglado: correos con espacio al final daban "Correo inválido" en el login.
 
 ---
 
@@ -103,7 +115,6 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 
 ## Backlog / ideas
 
-- Pantalla **Configuración** (PRD §8): inicio de semana de pago, cambio de contraseña (hoy se hace por `.env`).
 - Marcar una semana como **pagada** en `/pagos`.
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 

@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F6 completadas; en producción (Vercel + Neon)
+- **Estado:** F1–F7 completadas; en producción (Vercel + Neon)
 
 ---
 
@@ -130,6 +130,13 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - **Excepciones manuales:** abrir un día de cierre o cerrar un día normal (ej. 25 de diciembre). Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero.
 - **Hoy** indica si hoy se abre y cuál es el próximo festivo.
 
+### RF-10 · Configuración y seguridad
+- Pantalla **Configuración** (ícono de engranaje arriba):
+  - **Cuenta:** cambiar correo y/o contraseña; siempre pide la contraseña actual. Contraseña nueva: mínimo 10 caracteres, con letras y números, distinta de la actual.
+  - **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
+  - **Restaurante:** día de inicio de la semana de pago y días de cierre. Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
+- **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
+
 ## 5. Reglas de negocio
 
 1. Solo los empleados con estado **Trabajó** reciben propina y pago diario ese día.
@@ -247,7 +254,7 @@ model TipShare {
 5. **Empleados** — lista, alta, edición, baja/reactivación, días libres asignados.
 6. **Pagos** — resumen semanal (o rango libre) por empleado: días trabajados, pagos diarios, propinas y total a pagar.
 7. **Reportes** — ventas, propinas por empleado, asistencia; exportar CSV.
-8. **Configuración** — moneda, zona horaria, día de inicio de la semana de pago, cambio de contraseña.
+8. **Configuración** — correo y contraseña, cerrar otras sesiones, inicio de la semana de pago, días de cierre (zona horaria, moneda y hora de corte se muestran; se cambian en Vercel).
 
 ## 9. Requisitos no funcionales
 
@@ -270,6 +277,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F4 ✅ | Pantalla "Hoy", reportes y exportación CSV. |
 | F5 ✅ | Deploy en Vercel + BD en producción. |
 | F6 ✅ | Días de cierre (lunes) y festivos de Colombia, con excepciones manuales (RF-9). |
+| F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 
 ## 11. Preguntas abiertas
 

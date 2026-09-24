@@ -5,7 +5,7 @@ import type { AttendanceStatus } from "@/generated/prisma/enums";
 import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
-import { CURRENCY, PAY_WEEK_START, today } from "@/lib/config";
+import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { addDays, formatDateRange, formatDayShort, formatLongDate } from "@/lib/dates";
 import { nextHoliday } from "@/lib/holidays";
@@ -15,6 +15,7 @@ import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
 import { scheduleLabel } from "@/lib/schedule";
 import { getSchedule } from "@/lib/schedule-data";
+import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { getDayView, type DayRow } from "@/lib/workdays";
 
@@ -24,7 +25,7 @@ export const metadata: Metadata = { title: "Hoy · Gestión Simba" };
 export default async function TodayPage() {
   await verifySession();
   const date = today();
-  const week = weekRange(date, PAY_WEEK_START);
+  const week = weekRange(date, (await getSettings()).payWeekStart);
   const holiday = nextHoliday(addDays(date, 1));
   const [view, payroll, reports, holidaySchedule] = await Promise.all([
     getDayView(date),

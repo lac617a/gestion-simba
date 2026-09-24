@@ -9,7 +9,7 @@ import { getReports } from "@/lib/reports-data";
 export async function GET(req: NextRequest) {
   await verifySession();
   const params = req.nextUrl.searchParams;
-  const period = periodFromParams(params.get("desde"), params.get("hasta"));
+  const period = await periodFromParams(params.get("desde"), params.get("hasta"));
   const tipo = params.get("tipo");
   const r = await getReports(period);
   const d = CURRENCY.decimals;

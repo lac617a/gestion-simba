@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/app/actions/attendance";
-import { CLOSED_WEEKDAYS } from "@/lib/config";
+import { getSettings } from "@/lib/settings";
 import { verifySession } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isISODate, isoToDate } from "@/lib/dates";
@@ -22,7 +22,7 @@ export async function setDayOverride(date: string, open: boolean | null): Promis
   const d = isoToDate(date);
 
   // Si pide lo mismo que dice la regla, no hace falta guardar una excepción.
-  const ruleOpen = daySchedule(date, CLOSED_WEEKDAYS).open;
+  const ruleOpen = daySchedule(date, (await getSettings()).closedWeekdays).open;
   const override = open === null || open === ruleOpen ? null : open;
   const willBeOpen = override ?? ruleOpen;
 
