@@ -1,4 +1,5 @@
-import { addDays, weekdayOf, type ISODate } from "@/lib/dates";
+import { moneyCell, toCsv } from "@/lib/csv";
+import type { ISODate } from "@/lib/dates";
 
 /** Un día trabajado (en un día cerrado): lo que se le paga al empleado. */
 export type PayEntry = {
@@ -57,22 +58,9 @@ export function summarizePayroll(entries: PayEntry[]): PayrollSummary {
   return { employees, totals };
 }
 
-/** Semana de pago que contiene `date`, empezando en `weekStart` (0 = domingo … 6 = sábado). */
-export function weekRange(date: ISODate, weekStart: number) {
-  const back = (weekdayOf(date) - weekStart + 7) % 7;
-  const from = addDays(date, -back);
-  return { from, to: addDays(from, 6) };
-}
-
-/** CSV para Excel en español: separador ";" y BOM para que respete las tildes. */
 export function payrollCsv(summary: PayrollSummary, from: ISODate, to: ISODate, decimals: number) {
-  // Montos en unidades normales, con "," decimal si la moneda tiene centavos.
-  const m = (minor: number) => (minor / 10 ** decimals).toFixed(decimals).replace(".", ",");
-  const esc = (v: string | number) => {
-    const s = String(v);
-    return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const lines = [
+  const m = (minor: number) => moneyCell(minor, decimals);
+  return toCsv([
     ["Periodo", `${from} a ${to}`],
     [],
     ["Empleado", "Días trabajados", "Pagos diarios", "Propinas", "Total a pagar"],
@@ -84,6 +72,5 @@ export function payrollCsv(summary: PayrollSummary, from: ISODate, to: ISODate, 
     ...summary.employees.flatMap((e) =>
       e.entries.map((x) => [e.name, x.date, m(x.dailyPay), m(x.tip), m(x.dailyPay + x.tip)])
     ),
-  ];
-  return "﻿" + lines.map((l) => l.map(esc).join(";")).join("\r\n") + "\r\n";
+  ]);
 }

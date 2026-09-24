@@ -43,7 +43,7 @@ export function CloseDayPanel({ action, currency, rows, saved }: Props) {
   };
 
   return (
-    <section className="grid gap-4 rounded-lg border p-4">
+    <section id="cierre" className="grid scroll-mt-20 gap-4 rounded-lg border p-4">
       <div>
         <h2 className="font-medium">Cierre del día</h2>
         <p className="text-sm text-muted-foreground">

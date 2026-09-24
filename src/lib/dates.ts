@@ -73,6 +73,18 @@ export function formatShortDate(iso: ISODate) {
   return shortFormat.format(isoToDate(iso));
 }
 
+const dayFormat = new Intl.DateTimeFormat("es-CO", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+/** Para filas de tablas: "lun, 21 sept" */
+export function formatDayShort(iso: ISODate) {
+  return dayFormat.format(isoToDate(iso));
+}
+
 /** Rango compacto: "21–27 de sept de 2026", "28 de sept – 4 de oct de 2026" */
 export function formatDateRange(from: ISODate, to: ISODate) {
   return shortFormat.formatRange(isoToDate(from), isoToDate(to));

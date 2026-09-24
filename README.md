@@ -60,7 +60,11 @@ src/lib/attendance.ts       estados de asistencia, estado inicial del día, vali
 src/lib/workdays.ts         abrir un día y armar la vista de asistencia
 src/lib/money.ts            montos en unidades enteras, parseo y formato (COP)
 src/lib/closing.ts          reglas de cierre, reparto de propinas y pago del día
-src/lib/payroll.ts          resumen de pagos por empleado, semana de pago, CSV
+src/lib/payroll.ts          resumen de pagos por empleado
+src/lib/periods.ts          semana / quincena / mes y navegación entre periodos
+src/lib/reports.ts          reportes de ventas, propinas y asistencia
+src/lib/csv.ts              armado de CSV para Excel en español
+src/components/             selector de periodo y piezas compartidas de reportes
 src/app/actions/            Server Actions (auth, empleados, asistencia, días libres, cierre)
 src/app/login/              pantalla de login
 src/app/(app)/              pantallas autenticadas (layout con navegación)

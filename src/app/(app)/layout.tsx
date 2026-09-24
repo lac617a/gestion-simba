@@ -2,14 +2,14 @@ import Link from "next/link";
 import { LogOutIcon } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { NavLinks } from "./nav-links";
+import { BottomNav, NavLinks } from "./nav-links";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 sm:gap-4">
-          <Link href="/" className="hidden font-semibold sm:inline">
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
+          <Link href="/" className="font-semibold">
             Simba
           </Link>
           <NavLinks />
@@ -21,7 +21,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           </form>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+      {/* pb-24 en celular: deja espacio para la barra inferior */}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 sm:pb-6">{children}</main>
+      <BottomNav />
     </div>
   );
 }

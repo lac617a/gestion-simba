@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-09-23_
+_Última actualización: 2026-09-24_
 
 ## Estado
 
@@ -12,8 +12,8 @@ _Última actualización: 2026-09-23_
 | F2 · Asistencia diaria, descanso fijo, días libres | ✅ | `c8177ac` |
 | F3 · Cierre del día, propinas y reparto | ✅ | `c8177ac` |
 | F3b · Pago diario por empleado + pantalla Pagos (semana, CSV) | ✅ | `44ab4c4` |
+| F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | "F4: pantalla Hoy…" |
 | **T1 · Inputs de moneda con librería** | ⏭️ **siguiente** | — |
-| F4 · Pantalla "Hoy", reportes y CSV | pendiente | — |
 | F5 · Deploy (Vercel + Neon) | pendiente | — |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
@@ -30,7 +30,7 @@ npm test                                    # pruebas unitarias
 
 ## Pendientes de datos (los hace el usuario)
 
-- [ ] **Día 23/09 descuadrado**: propinas $500.000 pero Carlos aparece con $125.000 (quedó así por datos de prueba de la F3). Arreglo: Asistencia → 23/09 → **Reabrir día** → anotar su pago del día → **Cerrar día**.
+- [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
 
 ---
 
@@ -63,17 +63,17 @@ Alternativa considerada: `react-currency-input-field` (también válida; se desc
 
 ---
 
-## F4 · Pantalla "Hoy", reportes y CSV
+## F4 · Pantalla "Hoy", reportes y CSV ✅
 
-Según PRD RF-5 y RF-6.
+Hecho (PRD RF-5 y RF-6):
 
-- **Hoy** (`/`, hoy redirige a `/asistencia`): quién trabaja y quién descansa hoy, pendientes por marcar, estado del día (abierto/cerrado) con venta y propinas si ya cerró, accesos a Asistencia y Cierre.
-- **Reportes** (`/reportes`), por rango (semana, quincena, mes, personalizado):
-  - Ventas: total, promedio diario, venta por día.
-  - Propinas por empleado: total y días.
-  - Asistencia por empleado: trabajados, descansos, permisos, faltas, vacaciones.
-  - Exportar cada reporte a CSV (reusar el patrón de `src/lib/payroll.ts` → `payrollCsv` y `src/app/(app)/pagos/csv/route.ts`).
-- Reusar el selector de periodo de `/pagos` (sacarlo a un componente compartido).
+- **Hoy** (`/`): estado del día con la acción siguiente (marcar asistencia → cerrar el día → ver cierre), quién trabaja / pendientes / descansa / faltó, y la semana (venta acumulada y total por pagar).
+- **Reportes** (`/reportes`): ventas (total, promedio por día cerrado, mejor día, tabla por día), propinas por empleado y asistencia por empleado; CSV de cada uno en `/reportes/csv?tipo=ventas|propinas|asistencia`.
+- Selector de periodo compartido (`src/components/period-nav.tsx`) con atajos **Semana / Quincena / Mes**; las flechas saltan de mes en mes o de quincena en quincena. Lo usan Pagos y Reportes.
+- Navegación: barra inferior con íconos en celular; barra superior en pantallas grandes.
+- Código: lógica pura en `src/lib/periods.ts`, `src/lib/reports.ts`, `src/lib/csv.ts` (con pruebas); consultas en `src/lib/reports-data.ts`.
+
+Ideas que quedaron fuera: gráfico de ventas por día en Reportes.
 
 ## F5 · Deploy
 

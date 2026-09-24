@@ -1,27 +1,17 @@
 import "server-only";
-import { CURRENCY, PAY_WEEK_START, today } from "@/lib/config";
+import { CURRENCY, today } from "@/lib/config";
 import { db } from "@/lib/db";
-import { addDays, daysBetween, dateToISO, isISODate, isoToDate, type ISODate } from "@/lib/dates";
+import { dateToISO, isoToDate } from "@/lib/dates";
 import { fromDecimal } from "@/lib/money";
-import { summarizePayroll, weekRange, type PayEntry } from "@/lib/payroll";
-
-const MAX_RANGE_DAYS = 366;
-
-/** Periodo pedido por URL (?desde&hasta) o, si no hay, la semana de pago actual. */
-export function resolvePeriod(desde: unknown, hasta: unknown): { from: ISODate; to: ISODate } {
-  if (isISODate(desde) && isISODate(hasta)) {
-    const [from, to] = desde <= hasta ? [desde, hasta] : [hasta, desde];
-    return { from, to: daysBetween(from, to) > MAX_RANGE_DAYS ? addDays(from, MAX_RANGE_DAYS) : to };
-  }
-  return weekRange(today(), PAY_WEEK_START);
-}
+import { summarizePayroll, type PayEntry } from "@/lib/payroll";
+import { elapsedDays, type Period } from "@/lib/periods";
 
 /**
  * Pagos del periodo (RF-8). Solo cuentan días cerrados: ahí están el pago del
  * día y el reparto de propinas definitivos.
  */
-export async function getPayroll(from: ISODate, to: ISODate) {
-  const range = { gte: isoToDate(from), lte: isoToDate(to) };
+export async function getPayroll(period: Period) {
+  const range = { gte: isoToDate(period.from), lte: isoToDate(period.to) };
   const d = CURRENCY.decimals;
 
   const [worked, tips, closedDays] = await Promise.all([
@@ -51,9 +41,9 @@ export async function getPayroll(from: ISODate, to: ISODate) {
     tip: tipOf.get(`${a.workDayId}:${a.employeeId}`) ?? 0,
   }));
 
-  // Días del periodo que ya pasaron (hasta hoy) y aún no están cerrados.
-  const lastElapsed = to < today() ? to : today();
-  const elapsedDays = lastElapsed < from ? 0 : daysBetween(from, lastElapsed) + 1;
-
-  return { summary: summarizePayroll(entries), unclosedDays: Math.max(0, elapsedDays - closedDays) };
+  return {
+    summary: summarizePayroll(entries),
+    // Días del periodo que ya pasaron y aún no están cerrados.
+    unclosedDays: Math.max(0, elapsedDays(period, today()) - closedDays),
+  };
 }

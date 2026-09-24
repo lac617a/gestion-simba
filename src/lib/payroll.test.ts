@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parsePays, payField, type ClosingRow } from "./closing";
-import { payrollCsv, summarizePayroll, weekRange, type PayEntry } from "./payroll";
+import { payrollCsv, summarizePayroll, type PayEntry } from "./payroll";
 
 describe("parsePays", () => {
   const rows: ClosingRow[] = [
@@ -49,19 +49,6 @@ describe("summarizePayroll", () => {
 
   it("sin datos → vacío", () => {
     expect(summarizePayroll([])).toEqual({ employees: [], totals: { days: 0, pay: 0, tips: 0, total: 0 } });
-  });
-});
-
-describe("weekRange", () => {
-  it("semana de lunes a domingo", () => {
-    expect(weekRange("2026-09-23", 1)).toEqual({ from: "2026-09-21", to: "2026-09-27" }); // miércoles
-    expect(weekRange("2026-09-21", 1)).toEqual({ from: "2026-09-21", to: "2026-09-27" }); // lunes
-    expect(weekRange("2026-09-27", 1)).toEqual({ from: "2026-09-21", to: "2026-09-27" }); // domingo
-  });
-
-  it("semana con otro día de inicio (miércoles)", () => {
-    expect(weekRange("2026-09-22", 3)).toEqual({ from: "2026-09-16", to: "2026-09-22" }); // martes
-    expect(weekRange("2026-09-23", 3)).toEqual({ from: "2026-09-23", to: "2026-09-29" });
   });
 });
 
