@@ -250,6 +250,8 @@ model TipShare {
 
 ## 10. Roadmap
 
+Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
+
 | Fase | Entregable |
 |---|---|
 | F1 ✅ | Setup del proyecto (Next.js, Prisma, BD), login del admin, CRUD de empleados. |
