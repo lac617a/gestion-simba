@@ -18,7 +18,7 @@ _Última actualización: 2026-09-24_
 | F6 · Días de cierre (lunes) y festivos de Colombia | ✅ en producción | `2985038` |
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
-| F8 · Pagos realizados + gráfico de ventas | ✅ código · ⏳ **publicar** | `a294a55` + "Reportes: gráfico…" |
+| F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -39,7 +39,7 @@ npm test                                    # pruebas unitarias
 - [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
-- [ ] **Publicar F8**: aplicar la migración `pagos_realizados` en Neon y luego `git push`.
+- [x] ~~Publicar F8~~ — publicado el 2026-09-24.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
 
 ---
