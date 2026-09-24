@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+}
+
+enum AttendanceStatus {
+  PENDING
+  WORKED
+  REST // descanso fijo semanal
+  EXTRA_REST // descanso extra / permiso
+  ABSENT // falta
+  LEAVE // vacaciones / incapacidad
+}
+
+enum TimeOffType {
+  EXTRA_REST
+  LEAVE
+}
+
+enum DayStatus {
+  OPEN
+  CLOSED
+}
+
+model Employee {
+  id          String       @id @default(cuid())
+  name        String
+  position    String?
+  phone       String?
+  hireDate    DateTime?    @db.Date
+  /// Días de descanso fijo: 0 = domingo ... 6 = sábado
+  restDays    Int[]
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  attendances Attendance[]
+  timeOff     TimeOff[]
+  tipShares   TipShare[]
+
+  @@index([active, name])
+}
+
+/// Un día de operación del restaurante. Se crea al abrir la asistencia de esa fecha.
+model WorkDay {
+  id          String       @id @default(cuid())
+  /// Día local del restaurante (APP_TIMEZONE), guardado a medianoche UTC
+  date        DateTime     @unique @db.Date
+  totalSales  Decimal?     @db.Decimal(14, 2)
+  tipsTotal   Decimal?     @db.Decimal(14, 2)
+  note        String?
+  status      DayStatus    @default(OPEN)
+  closedAt    DateTime?
+  createdAt   DateTime     @default(now())
+  attendances Attendance[]
+  tipShares   TipShare[]
+}
+
+/// Reparto de propinas guardado al cerrar el día (se borra al reabrir).
+model TipShare {
+  id         String   @id @default(cuid())
+  workDayId  String
+  employeeId String
+  amount     Decimal  @db.Decimal(14, 2)
+  workDay    WorkDay  @relation(fields: [workDayId], references: [id], onDelete: Cascade)
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([workDayId, employeeId])
+  @@index([employeeId])
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  workDayId  String
+  employeeId String
+  status     AttendanceStatus @default(PENDING)
+  note       String?
+  updatedAt  DateTime         @updatedAt
+  workDay    WorkDay          @relation(fields: [workDayId], references: [id], onDelete: Cascade)
+  employee   Employee         @relation(fields: [employeeId], references: [id])
+
+  @@unique([workDayId, employeeId])
+  @@index([employeeId])
+}
+
+/// Días libres asignados por adelantado (rango inclusivo).
+model TimeOff {
+  id         String      @id @default(cuid())
+  employeeId String
+  type       TimeOffType
+  startDate  DateTime    @db.Date
+  endDate    DateTime    @db.Date
+  note       String?
+  createdAt  DateTime    @default(now())
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, startDate, endDate])
+}
