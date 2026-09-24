@@ -12,9 +12,9 @@ _Última actualización: 2026-09-24_
 | F2 · Asistencia diaria, descanso fijo, días libres | ✅ | `c8177ac` |
 | F3 · Cierre del día, propinas y reparto | ✅ | `c8177ac` |
 | F3b · Pago diario por empleado + pantalla Pagos (semana, CSV) | ✅ | `44ab4c4` |
-| F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | "F4: pantalla Hoy…" |
-| **T1 · Inputs de moneda con librería** | ⏭️ **siguiente** | — |
-| F5 · Deploy (Vercel + Neon) | pendiente | — |
+| F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | `6484c51` |
+| T1 · Inputs de moneda con librería | ✅ | "T1: inputs de moneda…" |
+| **F5 · Deploy (Vercel + Neon)** | ⏭️ **siguiente** | — |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -34,9 +34,11 @@ npm test                                    # pruebas unitarias
 
 ---
 
-## T1 · Inputs de moneda con librería ⏭️
+## T1 · Inputs de moneda con librería ✅
 
-**Por qué:** hoy los campos de dinero son `<input>` de texto con formato hecho a mano (`formatPlain` + `tidy` al salir del campo). Funciona, pero el formato de miles solo aparece al salir del campo, el cursor no se maneja bien al editar en medio del número y cada campo repite lógica.
+**Por qué:** los campos de dinero eran `<input>` de texto con formato hecho a mano (`formatPlain` + `tidy` al salir del campo): el formato de miles solo aparecía al salir del campo, el cursor no se manejaba bien al editar en medio del número y cada campo repetía lógica.
+
+**Resultado:** `src/components/money-input.tsx` (`MoneyInput`), usado en venta, propinas y pago del día. El estado del cierre ahora guarda montos en unidades mínimas (números), no texto. No se usó `fixedDecimalScale` (irrelevante en COP).
 
 **Librería elegida:** [`react-number-format`](https://www.npmjs.com/package/react-number-format) (v5, compatible con React 19), componente `NumericFormat`.
 Alternativa considerada: `react-currency-input-field` (también válida; se descartó por ser menos usada).
@@ -54,12 +56,12 @@ Alternativa considerada: `react-currency-input-field` (también válida; se desc
 4. Mantener el comportamiento actual de errores: la `key` del formulario remonta los campos con lo enviado cuando la acción devuelve error.
 
 **Listo cuando:**
-- [ ] Al escribir `1250000` se ve `1.250.000` mientras se escribe, sin saltos del cursor.
-- [ ] No se pueden escribir letras, negativos ni decimales en COP.
-- [ ] La vista previa del reparto y los totales por empleado se actualizan en vivo.
-- [ ] Cerrar/reabrir día sigue funcionando y los montos se guardan igual (probar en `dev:e2e`).
-- [ ] `npm test`, `npx tsc --noEmit`, `npm run lint` y `npm run build` en verde.
-- [ ] Commit: `T1: inputs de moneda con react-number-format`.
+- [x] Al escribir `1250000` se ve `1.250.000` mientras se escribe, sin saltos del cursor (probado también editando en medio del número y con Backspace).
+- [x] No se pueden escribir letras, negativos ni decimales en COP.
+- [x] La vista previa del reparto y los totales por empleado se actualizan en vivo.
+- [x] Cerrar/reabrir día sigue funcionando y los montos se guardan igual (probado en `dev:e2e`).
+- [x] `npm test`, `npx tsc --noEmit`, `npm run lint` y `npm run build` en verde.
+- [x] Commit: `T1: inputs de moneda con react-number-format`.
 
 ---
 

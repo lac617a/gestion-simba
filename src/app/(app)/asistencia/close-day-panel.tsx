@@ -2,7 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { LockIcon, TriangleAlertIcon } from "lucide-react";
-import type { CloseDayState, CloseDayValues } from "@/app/actions/closing";
+import type { CloseDayState } from "@/app/actions/closing";
+import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,24 +24,33 @@ type Props = {
   saved: DayClosing | null;
 };
 
-/** Número con separadores de miles, sin símbolo: "1.250.000" */
-function formatPlain(minor: number, currency: Currency) {
-  return new Intl.NumberFormat("es-CO", {
-    minimumFractionDigits: currency.decimals,
-    maximumFractionDigits: currency.decimals,
-  }).format(minor / 10 ** currency.decimals);
-}
+/** Montos iniciales del formulario, en unidades mínimas (null = vacío). */
+type Initial = {
+  totalSales: number | null;
+  tipsTotal: number | null;
+  note: string;
+  pays: Record<string, number | null>;
+};
 
 export function CloseDayPanel({ action, currency, rows, saved }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
-  const initial: CloseDayValues = state?.values ?? {
-    totalSales: saved?.totalSales != null ? formatPlain(saved.totalSales, currency) : "",
-    tipsTotal: saved?.tipsTotal != null ? formatPlain(saved.tipsTotal, currency) : "",
-    note: saved?.note ?? "",
-    pays: Object.fromEntries(
-      rows.map((r) => [r.employeeId, r.defaultPay != null ? formatPlain(r.defaultPay, currency) : ""])
-    ),
-  };
+
+  // Tras un error se muestra lo enviado; si no, lo guardado (o el último pago de cada uno).
+  const sent = state?.values;
+  const parse = (v: string | undefined) => (v ? parseMoney(v, currency.decimals) : null);
+  const initial: Initial = sent
+    ? {
+        totalSales: parse(sent.totalSales),
+        tipsTotal: parse(sent.tipsTotal),
+        note: sent.note,
+        pays: Object.fromEntries(rows.map((r) => [r.employeeId, parse(sent.pays[r.employeeId])])),
+      }
+    : {
+        totalSales: saved?.totalSales ?? null,
+        tipsTotal: saved?.tipsTotal ?? null,
+        note: saved?.note ?? "",
+        pays: Object.fromEntries(rows.map((r) => [r.employeeId, r.defaultPay])),
+      };
 
   return (
     <section id="cierre" className="grid scroll-mt-20 gap-4 rounded-lg border p-4">
@@ -52,7 +62,7 @@ export function CloseDayPanel({ action, currency, rows, saved }: Props) {
         </p>
       </div>
       {/* key: remonta los campos con lo enviado cuando la acción devuelve un error */}
-      <form key={JSON.stringify(state?.values ?? null)} action={formAction} className="grid gap-4">
+      <form key={JSON.stringify(sent ?? null)} action={formAction} className="grid gap-4">
         <CloseDayFields initial={initial} currency={currency} rows={rows} state={state} pending={pending} />
       </form>
     </section>
@@ -66,7 +76,7 @@ function CloseDayFields({
   state,
   pending,
 }: {
-  initial: CloseDayValues;
+  initial: Initial;
   currency: Currency;
   rows: CloseDayRow[];
   state: CloseDayState;
@@ -76,40 +86,32 @@ function CloseDayFields({
   const [tips, setTips] = useState(initial.tipsTotal);
   const [pays, setPays] = useState(initial.pays);
 
-  const tipsMinor = tips.trim() === "" ? 0 : parseMoney(tips, currency.decimals);
+  const tipsMinor = tips ?? 0;
   const pendingCount = rows.filter((r) => r.status === "PENDING").length;
-  const shares = tipsMinor === null ? [] : splitTips(tipsMinor, rows);
+  const shares = splitTips(tipsMinor, rows);
   const tipOf = new Map(shares.map((s) => [s.employeeId, s.amount]));
   const workers = rows.filter((r) => r.status === "WORKED");
-  const noWorkers = (tipsMinor ?? 0) > 0 && workers.length === 0;
-
-  // Da formato de miles al salir del campo, si el monto es válido.
-  const tidy = (value: string) => {
-    const minor = parseMoney(value, currency.decimals);
-    return minor === null ? value : formatPlain(minor, currency);
-  };
+  const noWorkers = tipsMinor > 0 && workers.length === 0;
 
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <MoneyField
           id="totalSales"
-          decimal={currency.decimals > 0}
           label={`Venta total del día (${currency.code})`}
+          currency={currency}
           value={sales}
-          onChange={setSales}
-          onBlur={() => setSales(tidy(sales))}
+          onValueChange={setSales}
           error={state?.errors?.totalSales}
           required
         />
         <MoneyField
           id="tipsTotal"
-          decimal={currency.decimals > 0}
           label={`Propinas (${currency.code})`}
+          currency={currency}
           value={tips}
-          onChange={setTips}
-          onBlur={() => setTips(tidy(tips))}
-          error={state?.errors?.tipsTotal ?? (tipsMinor === null ? "Monto inválido" : undefined)}
+          onValueChange={setTips}
+          error={state?.errors?.tipsTotal}
           placeholder="0"
         />
       </div>
@@ -117,31 +119,32 @@ function CloseDayFields({
       {workers.length > 0 && (
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-sm font-medium">Pago del día</legend>
-          {tipsMinor !== null && tipsMinor > 0 && <TipLine shares={shares} total={tipsMinor} currency={currency} />}
+          {tipsMinor > 0 && <TipLine shares={shares} total={tipsMinor} currency={currency} />}
           <ul className="divide-y rounded-lg border">
             {workers.map((w) => {
-              const payMinor = parseMoney(pays[w.employeeId] ?? "", currency.decimals);
+              const pay = pays[w.employeeId] ?? null;
               const tip = tipOf.get(w.employeeId) ?? 0;
-              const error = state?.errors?.pays?.[w.employeeId];
               return (
-                <li key={w.employeeId} className="grid gap-2 px-3 py-2 sm:grid-cols-[1fr_9rem_auto] sm:items-center sm:gap-4">
+                <li
+                  key={w.employeeId}
+                  className="grid gap-2 px-3 py-2 sm:grid-cols-[1fr_9rem_auto] sm:items-center sm:gap-4"
+                >
                   <span className="truncate font-medium">{w.name}</span>
                   <MoneyField
                     id={payField(w.employeeId)}
                     label={`Pago del día de ${w.name}`}
                     hideLabel
-                    decimal={currency.decimals > 0}
-                    value={pays[w.employeeId] ?? ""}
-                    onChange={(v) => setPays((p) => ({ ...p, [w.employeeId]: v }))}
-                    onBlur={() => setPays((p) => ({ ...p, [w.employeeId]: tidy(p[w.employeeId] ?? "") }))}
-                    error={error}
+                    currency={currency}
+                    value={pay}
+                    onValueChange={(v) => setPays((p) => ({ ...p, [w.employeeId]: v }))}
+                    error={state?.errors?.pays?.[w.employeeId]}
                     placeholder="0"
                     required
                   />
                   <span className="text-sm text-muted-foreground tabular-nums sm:text-right">
                     + propina {formatMoney(tip, currency)} ={" "}
                     <span className="font-semibold text-foreground">
-                      {payMinor === null ? "—" : formatMoney(payMinor + tip, currency)}
+                      {pay === null ? "—" : formatMoney(pay + tip, currency)}
                     </span>
                   </span>
                 </li>
@@ -168,7 +171,7 @@ function CloseDayFields({
         type="submit"
         size="lg"
         className="justify-self-start"
-        disabled={pending || pendingCount > 0 || noWorkers || tipsMinor === null}
+        disabled={pending || pendingCount > 0 || noWorkers}
       >
         <LockIcon />
         {pending ? "Cerrando…" : "Cerrar día"}
@@ -181,19 +184,15 @@ function MoneyField({
   id,
   label,
   hideLabel,
-  decimal,
   error,
-  onChange,
   ...props
 }: {
   id: string;
   label: string;
   hideLabel?: boolean;
-  /** La moneda usa centavos (teclado decimal en el celular) */
-  decimal?: boolean;
-  value: string;
-  onChange: (v: string) => void;
-  onBlur: () => void;
+  currency: Currency;
+  value: number | null;
+  onValueChange: (minor: number | null) => void;
   error?: string;
   required?: boolean;
   placeholder?: string;
@@ -203,21 +202,7 @@ function MoneyField({
       <Label htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
         {label}
       </Label>
-      <div className="relative">
-        <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
-          $
-        </span>
-        <Input
-          id={id}
-          name={id}
-          inputMode={decimal ? "decimal" : "numeric"}
-          autoComplete="off"
-          className="pl-6 tabular-nums"
-          aria-invalid={!!error}
-          onChange={(e) => onChange(e.target.value)}
-          {...props}
-        />
-      </div>
+      <MoneyInput id={id} name={id} invalid={!!error} {...props} />
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );

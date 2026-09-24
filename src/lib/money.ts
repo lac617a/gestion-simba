@@ -7,7 +7,7 @@ export type Currency = { code: string; decimals: number };
 const DECIMALS: Record<string, number> = { COP: 0, CLP: 0, PEN: 2, USD: 2, MXN: 2, EUR: 2 };
 
 /** Tope por monto: cabe en Decimal(14,2) con margen. */
-const MAX_MAJOR = 9_999_999_999;
+export const MAX_MAJOR = 9_999_999_999;
 
 export function currencyOf(code: string): Currency {
   const upper = code.toUpperCase();
