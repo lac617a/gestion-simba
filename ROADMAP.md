@@ -77,7 +77,9 @@ Hecho (PRD RF-5 y RF-6):
 
 Ideas que quedaron fuera: gráfico de ventas por día en Reportes.
 
-## F5 · Deploy
+## F5 · Deploy ⏭️
+
+Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resumen:
 
 - BD en Neon (o Supabase); `DATABASE_URL` de producción, **sin** `DATABASE_POOL_MAX`.
 - Vercel: variables `SESSION_SECRET` (nuevo), `APP_TIMEZONE`, `DAY_CUTOFF_HOUR`, `APP_CURRENCY`, `PAY_WEEK_START`.
