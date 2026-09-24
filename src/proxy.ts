@@ -16,5 +16,6 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|ico|jpg|webp)$).*)"],
+  // Sin proxy: estáticos, imágenes y el manifiesto (el navegador lo pide sin sesión para instalar la app).
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:png|svg|ico|jpg|webp)$).*)"],
 };

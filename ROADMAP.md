@@ -17,7 +17,7 @@ _Última actualización: 2026-09-24_
 | F5 · Deploy (Vercel + Neon) | ✅ en producción | `b5b7311` |
 | F6 · Días de cierre (lunes) y festivos de Colombia | ✅ en producción | `2985038` |
 | F7 · Configuración + límite de intentos de login | ✅ código · ⏳ **publicar** (ver abajo) | "F7: configuración…" |
-| Logo de Simba (ícono, app instalable, encabezado) | ⏭️ en curso | — |
+| Logo de Simba (favicon, app instalable, encabezado, login) | ✅ código · ⏳ publicar junto con F7 | "Logo de Simba…" |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -47,6 +47,13 @@ npm test                                    # pruebas unitarias
 - Sesiones con versión (`User.sessionVersion` en la cookie); `verifySession` la compara con la BD y manda a `/salir` si no coincide. Las cookies anteriores cuentan como versión 0.
 - Límite de intentos de login en `LoginThrottle` (`src/lib/throttle.ts`, `src/lib/auth.ts`).
 - Arreglado: correos con espacio al final daban "Correo inválido" en el login.
+
+## Logo de Simba ✅
+
+- Original: JPG 150×150 enviado por el usuario → `public/brand/simba-logo.png`. Colores en `src/lib/brand.ts` (verde `#022813`, dorado `#bfa889`).
+- Derivados: `src/app/favicon.ico` (16/32/48, PNG RGBA dentro del ICO), `src/app/apple-icon.png` (180), `public/brand/icon-192.png`, `icon-512.png` e `icon-512-maskable.png` (logo al 72 % con margen para Android) usados por `src/app/manifest.ts`.
+- El proxy no intercepta `manifest.webmanifest` (el navegador lo pide sin sesión).
+- Pendiente opcional: una versión del logo más grande o en vector para que el ícono de 512 px quede nítido.
 
 ---
 

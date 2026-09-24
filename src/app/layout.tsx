@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND_GREEN } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Gestión Simba",
   description: "Empleados, asistencia y propinas del restaurante",
+  // Nombre al agregarla a la pantalla de inicio en iPhone
+  appleWebApp: { title: "Simba", capable: true },
 };
+
+/** Color de la barra del navegador en el celular: el verde del logo. */
+export const viewport: Viewport = { themeColor: BRAND_GREEN };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
