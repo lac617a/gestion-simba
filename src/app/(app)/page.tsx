@@ -139,7 +139,12 @@ export default async function TodayPage() {
             value={money(reports.sales.totalSales)}
             hint={`${reports.sales.days.length} ${reports.sales.days.length === 1 ? "día cerrado" : "días cerrados"}`}
           />
-          <Stat label="Por pagar (pagos + propinas)" value={money(payroll.summary.totals.total)} strong />
+          <Stat
+            label="Por pagar (pagos + propinas)"
+            value={money(payroll.summary.totals.pending)}
+            hint={payroll.summary.totals.paid > 0 ? `Ya pagado: ${money(payroll.summary.totals.paid)}` : undefined}
+            strong
+          />
         </dl>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           <GoTo href="/reportes">Ver reportes</GoTo>

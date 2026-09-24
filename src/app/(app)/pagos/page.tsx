@@ -3,12 +3,13 @@ import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 import { PeriodNav } from "@/components/period-nav";
 import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
-import { CURRENCY } from "@/lib/config";
+import { APP_TIMEZONE, CURRENCY } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
-import { formatDayShort } from "@/lib/dates";
+import { formatDateRange, formatDayShort } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
 import { getPayroll } from "@/lib/payroll-data";
+import { EmployeePayActions, MarkAllPaidButton } from "./pay-actions";
 
 export const metadata: Metadata = { title: "Pagos · Gestión Simba" };
 
@@ -18,6 +19,14 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
   const period = await periodFromParams(desde, hasta);
   const { summary, unclosedDays } = await getPayroll(period);
   const money = (v: number) => formatMoney(v, CURRENCY);
+  const payable = summary.employees.filter((e) => e.canPay);
+  const common = {
+    period,
+    periodLabel: formatDateRange(period.from, period.to),
+    currency: CURRENCY,
+    unclosedDays,
+    timeZone: APP_TIMEZONE,
+  };
 
   return (
     <div className="grid gap-5">
@@ -31,10 +40,22 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
       <UnclosedWarning days={unclosedDays} what="sus pagos y propinas todavía no cuentan." />
 
       <dl className="grid grid-cols-3 gap-2">
-        <Stat label="Pagos diarios" value={money(summary.totals.pay)} />
-        <Stat label="Propinas" value={money(summary.totals.tips)} />
-        <Stat label="Total a pagar" value={money(summary.totals.total)} strong />
+        <Stat
+          label="Total del periodo"
+          value={money(summary.totals.total)}
+          hint={`${money(summary.totals.pay)} + ${money(summary.totals.tips)} propinas`}
+        />
+        <Stat label="Pagado" value={money(summary.totals.paid)} />
+        <Stat label="Por pagar" value={money(summary.totals.pending)} strong />
       </dl>
+
+      <div className="flex justify-end">
+        <MarkAllPaidButton
+          count={payable.length}
+          amount={payable.reduce((s, e) => s + e.total, 0)}
+          {...common}
+        />
+      </div>
 
       {summary.employees.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
@@ -85,6 +106,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
                   </table>
                 </div>
               </details>
+              <EmployeePayActions employee={e} {...common} />
             </li>
           ))}
         </ul>

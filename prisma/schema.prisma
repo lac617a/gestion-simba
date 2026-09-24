@@ -68,6 +68,7 @@ model Employee {
   attendances Attendance[]
   timeOff     TimeOff[]
   tipShares   TipShare[]
+  payments    Payment[]
 
   @@index([active, name])
 }
@@ -85,6 +86,22 @@ model WorkDay {
   createdAt   DateTime     @default(now())
   attendances Attendance[]
   tipShares   TipShare[]
+}
+
+/// Pago hecho a un empleado por los días trabajados (pago diario + propinas)
+/// de un rango de fechas. Guarda el monto pagado tal como era al pagar.
+/// Los rangos de un mismo empleado no se solapan.
+model Payment {
+  id         String   @id @default(cuid())
+  employeeId String
+  periodFrom DateTime @db.Date
+  periodTo   DateTime @db.Date
+  amount     Decimal  @db.Decimal(14, 2)
+  note       String?
+  paidAt     DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId, periodFrom, periodTo])
 }
 
 /// Excepción manual a la regla de días de cierre: abrir un día que normalmente

@@ -3,7 +3,7 @@ import { CURRENCY } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 import { fromDecimal } from "@/lib/money";
-import { summarizePayroll, type PayEntry } from "@/lib/payroll";
+import { applyPayments, summarizePayroll, type PayEntry, type PaymentRecord } from "@/lib/payroll";
 import type { Period } from "@/lib/periods";
 import { countUnclosedDays } from "@/lib/schedule-data";
 
@@ -15,7 +15,7 @@ export async function getPayroll(period: Period) {
   const range = { gte: isoToDate(period.from), lte: isoToDate(period.to) };
   const d = CURRENCY.decimals;
 
-  const [worked, tips, closedDays] = await Promise.all([
+  const [worked, tips, closedDays, payments] = await Promise.all([
     db.attendance.findMany({
       where: { status: "WORKED", workDay: { status: "CLOSED", date: range } },
       select: {
@@ -31,6 +31,8 @@ export async function getPayroll(period: Period) {
       select: { workDayId: true, employeeId: true, amount: true },
     }),
     db.workDay.findMany({ where: { status: "CLOSED", date: range }, select: { date: true } }),
+    // Pagos que tocan el periodo (aunque empiecen antes o terminen después)
+    db.payment.findMany({ where: { periodFrom: { lte: range.lte }, periodTo: { gte: range.gte } } }),
   ]);
 
   const tipOf = new Map(tips.map((t) => [`${t.workDayId}:${t.employeeId}`, fromDecimal(t.amount, d)!]));
@@ -42,8 +44,18 @@ export async function getPayroll(period: Period) {
     tip: tipOf.get(`${a.workDayId}:${a.employeeId}`) ?? 0,
   }));
 
+  const records: PaymentRecord[] = payments.map((p) => ({
+    id: p.id,
+    employeeId: p.employeeId,
+    from: dateToISO(p.periodFrom),
+    to: dateToISO(p.periodTo),
+    amount: fromDecimal(p.amount, d)!,
+    paidAt: p.paidAt.toISOString(),
+    note: p.note,
+  }));
+
   return {
-    summary: summarizePayroll(entries),
+    summary: applyPayments(summarizePayroll(entries), records, period),
     unclosedDays: await countUnclosedDays(period, new Set(closedDays.map((w) => dateToISO(w.date)))),
   };
 }
