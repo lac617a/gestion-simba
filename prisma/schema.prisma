@@ -65,6 +65,15 @@ model WorkDay {
   tipShares   TipShare[]
 }
 
+/// Excepción manual a la regla de días de cierre: abrir un día que normalmente
+/// cierra (open = true) o cerrar un día que normalmente abre (open = false).
+model DayOverride {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  open      Boolean
+  createdAt DateTime @default(now())
+}
+
 /// Reparto de propinas guardado al cerrar el día (se borra al reabrir).
 model TipShare {
   id         String   @id @default(cuid())

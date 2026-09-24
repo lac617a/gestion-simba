@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1, F2, F3, F3b y F4 completadas
+- **Estado:** F1–F6 completadas; en producción (Vercel + Neon)
 
 ---
 
@@ -120,6 +120,15 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Detalle por día al abrir un empleado (fecha, pago del día, propina).
 - Aviso si en el periodo hay días **sin cerrar** (sus pagos y propinas aún no cuentan).
 - Exportar a CSV.
+
+### RF-9 · Días de cierre y festivos
+- El restaurante **cierra los lunes** (configurable con `CLOSED_WEEKDAYS`).
+- Si el lunes es **festivo de Colombia**, el restaurante **abre** ese lunes y **cierra el martes** siguiente.
+- Festivos calculados automáticamente (Ley 51 de 1983: fijos, trasladados al lunes y los que dependen de la Pascua).
+- En un día de cierre no hay asistencia ni cierre que registrar, y Pagos/Reportes no lo cuentan como "día sin cerrar".
+- En un lunes festivo, el descanso fijo de lunes de los empleados no aplica (quedan Pendiente).
+- **Excepciones manuales:** abrir un día de cierre o cerrar un día normal (ej. 25 de diciembre). Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero.
+- **Hoy** indica si hoy se abre y cuál es el próximo festivo.
 
 ## 5. Reglas de negocio
 
@@ -259,7 +268,8 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F3 ✅ | Cierre del día, propinas y reparto (con pruebas unitarias). |
 | F3b ✅ | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
 | F4 ✅ | Pantalla "Hoy", reportes y exportación CSV. |
-| F5 | Deploy en Vercel + BD en producción. |
+| F5 ✅ | Deploy en Vercel + BD en producción. |
+| F6 ✅ | Días de cierre (lunes) y festivos de Colombia, con excepciones manuales (RF-9). |
 
 ## 11. Preguntas abiertas
 

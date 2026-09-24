@@ -13,15 +13,18 @@ _Última actualización: 2026-09-24_
 | F3 · Cierre del día, propinas y reparto | ✅ | `c8177ac` |
 | F3b · Pago diario por empleado + pantalla Pagos (semana, CSV) | ✅ | `44ab4c4` |
 | F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | `6484c51` |
-| T1 · Inputs de moneda con librería | ✅ | "T1: inputs de moneda…" |
-| **F5 · Deploy (Vercel + Neon)** | ⏭️ **siguiente** | — |
+| T1 · Inputs de moneda con librería | ✅ | `e328c56` |
+| F5 · Deploy (Vercel + Neon) | ✅ en producción | `b5b7311` |
+| F6 · Días de cierre (lunes) y festivos de Colombia | ✅ código · ⏳ **publicar** (ver abajo) | "F6: días de cierre…" |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
+
+**Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
 ## Cómo retomar
 
 ```bash
-npx prisma dev start gestion-simba          # BD real (puerto 51218)
+npx prisma dev start gestion-simba          # BD local de desarrollo (puerto 51218)
 npx prisma dev start gestion-simba-test     # BD de pruebas (puerto 51221)
 npm run dev                                 # app real → http://localhost:3000
 npm run dev:e2e                             # app de pruebas → http://localhost:3001
@@ -31,6 +34,18 @@ npm test                                    # pruebas unitarias
 ## Pendientes de datos (los hace el usuario)
 
 - [x] ~~Día 23/09 descuadrado~~ — corregido por el usuario el 2026-09-24 (reabrir → cerrar).
+- [ ] **Publicar F6**: aplicar la migración `dias_de_cierre` en Neon y luego `git push` (pasos en la respuesta del 2026-09-24 y en DEPLOY.md §6).
+
+---
+
+## F6 · Días de cierre y festivos ✅
+
+- Regla: cierra los lunes (`CLOSED_WEEKDAYS`, por defecto `1`); lunes festivo abre y cierra el martes. Festivos de Colombia calculados en `src/lib/holidays.ts`.
+- Días de cierre: sin asistencia ni cierre; no cuentan como "sin cerrar" en Pagos/Reportes.
+- Lunes festivo: el descanso fijo de lunes no aplica (Pendiente).
+- Excepciones manuales (tabla `DayOverride`) desde Asistencia: "Abrir este día igual" / "Marcar como día cerrado" / "Quitar excepción".
+- Días que ya tenían registro antes de la regla se conservan con un aviso.
+- Hoy: estado "restaurante cerrado" y próximo festivo.
 
 ---
 
@@ -77,7 +92,7 @@ Hecho (PRD RF-5 y RF-6):
 
 Ideas que quedaron fuera: gráfico de ventas por día en Reportes.
 
-## F5 · Deploy ⏭️
+## F5 · Deploy ✅
 
 Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resumen:
 

@@ -1,10 +1,11 @@
 import "server-only";
-import { CURRENCY, today } from "@/lib/config";
+import { CURRENCY } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 import { fromDecimal } from "@/lib/money";
 import { summarizePayroll, type PayEntry } from "@/lib/payroll";
-import { elapsedDays, type Period } from "@/lib/periods";
+import type { Period } from "@/lib/periods";
+import { countUnclosedDays } from "@/lib/schedule-data";
 
 /**
  * Pagos del periodo (RF-8). Solo cuentan días cerrados: ahí están el pago del
@@ -29,7 +30,7 @@ export async function getPayroll(period: Period) {
       where: { workDay: { status: "CLOSED", date: range } },
       select: { workDayId: true, employeeId: true, amount: true },
     }),
-    db.workDay.count({ where: { status: "CLOSED", date: range } }),
+    db.workDay.findMany({ where: { status: "CLOSED", date: range }, select: { date: true } }),
   ]);
 
   const tipOf = new Map(tips.map((t) => [`${t.workDayId}:${t.employeeId}`, fromDecimal(t.amount, d)!]));
@@ -43,7 +44,6 @@ export async function getPayroll(period: Period) {
 
   return {
     summary: summarizePayroll(entries),
-    // Días del periodo que ya pasaron y aún no están cerrados.
-    unclosedDays: Math.max(0, elapsedDays(period, today()) - closedDays),
+    unclosedDays: await countUnclosedDays(period, new Set(closedDays.map((w) => dateToISO(w.date)))),
   };
 }

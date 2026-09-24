@@ -9,6 +9,7 @@ import { getDayView } from "@/lib/workdays";
 import { AttendanceList } from "./attendance-list";
 import { ClosedSummary } from "./closed-summary";
 import { DateNav } from "./date-nav";
+import { ScheduleBar } from "./schedule-bar";
 
 export const metadata: Metadata = { title: "Asistencia · Gestión Simba" };
 
@@ -36,6 +37,8 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
         </p>
       </div>
 
+      <ScheduleBar date={date} mode={view.mode} schedule={view.schedule} />
+
       {view.mode === "future" && (
         <div className="flex items-start gap-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
           <CalendarClockIcon className="mt-0.5 size-4 shrink-0" />
@@ -53,7 +56,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
         />
       )}
 
-      {view.rows.length === 0 ? (
+      {view.mode === "dayoff" ? null : view.rows.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           No hay empleados activos para esta fecha.{" "}
           <Link href="/empleados/nuevo" className="text-foreground underline underline-offset-4">

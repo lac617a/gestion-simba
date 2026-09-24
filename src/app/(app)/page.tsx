@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRightIcon, CircleCheckIcon, LockIcon } from "lucide-react";
+import { ArrowRightIcon, CalendarHeartIcon, CircleCheckIcon, DoorClosedIcon, LockIcon } from "lucide-react";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
 import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { CURRENCY, PAY_WEEK_START, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
-import { formatDateRange, formatLongDate } from "@/lib/dates";
+import { addDays, formatDateRange, formatDayShort, formatLongDate } from "@/lib/dates";
+import { nextHoliday } from "@/lib/holidays";
 import { formatMoney } from "@/lib/money";
 import { getPayroll } from "@/lib/payroll-data";
 import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
+import { scheduleLabel } from "@/lib/schedule";
+import { getSchedule } from "@/lib/schedule-data";
 import { cn } from "@/lib/utils";
 import { getDayView, type DayRow } from "@/lib/workdays";
 
@@ -22,7 +25,13 @@ export default async function TodayPage() {
   await verifySession();
   const date = today();
   const week = weekRange(date, PAY_WEEK_START);
-  const [view, payroll, reports] = await Promise.all([getDayView(date), getPayroll(week), getReports(week)]);
+  const holiday = nextHoliday(addDays(date, 1));
+  const [view, payroll, reports, holidaySchedule] = await Promise.all([
+    getDayView(date),
+    getPayroll(week),
+    getReports(week),
+    getSchedule(holiday.date),
+  ]);
   const money = (v: number | null) => formatMoney(v ?? 0, CURRENCY);
 
   const by = (...statuses: AttendanceStatus[]) => view.rows.filter((r) => statuses.includes(r.status));
@@ -36,7 +45,10 @@ export default async function TodayPage() {
     <div className="grid gap-6">
       <div>
         <h1 className="text-2xl font-semibold">Hoy</h1>
-        <p className="text-sm text-muted-foreground first-letter:uppercase">{formatLongDate(date)}</p>
+        <p className="text-sm text-muted-foreground first-letter:uppercase">
+          {formatLongDate(date)}
+          {view.schedule.holiday && ` · Festivo: ${view.schedule.holiday}`}
+        </p>
       </div>
 
       {/* Estado del día */}
@@ -46,7 +58,15 @@ export default async function TodayPage() {
           !closed && pending.length > 0 && "border-amber-300 bg-amber-50/60"
         )}
       >
-        {view.rows.length === 0 ? (
+        {view.mode === "dayoff" ? (
+          <>
+            <p className="flex items-center gap-2 font-medium">
+              <DoorClosedIcon className="size-4" /> Hoy el restaurante está cerrado
+            </p>
+            <p className="text-sm text-muted-foreground">{scheduleLabel(view.schedule)}</p>
+            <GoTo href="/asistencia">Abrir hoy igual</GoTo>
+          </>
+        ) : view.rows.length === 0 ? (
           <>
             <p className="font-medium">Todavía no hay empleados registrados.</p>
             <Button className="justify-self-start" render={<Link href="/empleados/nuevo" />} nativeButton={false}>
@@ -94,6 +114,17 @@ export default async function TodayPage() {
           {absent.length > 0 && <PeopleGroup title="Faltaron" rows={absent} />}
         </section>
       )}
+
+      {/* Próximo festivo */}
+      <p className="flex items-start gap-2 text-sm text-muted-foreground">
+        <CalendarHeartIcon className="mt-0.5 size-4 shrink-0" />
+        <span>
+          Próximo festivo: <span className="font-medium text-foreground first-letter:uppercase">{formatDayShort(holiday.date)}</span> ·{" "}
+          {holiday.name}
+          {holidaySchedule.reason === "holiday-open" &&
+            ` — el restaurante abre y cierra el ${formatDayShort(addDays(holiday.date, 1))}`}
+        </span>
+      </p>
 
       {/* La semana */}
       <section className="grid gap-3">

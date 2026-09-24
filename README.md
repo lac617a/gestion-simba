@@ -31,6 +31,7 @@ Abre http://localhost:3000 y entra con el admin.
 | `APP_TIMEZONE` | Zona del restaurante (define qué día es "hoy"). Por defecto `America/Bogota` |
 | `DAY_CUTOFF_HOUR` | Hora en que termina el día de trabajo (0 = medianoche) |
 | `APP_CURRENCY` | Moneda (`COP` = pesos enteros; `USD`/`PEN` con centavos) |
+| `CLOSED_WEEKDAYS` | Días en que el restaurante cierra (por defecto `1` = lunes; si es festivo abre y cierra al día siguiente). Vacío = nunca cierra por regla |
 | `PAY_WEEK_START` | Día en que empieza la semana de pago (0 = domingo … 6 = sábado; 1 = lunes) |
 | `DATABASE_POOL_MAX` | Pon `1` con la BD local de `prisma dev`, que no soporta conexiones en paralelo. Vacío en producción |
 
@@ -62,6 +63,8 @@ src/lib/money.ts            montos en unidades enteras, parseo y formato (COP)
 src/lib/closing.ts          reglas de cierre, reparto de propinas y pago del día
 src/lib/payroll.ts          resumen de pagos por empleado
 src/lib/periods.ts          semana / quincena / mes y navegación entre periodos
+src/lib/holidays.ts         festivos de Colombia (Ley 51 de 1983 + Pascua)
+src/lib/schedule.ts         regla de días de cierre (lunes; martes tras lunes festivo) y excepciones
 src/lib/reports.ts          reportes de ventas, propinas y asistencia
 src/lib/csv.ts              armado de CSV para Excel en español
 src/components/             selector de periodo y piezas compartidas de reportes

@@ -53,7 +53,9 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
   if (Object.keys(errors).length) return fail({ errors });
 
   // Asegura que empleados agregados después de abrir el día tengan su fila.
-  const { id: workDayId } = await openWorkDay(date);
+  const opened = await openWorkDay(date);
+  if (!opened) return fail({ message: "El restaurante no abre este día. Ábrelo como excepción para registrarlo." });
+  const workDayId = opened.id;
 
   const result = await db.$transaction(async (tx) => {
     const rows = await loadDayRows(tx, workDayId);

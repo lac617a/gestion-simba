@@ -1,9 +1,10 @@
 import "server-only";
-import { CURRENCY, today } from "@/lib/config";
+import { CURRENCY } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 import { fromDecimal } from "@/lib/money";
-import { elapsedDays, type Period } from "@/lib/periods";
+import type { Period } from "@/lib/periods";
+import { countUnclosedDays } from "@/lib/schedule-data";
 import { summarizeAttendance, summarizeSales, summarizeTips } from "@/lib/reports";
 
 /**
@@ -53,6 +54,6 @@ export async function getReports(period: Period) {
     attendance: summarizeAttendance(
       attendances.map((a) => ({ employeeId: a.employee.id, name: a.employee.name, status: a.status }))
     ),
-    unclosedDays: Math.max(0, elapsedDays(period, today()) - closedDays.length),
+    unclosedDays: await countUnclosedDays(period, new Set(closedDays.map((w) => dateToISO(w.date)))),
   };
 }
