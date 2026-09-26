@@ -39,16 +39,26 @@ export function MenuSectionList() {
         </div>
       </nav>
 
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 sm:gap-16">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-12 sm:gap-16">
         {MENU.map((s) => (s.groups ? <GroupedSection key={s.id} section={s} /> : <Section key={s.id} section={s} />))}
 
-        <a
-          href="/menu-simba.pdf"
-          download
-          className="inline-flex items-center gap-2 justify-self-start rounded-full border border-simba-rust px-5 py-2.5 text-sm font-semibold text-simba-rust transition-colors hover:bg-simba-rust hover:text-simba-cream"
-        >
-          <DownloadIcon className="size-4" /> Descargar la carta en PDF
-        </a>
+        {/* Como en la carta impresa: los personajes cierran el menú, "parados" sobre la sección siguiente */}
+        <div className="flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between">
+          <a
+            href="/menu-simba.pdf"
+            download
+            className="inline-flex items-center gap-2 self-start rounded-full border border-simba-rust px-5 py-2.5 text-sm font-semibold text-simba-rust transition-colors hover:bg-simba-rust hover:text-simba-cream sm:mb-12"
+          >
+            <DownloadIcon className="size-4" /> Descargar la carta en PDF
+          </a>
+          <Image
+            src="/landing/personajes.webp"
+            alt=""
+            width={1314}
+            height={456}
+            className="block h-auto w-full max-w-md self-end sm:max-w-lg"
+          />
+        </div>
       </div>
     </section>
   );

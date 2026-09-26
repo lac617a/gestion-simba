@@ -62,7 +62,7 @@ npm test                                    # pruebas unitarias
 
 - Administración movida a `src/app/gestion/(app)` (URLs `/gestion/...`), login `/gestion/login`, `/gestion/salir`; redirecciones de las URLs viejas en `next.config.ts`; el proxy solo mira `/gestion`; manifiesto en `/gestion/manifest.webmanifest` (start_url `/gestion`), `/gestion` con `noindex`.
 - Página pública `src/app/page.tsx` + `src/app/_landing/` (menú, formulario de reserva). ISR `revalidate = 600`; Configuración y excepciones de apertura la revalidan.
-- Menú en `src/lib/menu.ts` (transcrito del PDF; **para cambiar precios se edita ese archivo**). PDF original en `public/menu-simba.pdf`. Fotos sacadas del PDF en `public/landing/` (portada, parrilla, perro, bebidas, imagen para redes).
+- Menú en `src/lib/menu.ts` (transcrito del PDF; **para cambiar precios se edita ese archivo**). PDF original en `public/menu-simba.pdf`. Fotos sacadas del PDF en `public/landing/` (portada, parrilla, perro, bebidas, imagen para redes). Siluetas de los personajes (`personajes.webp`) recortadas de una captura de la carta que envió el usuario; cierran el menú antes de Reservar.
 - Reservas web: `reservationRequestMessage` en `src/lib/public-site.ts`; se abre `wa.me/<WhatsApp del restaurante>`; no se guarda nada.
 - `AppSettings.whatsapp` (Configuración). Migración `whatsapp_restaurante`.
 - Colores y letras de la carta como tokens de Tailwind (`simba-cream`, `simba-rust`, `simba-forest`, `font-display` = Alfa Slab One, `font-price` = Bree Serif).
