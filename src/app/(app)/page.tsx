@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRightIcon,
+  CalendarDaysIcon,
   CalendarHeartIcon,
   CircleCheckIcon,
   ClockIcon,
   DoorClosedIcon,
   LockIcon,
+  PlusIcon,
   WalletIcon,
 } from "lucide-react";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
@@ -24,11 +26,13 @@ import { payDue, type PayDue } from "@/lib/payday";
 import { getPayroll } from "@/lib/payroll-data";
 import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
+import { getReservationsOn } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
 import { getSchedule } from "@/lib/schedule-data";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { getDayView, type DayRow } from "@/lib/workdays";
+import { ReservationList } from "./reservas/reservation-list";
 
 export const metadata: Metadata = { title: "Hoy · Gestión Simba" };
 
@@ -40,12 +44,13 @@ export default async function TodayPage() {
   const week = weekRange(date, settings.payWeekStart);
   const due = payDue(date, settings.payWeekStart, settings.payDay);
   const holiday = nextHoliday(addDays(date, 1));
-  const [view, payroll, duePayroll, reports, holidaySchedule] = await Promise.all([
+  const [view, payroll, duePayroll, reports, holidaySchedule, reservations] = await Promise.all([
     getDayView(date),
     getPayroll(week),
     getPayroll(due.week),
     getReports(week),
     getSchedule(holiday.date),
+    getReservationsOn(date),
   ]);
   const hours = hoursFor(view.schedule, settings.openingHours);
   const money = (v: number | null) => formatMoney(v ?? 0, CURRENCY);
@@ -133,6 +138,32 @@ export default async function TodayPage() {
             </Button>
           </>
         )}
+      </section>
+
+      {/* Reservas de hoy */}
+      <section className="grid gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <CalendarDaysIcon className="size-4" /> Reservas de hoy
+          </h2>
+          {reservations && (
+            <span className="text-sm text-muted-foreground">
+              {reservations.totals.count} {reservations.totals.count === 1 ? "reserva" : "reservas"} ·{" "}
+              {reservations.totals.people} {reservations.totals.people === 1 ? "persona" : "personas"}
+            </span>
+          )}
+        </div>
+        {reservations ? (
+          <ReservationList reservations={reservations.reservations} today={date} />
+        ) : (
+          <p className="text-sm text-muted-foreground">No hay reservas para hoy.</p>
+        )}
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <GoTo href="/reservas">Ver todas</GoTo>
+          <Link href="/reservas/nueva" className="inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline">
+            <PlusIcon className="size-3.5" /> Nueva reserva
+          </Link>
+        </div>
       </section>
 
       {/* Quién está hoy */}

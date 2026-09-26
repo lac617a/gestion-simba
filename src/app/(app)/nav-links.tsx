@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartColumnIcon, ClipboardCheckIcon, HouseIcon, UsersIcon, WalletIcon } from "lucide-react";
+import { CalendarDaysIcon, ChartColumnIcon, ClipboardCheckIcon, HouseIcon, UsersIcon, WalletIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/", label: "Hoy", icon: HouseIcon },
   { href: "/asistencia", label: "Asistencia", icon: ClipboardCheckIcon },
+  { href: "/reservas", label: "Reservas", icon: CalendarDaysIcon },
   { href: "/pagos", label: "Pagos", icon: WalletIcon },
   { href: "/reportes", label: "Reportes", icon: ChartColumnIcon },
   { href: "/empleados", label: "Empleados", icon: UsersIcon },
@@ -45,7 +46,7 @@ export function BottomNav() {
   const isActive = useIsActive();
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-6 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
       aria-label="Navegación principal"
     >
       {LINKS.map(({ href, label, icon: Icon }) => {
@@ -56,7 +57,7 @@ export function BottomNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[11px] text-muted-foreground",
+              "flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] text-muted-foreground",
               active && "text-foreground"
             )}
           >

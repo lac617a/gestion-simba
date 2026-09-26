@@ -19,7 +19,8 @@ _Última actualización: 2026-09-26_
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
-| F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | ver `git log` |
+| F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | `895142e` |
+| F10 · Reservas | ✅ sin publicar (tiene migración) | ver `git log` |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -41,8 +42,17 @@ npm test                                    # pruebas unitarias
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 - [x] ~~Publicar F8~~ — publicado el 2026-09-24.
-- [ ] **Publicar F9:** primero `npx prisma migrate deploy` en Neon (migración `horario_y_dia_de_pago`), después `git push`. Luego llenar el horario en Configuración.
+- [ ] **Publicar F9 y F10:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago` y `reservas`), después `git push`. Luego llenar el horario en Configuración.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
+
+---
+
+## F10 · Reservas ✅
+
+- Tabla `Reservation` (fecha `@db.Date` + hora `"HH:MM"`, personas, a nombre de, teléfono, ocasión, persona de la ocasión, observación, estado `CONFIRMED/ARRIVED/NO_SHOW/CANCELLED`). Migración `reservas`.
+- Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
+- Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
+- Ideas que quedaron fuera: mensaje de WhatsApp para confirmar, límite de cupo por hora, reporte de reservas.
 
 ---
 
@@ -146,7 +156,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (106).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (115).
 
 ## Notas técnicas conocidas
 

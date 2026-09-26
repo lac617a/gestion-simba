@@ -15,6 +15,7 @@ export function FlashToast({ message }: { message: string }) {
     const params = new URLSearchParams(searchParams);
     params.delete("creado");
     params.delete("actualizado");
+    params.delete("eliminado");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [message, pathname, router, searchParams]);

@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { verifySession } from "@/lib/dal";
 import { formatRestDays } from "@/lib/employees";
 import { cn } from "@/lib/utils";
-import { FlashToast } from "./flash-toast";
+import { FlashToast } from "@/components/flash-toast";
 
 export const metadata: Metadata = { title: "Empleados · Gestión Simba" };
 

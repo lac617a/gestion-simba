@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9 lista para publicar
+- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9 y F10 listas para publicar
 
 ---
 
@@ -159,6 +159,13 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
   - Si esa semana tiene días sin cerrar, avisa que el total puede cambiar.
   - Entregar el dinero es responsabilidad de los dueños; el sistema calcula, recuerda y registra.
 
+### RF-14 · Reservas
+- Pantalla **Reservas** en el menú. Cada reserva tiene: **fecha y hora**, **cantidad de personas**, **a nombre de** (quien reserva), **teléfono** (opcional), **ocasión** (opcional: Cumpleaños, Aniversario, Grado, Despedida, Reunión de trabajo, Pedida de mano u "Otra" con texto libre), **persona de la ocasión** (ej. el cumpleañero; solo si hay ocasión) y **observación**.
+- Lista **Próximas** (desde hoy) y **Anteriores**, agrupadas por día con total de reservas y personas; búsqueda por nombre (quien reserva o persona de la ocasión).
+- Estados: **Confirmada** (al crearla), **Llegó**, **No vino** (se marcan desde el día de la reserva) y **Cancelada** (desde Editar; queda en el historial y no cuenta en los totales). Todos se pueden deshacer. **Eliminar** borra la reserva (para las registradas por error).
+- Avisos que no impiden guardar: el restaurante está cerrado ese día (encabezado del día) o la hora queda fuera del horario de atención (RF-13).
+- **Hoy** muestra las reservas del día con acceso a Nueva reserva.
+
 ## 5. Reglas de negocio
 
 1. Solo los empleados con estado **Trabajó** reciben propina y pago diario ese día.
@@ -302,6 +309,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 | F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |
+| F10 ✅ | Reservas (RF-14). |
 
 ## 11. Preguntas abiertas
 

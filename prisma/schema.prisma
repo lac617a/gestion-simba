@@ -159,3 +159,32 @@ model TimeOff {
 
   @@index([employeeId, startDate, endDate])
 }
+
+enum ReservationStatus {
+  CONFIRMED
+  ARRIVED
+  NO_SHOW
+  CANCELLED
+}
+
+/// Reservas de mesa (RF-14).
+model Reservation {
+  id           String            @id @default(cuid())
+  date         DateTime          @db.Date
+  /// Hora local "HH:MM"
+  time         String
+  partySize    Int
+  /// A nombre de quién está la reserva
+  customerName String
+  phone        String?
+  /// Cumpleaños, aniversario… (texto libre)
+  occasion     String?
+  /// Persona de la ocasión (ej. el cumpleañero)
+  honoree      String?
+  note         String?
+  status       ReservationStatus @default(CONFIRMED)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([date])
+}
