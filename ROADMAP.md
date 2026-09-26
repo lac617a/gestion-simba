@@ -23,6 +23,7 @@ _Última actualización: 2026-09-26_
 | F10 · Reservas | ✅ sin publicar (tiene migración) | `72b21f4` |
 | F11 · WhatsApp de confirmación + reporte de reservas | ✅ sin publicar | `5dc60b9` |
 | F12 · Administración en `/gestion` + página pública | ✅ sin publicar (tiene migración) | `951ab6c` + commit «F12: página pública…» |
+| F13 · Reseñas en la página pública | ✅ sin publicar (tiene migración) | commit «F13: reseñas…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -44,7 +45,7 @@ npm test                                    # pruebas unitarias
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 - [x] ~~Publicar F8~~ — publicado el 2026-09-24.
-- [ ] **Publicar F9–F12:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago`, `reservas` y `whatsapp_restaurante`), después `git push`. Luego llenar el horario en Configuración (se ve en la página pública).
+- [ ] **Publicar F9–F12:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago`, `reservas`, `whatsapp_restaurante` y `resenas`), después `git push`. Luego llenar el horario en Configuración (se ve en la página pública).
 - [ ] Conectar el dominio `simba.profiya.com` en Vercel (ver [DEPLOY.md](DEPLOY.md) §8).
 - [ ] Revisar precios del menú en la página: en el PDF Buchanan's dice "270.00" (se puso 270.000) y los granizados/jugos se tomaron todos a 10.000.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
@@ -57,6 +58,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F13 · Reseñas en la página pública ✅
+
+- Tabla `Review` (autor, estrellas, texto, fecha aproximada, visible, posición) y `AppSettings.googleRating` / `googleReviewCount`. La migración `resenas` **inserta las 8 reseñas iniciales** (así aparecen en producción sin cargar nada).
+- Administración: `/gestion/resenas` (lista con subir/bajar, ocultar, editar; nueva; eliminar) y la calificación general. Acceso desde Configuración → Página pública.
+- Página: `src/app/_landing/reviews-section.tsx` (carrusel en celular, cuadrícula en pantallas grandes). Enlaces a Google sin API: `#lrd=<id de la ficha>,1` (ver reseñas) y `,3` (escribir una).
+- Decisión: nada de API de Google (el usuario no quiere manejar Google Cloud). Las reseñas son de sus autores: se muestran abreviadas y con enlace a Google.
+
+---
 
 ## F12 · Página pública y administración en /gestion ✅
 
@@ -178,7 +188,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (132).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (146).
 
 ## Notas técnicas conocidas
 

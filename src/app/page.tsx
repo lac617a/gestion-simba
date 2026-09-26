@@ -14,12 +14,14 @@ import {
   weeklyHours,
 } from "@/lib/public-site";
 import { whatsappHref, whatsappNumber } from "@/lib/reservations";
+import { getReviews } from "@/lib/reviews-data";
 import { getSchedule } from "@/lib/schedule-data";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { alfaSlab, bree } from "./_landing/fonts";
 import { MenuSectionList } from "./_landing/menu-section";
 import { ReserveForm } from "./_landing/reserve-form";
+import { ReviewsSection } from "./_landing/reviews-section";
 
 // Página estática que se regenera cada 10 minutos (el "hoy abrimos…" cambia a medianoche)
 // y al guardar Configuración o una excepción de apertura.
@@ -43,9 +45,12 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const settings = await getSettings();
   const date = today();
-  const schedule = await getSchedule(date);
+  const [settings, schedule, reviews] = await Promise.all([
+    getSettings(),
+    getSchedule(date),
+    getReviews({ onlyVisible: true }),
+  ]);
   const todayHours = hoursFor(schedule, settings.openingHours);
   const wa = whatsappNumber(settings.whatsapp, PHONE_COUNTRY_CODE);
   const orderHref = wa ? whatsappHref(wa, orderMessage(SITE.name)) : null;
@@ -72,6 +77,9 @@ export default async function HomePage() {
           </a>
           <nav className="ml-auto hidden items-center gap-6 text-sm font-medium sm:flex" aria-label="Secciones">
             <a href="#menu" className="hover:text-simba-gold">Menú</a>
+            {reviews.length > 0 && (
+              <a href="#resenas" className="hover:text-simba-gold">Reseñas</a>
+            )}
             <a href="#reservar" className="hover:text-simba-gold">Reservar</a>
             <a href="#ubicacion" className="hover:text-simba-gold">Ubicación</a>
           </nav>
@@ -140,6 +148,14 @@ export default async function HomePage() {
 
       {/* ---------- Menú ---------- */}
       <MenuSectionList />
+
+      {/* ---------- Reseñas ---------- */}
+      <ReviewsSection
+        reviews={reviews}
+        rating={settings.googleRating}
+        count={settings.googleReviewCount}
+        today={date}
+      />
 
       {/* ---------- Reservar ---------- */}
       <section id="reservar" className="scroll-mt-14 bg-simba-forest">

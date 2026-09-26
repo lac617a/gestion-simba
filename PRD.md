@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9–F12 listas para publicar
+- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9–F13 listas para publicar
 
 ---
 
@@ -181,6 +181,11 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - El número de WhatsApp se cambia en **Configuración** (por defecto 301 216 8273).
 - SEO: título y descripción, imagen para redes, datos estructurados de restaurante (dirección, horario, reservas), `robots.txt` (sin `/gestion`) y `sitemap.xml`. La página se regenera cada 10 minutos y al guardar Configuración.
 
+### RF-17 · Reseñas en la página pública
+- Sección **"Lo que dicen nuestros clientes"** (antes de Reservar): calificación general y total de opiniones de Google, tarjetas con estrellas, texto, nombre abreviado y fecha relativa ("hace 8 meses"), y botones **"Déjanos tu reseña"** (abre el formulario de Google) y **"Ver todas en Google"**.
+- **Sin API de Google**: las reseñas se copian a mano. En **/gestion/resenas** (desde Configuración → Página pública) se agregan, editan, ocultan, ordenan y eliminan; también se actualiza la calificación y el total.
+- Arranca con 8 reseñas copiadas de Google el 2026-09-26 (4,6 ★ · 243 opiniones).
+
 ## 5. Reglas de negocio
 
 1. Solo los empleados con estado **Trabajó** reciben propina y pago diario ese día.
@@ -327,6 +332,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F10 ✅ | Reservas (RF-14). |
 | F11 ✅ | Confirmación por WhatsApp y reporte de reservas (RF-14, RF-15). |
 | F12 ✅ | Administración en `/gestion` y página pública con menú y reservas por WhatsApp (RF-16). |
+| F13 ✅ | Reseñas en la página pública, administradas en /gestion/resenas (RF-17). |
 
 ## 11. Preguntas abiertas
 

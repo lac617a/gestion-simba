@@ -30,6 +30,9 @@ model AppSettings {
   payDay         Int      @default(1)
   /// WhatsApp del restaurante: a donde la página pública manda reservas y pedidos
   whatsapp       String   @default("3012168273")
+  /// Calificación y total de opiniones en Google, escritos a mano (página pública)
+  googleRating      Float @default(4.6)
+  googleReviewCount Int   @default(243)
   updatedAt      DateTime @updatedAt
 }
 
@@ -189,4 +192,21 @@ model Reservation {
   updatedAt    DateTime          @updatedAt
 
   @@index([date])
+}
+
+/// Reseñas de clientes que se muestran en la página pública (copiadas a mano de Google).
+model Review {
+  id         String   @id @default(cuid())
+  /// Nombre como se muestra (ej. "Laura G.")
+  author     String
+  /// 1 a 5 estrellas
+  rating     Int
+  text       String
+  /// Fecha aproximada de la reseña (para "hace 3 meses")
+  reviewedAt DateTime @db.Date
+  visible    Boolean  @default(true)
+  /// Orden en la página (menor primero)
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

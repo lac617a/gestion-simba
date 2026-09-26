@@ -11,6 +11,9 @@ export type AppSettings = {
   openingHours: string[];
   /** WhatsApp del restaurante (página pública) */
   whatsapp: string;
+  /** Calificación y total de opiniones en Google (página pública, se escriben a mano) */
+  googleRating: number;
+  googleReviewCount: number;
 };
 
 /** Ajustes del restaurante (Configuración). Sin fila guardada, los del .env. Una consulta por petición. */
@@ -23,6 +26,8 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         closedWeekdays: row.closedWeekdays,
         openingHours: row.openingHours,
         whatsapp: row.whatsapp,
+        googleRating: row.googleRating,
+        googleReviewCount: row.googleReviewCount,
       }
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
@@ -30,5 +35,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         closedWeekdays: DEFAULT_CLOSED_WEEKDAYS,
         openingHours: [],
         whatsapp: DEFAULT_WHATSAPP,
+        googleRating: 4.6,
+        googleReviewCount: 243,
       };
 });
