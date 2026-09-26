@@ -19,11 +19,11 @@ _Última actualización: 2026-09-26_
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
-| F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | `895142e` |
-| F10 · Reservas | ✅ sin publicar (tiene migración) | `72b21f4` |
-| F11 · WhatsApp de confirmación + reporte de reservas | ✅ sin publicar | `5dc60b9` |
-| F12 · Administración en `/gestion` + página pública | ✅ sin publicar (tiene migración) | `951ab6c` + commit «F12: página pública…» |
-| F13 · Reseñas en la página pública | ✅ sin publicar (tiene migración) | commit «F13: reseñas…» |
+| F9 · Horario de atención + recordatorio del día de pago | ✅ en producción | `895142e` |
+| F10 · Reservas | ✅ en producción | `72b21f4` |
+| F11 · WhatsApp de confirmación + reporte de reservas | ✅ en producción | `5dc60b9` |
+| F12 · Administración en `/gestion` + página pública | ✅ en producción | `951ab6c` + commit «F12: página pública…» |
+| F13 · Reseñas en la página pública | ✅ en producción | commit «F13: reseñas…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -45,7 +45,8 @@ npm test                                    # pruebas unitarias
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 - [x] ~~Publicar F8~~ — publicado el 2026-09-24.
-- [ ] **Publicar F9–F12:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago`, `reservas`, `whatsapp_restaurante` y `resenas`), después `git push`. Luego llenar el horario en Configuración (se ve en la página pública).
+- [x] ~~Publicar F9–F13~~ — publicado el 2026-09-26.
+- [ ] Llenar el horario en Configuración (se ve en la página pública).
 - [ ] Conectar el dominio `simba.profiya.com` en Vercel (ver [DEPLOY.md](DEPLOY.md) §8).
 - [ ] Revisar precios del menú en la página: en el PDF Buchanan's dice "270.00" (se puso 270.000) y los granizados/jugos se tomaron todos a 10.000.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
@@ -180,11 +181,16 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 ## Backlog / ideas
 
 **Funciones**
+- Editar el menú (platos y precios) desde la administración; hoy está en `src/lib/menu.ts`.
+- Reservas: límite de personas por hora / aviso de cupo lleno.
+- Botón "Descargar respaldo" en Configuración (exportar todos los datos).
 - Logo en mayor resolución o vector para que el ícono de 512 px quede nítido (falta el archivo).
+- Más fotos para la página y siluetas de los personajes en archivo original (faltan los archivos).
 
 **Decisiones del usuario (sin código)**
-- Plan de Vercel: Hobby es para uso no comercial; evaluar Pro.
+- Plan de Vercel: Hobby es para uso no comercial; con la página pública del restaurante, pasar a Pro.
 - Respaldos: el plan gratis de Neon guarda poco historial; ¿exportación periódica?
+- Siluetas de El Rey León en la página pública (personajes de Disney): decisión de los dueños.
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**

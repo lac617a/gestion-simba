@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9–F13 listas para publicar
+- **Estado:** F1–F13 completadas y en producción (Vercel + Neon)
 
 ---
 
