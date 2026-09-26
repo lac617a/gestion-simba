@@ -66,22 +66,61 @@ describe("parseAccountForm", () => {
   });
 });
 
+const NO_HOURS = ["", "", "", "", "", "", "", ""];
+
+function settingsForm(fields: { payWeekStart?: string; payDay?: string; closed?: string[]; hours?: [string, string][] }) {
+  const fd = new FormData();
+  fd.append("payWeekStart", fields.payWeekStart ?? "1");
+  fd.append("payDay", fields.payDay ?? "1");
+  for (const d of fields.closed ?? []) fd.append("closedWeekdays", d);
+  (fields.hours ?? []).forEach(([open, close], i) => {
+    fd.append(`open${i}`, open);
+    fd.append(`close${i}`, close);
+  });
+  return fd;
+}
+
 describe("parseSettingsForm", () => {
   it("normaliza días de cierre y valida", () => {
-    const fd = new FormData();
-    fd.append("payWeekStart", "1");
-    for (const d of ["2", "1", "2"]) fd.append("closedWeekdays", d);
-    expect(parseSettingsForm(fd).data).toEqual({ payWeekStart: 1, closedWeekdays: [1, 2] });
-
-    const all = new FormData();
-    all.append("payWeekStart", "7");
-    for (const d of ["0", "1", "2", "3", "4", "5", "6"]) all.append("closedWeekdays", d);
+    expect(parseSettingsForm(settingsForm({ closed: ["2", "1", "2"] })).data).toEqual({
+      payWeekStart: 1,
+      payDay: 1,
+      closedWeekdays: [1, 2],
+      openingHours: NO_HOURS,
+    });
+    const all = settingsForm({ payWeekStart: "7", closed: ["0", "1", "2", "3", "4", "5", "6"] });
     expect(parseSettingsForm(all).success).toBe(false);
   });
 
   it("sin días de cierre también es válido", () => {
-    const fd = new FormData();
-    fd.append("payWeekStart", "0");
-    expect(parseSettingsForm(fd).data).toEqual({ payWeekStart: 0, closedWeekdays: [] });
+    expect(parseSettingsForm(settingsForm({ payWeekStart: "0", payDay: "0" })).data).toEqual({
+      payWeekStart: 0,
+      payDay: 0,
+      closedWeekdays: [],
+      openingHours: NO_HOURS,
+    });
+  });
+
+  it("día de pago inválido", () => {
+    expect(parseSettingsForm(settingsForm({ payDay: "8" })).success).toBe(false);
+  });
+
+  it("horario: guarda los días llenos, vacío = sin horario", () => {
+    const hours: [string, string][] = [["12:00", "17:00"], ["", ""], ["12:00", "22:00"], ["", ""], ["", ""], ["", ""], ["", ""], ["12:00", "18:00"]];
+    expect(parseSettingsForm(settingsForm({ hours })).data?.openingHours).toEqual([
+      "12:00-17:00", "", "12:00-22:00", "", "", "", "", "12:00-18:00",
+    ]);
+  });
+
+  it("horario: falta una hora o cierra antes de abrir", () => {
+    const row = (i: number, open: string, close: string) =>
+      Array.from({ length: 8 }, (_, j): [string, string] => (j === i ? [open, close] : ["", ""]));
+    const error = (hours: [string, string][]) => parseSettingsForm(settingsForm({ hours })).error?.issues[0].message;
+
+    expect(error(row(2, "12:00", ""))).toBe("Martes: falta la hora de cierre.");
+    expect(error(row(7, "", "18:00"))).toBe("Festivos: falta la hora de apertura.");
+    expect(error(row(6, "22:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
+    expect(error(row(6, "12:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
+    expect(error(row(6, "12:00", "25:00"))).toBe("Hora inválida");
   });
 });

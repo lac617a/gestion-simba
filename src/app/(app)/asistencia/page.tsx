@@ -5,6 +5,8 @@ import { closeDay, reopenDay } from "@/app/actions/closing";
 import { APP_TIMEZONE, CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { formatLongDate, isISODate } from "@/lib/dates";
+import { formatHours, hoursFor } from "@/lib/hours";
+import { getSettings } from "@/lib/settings";
 import { getDayView } from "@/lib/workdays";
 import { AttendanceList } from "./attendance-list";
 import { ClosedSummary } from "./closed-summary";
@@ -24,7 +26,8 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
   const { fecha } = await searchParams;
   const todayIso = today();
   const date = isISODate(fecha) ? fecha : todayIso;
-  const view = await getDayView(date);
+  const [view, settings] = await Promise.all([getDayView(date), getSettings()]);
+  const hours = hoursFor(view.schedule, settings.openingHours);
 
   return (
     <div className="grid gap-5">
@@ -37,7 +40,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
         </p>
       </div>
 
-      <ScheduleBar date={date} mode={view.mode} schedule={view.schedule} />
+      <ScheduleBar date={date} mode={view.mode} schedule={view.schedule} hours={hours && formatHours(hours)} />
 
       {view.mode === "future" && (
         <div className="flex items-start gap-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">

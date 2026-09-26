@@ -24,6 +24,10 @@ model AppSettings {
   payWeekStart   Int
   /// Días en que el restaurante cierra; si es festivo abre y cierra al día siguiente
   closedWeekdays Int[]
+  /// Horario de atención, informativo: 8 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado, 7 = festivos); "" = sin horario
+  openingHours   String[] @default([])
+  /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
+  payDay         Int      @default(1)
   updatedAt      DateTime @updatedAt
 }
 

@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-09-24_
+_Última actualización: 2026-09-26_
 
 ## Estado
 
@@ -19,6 +19,7 @@ _Última actualización: 2026-09-24_
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
+| F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | ver `git log` |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -40,7 +41,18 @@ npm test                                    # pruebas unitarias
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 - [x] ~~Publicar F8~~ — publicado el 2026-09-24.
+- [ ] **Publicar F9:** primero `npx prisma migrate deploy` en Neon (migración `horario_y_dia_de_pago`), después `git push`. Luego llenar el horario en Configuración.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
+
+---
+
+## F9 · Horario de atención y día de pago ✅
+
+- `AppSettings.openingHours` (8 textos `"HH:MM-HH:MM"`: domingo…sábado + festivos; `""` = sin horario) y `AppSettings.payDay` (por defecto lunes). Migración `horario_y_dia_de_pago`.
+- Horario **informativo** (siempre cierran antes de medianoche; el día sigue cambiando a las 00:00). Lógica en `src/lib/hours.ts` (`hoursFor`: festivos > día de la semana; nada si el día está cerrado). Se ve en Hoy y en la barra de Asistencia.
+- Configuración: tabla de horario (en celular el día va arriba para que quepa "a. m./p. m."), botón para copiar el primer horario a los días vacíos, validación de cierre > apertura.
+- Día de pago: `src/lib/payday.ts` (`payDue`: semana que toca pagar y estado upcoming/today/late). Hoy muestra la tarjeta con lo pendiente de esa semana y "Ir a pagar" → `/pagos?desde…&hasta…`; desaparece cuando se marca pagado.
+- Decisión: entregar el dinero es de los dueños; el sistema calcula, recuerda y registra.
 
 ---
 
@@ -134,7 +146,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (84).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (106).
 
 ## Notas técnicas conocidas
 

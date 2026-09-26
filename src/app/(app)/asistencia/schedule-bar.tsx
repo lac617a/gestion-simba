@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { CalendarHeartIcon, DoorClosedIcon, DoorOpenIcon, TriangleAlertIcon } from "lucide-react";
+import { CalendarHeartIcon, ClockIcon, DoorClosedIcon, DoorOpenIcon, TriangleAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 import { setDayOverride } from "@/app/actions/schedule";
 import {
@@ -19,10 +19,16 @@ import { Button } from "@/components/ui/button";
 import { scheduleLabel, type DaySchedule } from "@/lib/schedule";
 import type { DayView } from "@/lib/workdays";
 
-type Props = { date: string; mode: DayView["mode"]; schedule: DaySchedule };
+type Props = {
+  date: string;
+  mode: DayView["mode"];
+  schedule: DaySchedule;
+  /** Horario de atención ya formateado ("12:00 p. m. a 10:00 p. m."), si hay */
+  hours?: string | null;
+};
 
 /** Estado del día según la regla de cierre / festivos, con las excepciones manuales. */
-export function ScheduleBar({ date, mode, schedule }: Props) {
+export function ScheduleBar({ date, mode, schedule, hours }: Props) {
   const [pending, startTransition] = useTransition();
   const label = scheduleLabel(schedule);
   const hasAttendance = mode === "open";
@@ -70,10 +76,16 @@ export function ScheduleBar({ date, mode, schedule }: Props) {
   }
 
   const canClose = mode === "open" || mode === "future";
-  if (!label && !canClose) return null;
+  if (!label && !canClose && !hours) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+      {hours && (
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <ClockIcon className="size-4 shrink-0" />
+          Abre de {hours}
+        </span>
+      )}
       {label && (
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <CalendarHeartIcon className="size-4 shrink-0" />

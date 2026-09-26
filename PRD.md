@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F8 completadas y en producción (Vercel + Neon)
+- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9 lista para publicar
 
 ---
 
@@ -134,7 +134,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Pantalla **Configuración** (ícono de engranaje arriba):
   - **Cuenta:** cambiar correo y/o contraseña; siempre pide la contraseña actual. Contraseña nueva: mínimo 10 caracteres, con letras y números, distinta de la actual.
   - **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
-  - **Restaurante:** día de inicio de la semana de pago y días de cierre. Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
+  - **Restaurante:** día de inicio de la semana de pago, día de pago, días de cierre y horario de atención (RF-13). Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
 - **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
 
 ### RF-11 · Pagos realizados
@@ -149,6 +149,15 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 ### RF-12 · Gráfico de ventas
 - En **Reportes → Ventas**, gráfico de columnas de venta por día (por semana si el rango pasa de 62 días), hasta hoy.
 - Los días sin cierre quedan como hueco; se marca el valor del mejor día; al pasar o tocar una barra se ve fecha, venta y propinas. La tabla de abajo sigue siendo el detalle.
+
+### RF-13 · Horario de atención y día de pago
+- **Horario** (Configuración): hora de apertura y de cierre para cada día de la semana y una fila **Festivos**. Es **informativo**: se muestra en Hoy y en Asistencia. El día de trabajo sigue cambiando a medianoche (siempre cierran antes de las 12).
+  - Un día vacío no muestra horario. En festivo se usa la fila Festivos si está llena; si no, la del día. En días de cierre no se muestra; el horario de un día de cierre (ej. lunes) solo se usa si abre por festivo o excepción.
+  - La hora de cierre debe ser posterior a la de apertura.
+- **Día de pago** (Configuración, por defecto lunes): la semana se paga el primer día de pago desde que termina (semana lunes–domingo → se paga el lunes siguiente).
+  - Hoy muestra la tarjeta **"Hoy es día de pago"** con lo que falta pagar de la semana que terminó, cuántos empleados y un botón **Ir a pagar** (abre esa semana en Pagos). Si pasa el día y sigue sin pagar: **"Pago pendiente desde…"**. Desaparece cuando todo queda marcado como pagado.
+  - Si esa semana tiene días sin cerrar, avisa que el total puede cambiar.
+  - Entregar el dinero es responsabilidad de los dueños; el sistema calcula, recuerda y registra.
 
 ## 5. Reglas de negocio
 
@@ -292,6 +301,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F6 ✅ | Días de cierre (lunes) y festivos de Colombia, con excepciones manuales (RF-9). |
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
+| F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |
 
 ## 11. Preguntas abiertas
 

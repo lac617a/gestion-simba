@@ -1,15 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRightIcon, CalendarHeartIcon, CircleCheckIcon, DoorClosedIcon, LockIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CalendarHeartIcon,
+  CircleCheckIcon,
+  ClockIcon,
+  DoorClosedIcon,
+  LockIcon,
+  WalletIcon,
+} from "lucide-react";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
 import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
-import { addDays, formatDateRange, formatDayShort, formatLongDate } from "@/lib/dates";
+import { addDays, formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/lib/dates";
+import { WEEKDAYS } from "@/lib/employees";
 import { nextHoliday } from "@/lib/holidays";
+import { formatHours, hoursFor } from "@/lib/hours";
 import { formatMoney } from "@/lib/money";
+import { payDue, type PayDue } from "@/lib/payday";
 import { getPayroll } from "@/lib/payroll-data";
 import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
@@ -25,14 +36,18 @@ export const metadata: Metadata = { title: "Hoy · Gestión Simba" };
 export default async function TodayPage() {
   await verifySession();
   const date = today();
-  const week = weekRange(date, (await getSettings()).payWeekStart);
+  const settings = await getSettings();
+  const week = weekRange(date, settings.payWeekStart);
+  const due = payDue(date, settings.payWeekStart, settings.payDay);
   const holiday = nextHoliday(addDays(date, 1));
-  const [view, payroll, reports, holidaySchedule] = await Promise.all([
+  const [view, payroll, duePayroll, reports, holidaySchedule] = await Promise.all([
     getDayView(date),
     getPayroll(week),
+    getPayroll(due.week),
     getReports(week),
     getSchedule(holiday.date),
   ]);
+  const hours = hoursFor(view.schedule, settings.openingHours);
   const money = (v: number | null) => formatMoney(v ?? 0, CURRENCY);
 
   const by = (...statuses: AttendanceStatus[]) => view.rows.filter((r) => statuses.includes(r.status));
@@ -50,7 +65,21 @@ export default async function TodayPage() {
           {formatLongDate(date)}
           {view.schedule.holiday && ` · Festivo: ${view.schedule.holiday}`}
         </p>
+        {hours && (
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <ClockIcon className="size-3.5" /> Abre de {formatHours(hours)}
+          </p>
+        )}
       </div>
+
+      {duePayroll.summary.totals.pending > 0 && (
+        <PayDueCard
+          due={due}
+          pending={money(duePayroll.summary.totals.pending)}
+          employees={duePayroll.summary.employees.filter((e) => e.pending > 0).length}
+          unclosedDays={duePayroll.unclosedDays}
+        />
+      )}
 
       {/* Estado del día */}
       <section
@@ -152,6 +181,60 @@ export default async function TodayPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Recordatorio del día de pago: la semana que terminó y lo que falta pagarle. */
+function PayDueCard({
+  due,
+  pending,
+  employees,
+  unclosedDays,
+}: {
+  due: PayDue;
+  pending: string;
+  employees: number;
+  unclosedDays: number;
+}) {
+  const title =
+    due.status === "today"
+      ? "Hoy es día de pago"
+      : due.status === "late"
+        ? `Pago pendiente desde el ${formatDayShort(due.payDate)}`
+        : `El ${WEEKDAYS[weekdayOf(due.payDate)].toLowerCase()} toca pagar`;
+
+  return (
+    <section
+      className={cn(
+        "grid gap-3 rounded-lg border p-4",
+        due.status === "today" && "border-primary/40 bg-primary/5",
+        due.status === "late" && "border-amber-300 bg-amber-50/60"
+      )}
+    >
+      <div>
+        <p className="flex items-center gap-2 font-medium">
+          <WalletIcon className="size-4" /> {title}
+        </p>
+        <p className="text-sm text-muted-foreground">Semana {formatDateRange(due.week.from, due.week.to)}</p>
+      </div>
+      <dl className="grid grid-cols-2 gap-2">
+        <Stat label="Por pagar (pagos + propinas)" value={pending} strong />
+        <Stat label="Empleados" value={String(employees)} />
+      </dl>
+      {unclosedDays > 0 && (
+        <p className="text-sm text-amber-800">
+          {unclosedDays === 1 ? "Hay 1 día sin cerrar" : `Hay ${unclosedDays} días sin cerrar`} en esa semana: el total
+          puede cambiar al cerrarlo.
+        </p>
+      )}
+      <Button
+        className="justify-self-start"
+        render={<Link href={`/pagos?desde=${due.week.from}&hasta=${due.week.to}`} />}
+        nativeButton={false}
+      >
+        Ir a pagar <ArrowRightIcon />
+      </Button>
+    </section>
   );
 }
 
