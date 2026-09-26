@@ -63,6 +63,18 @@ const shortFormat = new Intl.DateTimeFormat("es-CO", {
   year: "numeric",
 });
 
+const dayMonthFormat = new Intl.DateTimeFormat("es-CO", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+/** "sábado, 3 de octubre" (sin año; para mensajes) */
+export function formatDayMonth(iso: ISODate) {
+  return dayMonthFormat.format(isoToDate(iso));
+}
+
 /** "martes, 23 de septiembre de 2026" */
 export function formatLongDate(iso: ISODate) {
   return longFormat.format(isoToDate(iso));

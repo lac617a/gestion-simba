@@ -11,6 +11,8 @@ import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
 import { ATTENDANCE_COLUMNS, salesSeries } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
+import type { Bucket } from "@/lib/reservation-report";
+import { getReservationReport } from "@/lib/reservations-data";
 
 export const metadata: Metadata = { title: "Reportes · Gestión Simba" };
 
@@ -18,13 +20,17 @@ const SECTIONS = [
   { id: "ventas", label: "Ventas" },
   { id: "propinas", label: "Propinas" },
   { id: "asistencia", label: "Asistencia" },
+  { id: "reservas", label: "Reservas" },
 ] as const;
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reportes">) {
   await verifySession();
   const { desde, hasta } = await searchParams;
   const period = await periodFromParams(desde, hasta);
-  const { sales, tips, attendance, unclosedDays } = await getReports(period);
+  const [{ sales, tips, attendance, unclosedDays }, reservations] = await Promise.all([
+    getReports(period),
+    getReservationReport(period),
+  ]);
 
   const money = (v: number) => formatMoney(v, CURRENCY);
   const csv = (tipo: string) => `/reportes/csv?tipo=${tipo}&desde=${period.from}&hasta=${period.to}`;
@@ -38,7 +44,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
         <h1 className="text-2xl font-semibold">Reportes</h1>
         <PeriodNav basePath="/reportes" period={period} presets={await periodPresets()} />
         <UnclosedWarning days={unclosedDays} what="sus ventas y propinas todavía no cuentan." />
-        <nav className="flex gap-2 text-sm" aria-label="Secciones">
+        <nav className="flex flex-wrap gap-2 text-sm" aria-label="Secciones">
           {SECTIONS.map((s) => (
             <a key={s.id} href={`#${s.id}`} className="rounded-full border px-3 py-1 text-muted-foreground hover:text-foreground">
               {s.label}
@@ -130,7 +136,71 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
           </Table>
         )}
       </Section>
+
+      {/* ---------- Reservas ---------- */}
+      <Section id="reservas" title="Reservas" csv={csv("reservas")}>
+        {reservations.records.length === 0 ? (
+          <Empty>No hay reservas en este periodo.</Empty>
+        ) : (
+          <>
+            <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Stat
+                label="Reservas"
+                value={String(reservations.totals.count)}
+                hint={
+                  reservations.status.cancelled > 0
+                    ? `Sin contar ${reservations.status.cancelled} ${reservations.status.cancelled === 1 ? "cancelada" : "canceladas"}`
+                    : undefined
+                }
+                strong
+              />
+              <Stat
+                label="Personas"
+                value={String(reservations.totals.people)}
+                hint={`${reservations.totals.avgParty.toLocaleString("es-CO")} por reserva`}
+              />
+              <Stat
+                label="Llegaron"
+                value={reservations.status.showRate === null ? "—" : `${reservations.status.showRate} %`}
+                hint={`${reservations.status.arrived} ${reservations.status.arrived === 1 ? "llegó" : "llegaron"} · ${reservations.status.noShow} no ${reservations.status.noShow === 1 ? "vino" : "vinieron"}`}
+              />
+              <Stat label="Por venir" value={String(reservations.status.upcoming)} hint="Confirmadas, de hoy en adelante" />
+            </dl>
+            {reservations.status.unmarked > 0 && (
+              <p className="text-sm text-amber-800">
+                {reservations.status.unmarked === 1
+                  ? "1 reserva de días pasados sigue sin marcar"
+                  : `${reservations.status.unmarked} reservas de días pasados siguen sin marcar`}{" "}
+                (Llegó / No vino).{" "}
+                <Link href="/reservas?ver=anteriores" className="font-medium underline underline-offset-4">
+                  Marcarlas
+                </Link>
+              </p>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <BucketTable title="Día de la semana" rows={reservations.byWeekday} />
+              <BucketTable title="Hora" rows={reservations.byHour} />
+              <BucketTable title="Ocasión" rows={reservations.byOccasion} />
+            </div>
+          </>
+        )}
+      </Section>
     </div>
+  );
+}
+
+/** Reservas y personas agrupadas (por día, hora u ocasión). */
+function BucketTable({ title, rows }: { title: string; rows: Bucket[] }) {
+  return (
+    <Table head={[title, "Reservas", "Personas"]}>
+      {rows.map((r) => (
+        <tr key={r.label}>
+          <td className="sticky left-0 max-w-44 truncate bg-background px-3 py-2">{r.label}</td>
+          <td className="px-3 py-2 text-right">{r.count}</td>
+          <td className="px-3 py-2 text-right">{r.people}</td>
+        </tr>
+      ))}
+    </Table>
   );
 }
 

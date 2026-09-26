@@ -1,8 +1,11 @@
 import "server-only";
 import type { Prisma, Reservation } from "@/generated/prisma/client";
+import { today } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
 import { hoursFor, type OpeningHours } from "@/lib/hours";
+import type { Period } from "@/lib/periods";
+import { summarizeReservations } from "@/lib/reservation-report";
 import { dayTotals, outsideHoursWarning } from "@/lib/reservations";
 import { daySchedule, type DaySchedule } from "@/lib/schedule";
 import { getSettings } from "@/lib/settings";
@@ -84,4 +87,16 @@ export async function getReservationsOn(date: ISODate) {
 export async function getReservation(id: string) {
   const r = await db.reservation.findUnique({ where: { id } });
   return r && { ...r, date: dateToISO(r.date) };
+}
+
+/** Reporte de reservas del periodo (Reportes). */
+export async function getReservationReport(period: Period) {
+  const rows = await db.reservation.findMany({
+    where: { date: { gte: isoToDate(period.from), lte: isoToDate(period.to) } },
+    omit: { id: true, createdAt: true, updatedAt: true },
+  });
+  return summarizeReservations(
+    rows.map((r) => ({ ...r, date: dateToISO(r.date) })),
+    today()
+  );
 }

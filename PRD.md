@@ -4,7 +4,7 @@ Sistema web para gestionar empleados, asistencia diaria, ventas y propinas de un
 
 - **Versión:** 0.1 (borrador)
 - **Fecha:** 2026-09-23
-- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9 y F10 listas para publicar
+- **Estado:** F1–F8 completadas y en producción (Vercel + Neon); F9–F11 listas para publicar
 
 ---
 
@@ -165,6 +165,13 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Estados: **Confirmada** (al crearla), **Llegó**, **No vino** (se marcan desde el día de la reserva) y **Cancelada** (desde Editar; queda en el historial y no cuenta en los totales). Todos se pueden deshacer. **Eliminar** borra la reserva (para las registradas por error).
 - Avisos que no impiden guardar: el restaurante está cerrado ese día (encabezado del día) o la hora queda fuera del horario de atención (RF-13).
 - **Hoy** muestra las reservas del día con acceso a Nueva reserva.
+- **WhatsApp:** en las reservas confirmadas de hoy en adelante con teléfono, botón que abre WhatsApp con el mensaje de confirmación escrito (nombre, fecha, hora, personas y ocasión); el empleado solo lo envía. Números de 10 dígitos llevan el indicativo `PHONE_COUNTRY_CODE` (57).
+
+### RF-15 · Reporte de reservas
+- En **Reportes → Reservas**, para el periodo elegido: reservas y personas (sin canceladas), promedio de personas por reserva, % que llegaron (llegó / (llegó + no vino)), confirmadas por venir y canceladas.
+- Aviso de reservas pasadas sin marcar Llegó / No vino, con enlace para marcarlas.
+- Tablas por día de la semana, por hora y por ocasión (reservas y personas).
+- CSV con todas las reservas del periodo y el resumen.
 
 ## 5. Reglas de negocio
 
@@ -310,6 +317,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 | F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |
 | F10 ✅ | Reservas (RF-14). |
+| F11 ✅ | Confirmación por WhatsApp y reporte de reservas (RF-14, RF-15). |
 
 ## 11. Preguntas abiertas
 

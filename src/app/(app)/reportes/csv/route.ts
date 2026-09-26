@@ -5,15 +5,20 @@ import { verifySession } from "@/lib/dal";
 import { periodFromParams } from "@/lib/period-params";
 import { attendanceCsv, salesCsv, tipsCsv } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
+import { reservationsCsv } from "@/lib/reservation-report";
+import { getReservationReport } from "@/lib/reservations-data";
 
 export async function GET(req: NextRequest) {
   await verifySession();
   const params = req.nextUrl.searchParams;
   const period = await periodFromParams(params.get("desde"), params.get("hasta"));
   const tipo = params.get("tipo");
+  const suffix = `${period.from}_${period.to}.csv`;
+  if (tipo === "reservas") {
+    return csvResponse(reservationsCsv(await getReservationReport(period), period), `reservas_${suffix}`);
+  }
   const r = await getReports(period);
   const d = CURRENCY.decimals;
-  const suffix = `${period.from}_${period.to}.csv`;
 
   switch (tipo) {
     case "ventas":

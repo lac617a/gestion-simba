@@ -1,5 +1,6 @@
 import * as z from "zod";
 import type { ReservationStatus } from "@/generated/prisma/enums";
+import { addDays, formatDayMonth, type ISODate } from "@/lib/dates";
 import { formatHours, formatTime, type OpeningHours } from "@/lib/hours";
 
 /** Ocasiones frecuentes para el selector; "Otra" deja escribir cualquiera. */
@@ -88,6 +89,51 @@ export function occasionLabel(occasion: string | null, honoree: string | null) {
 export function outsideHoursWarning(hours: OpeningHours | null, time: string): string | null {
   if (!hours || (time >= hours.open && time < hours.close)) return null;
   return `${formatTime(time)} está fuera del horario (${formatHours(hours)})`;
+}
+
+/**
+ * Número para wa.me (solo dígitos, con indicativo). "300 123 4567" → "573001234567";
+ * "+1 305 555 0100" se deja igual. Números cortos (fijos viejos) → null.
+ */
+export function whatsappNumber(phone: string | null, countryCode: string): string | null {
+  if (!phone) return null;
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  else if (!phone.trim().startsWith("+")) {
+    if (digits.length === 10) digits = countryCode + digits;
+    else if (!(digits.startsWith(countryCode) && digits.length === countryCode.length + 10)) return null;
+  }
+  return digits.length >= 8 && digits.length <= 15 ? digits : null;
+}
+
+type ConfirmationData = {
+  customerName: string;
+  date: ISODate;
+  time: string;
+  partySize: number;
+  occasion: string | null;
+  honoree: string | null;
+};
+
+/** Mensaje de confirmación de la reserva, listo para enviar por WhatsApp. */
+export function confirmationMessage(r: ConfirmationData, restaurant: string, today: ISODate) {
+  const firstName = r.customerName.trim().split(/\s+/)[0];
+  const when = r.date === today ? "hoy " : r.date === addDays(today, 1) ? "mañana " : "el ";
+  const occasion = occasionLabel(r.occasion, r.honoree);
+  return [
+    `Hola ${firstName}, te escribimos de ${restaurant} para confirmar tu reserva:`,
+    "",
+    `📅 ${when}${formatDayMonth(r.date)}, a las ${formatTime(r.time)}`,
+    `👥 ${r.partySize} ${r.partySize === 1 ? "persona" : "personas"}`,
+    ...(occasion ? [`🎉 ${occasion}`] : []),
+    "",
+    "¡Te esperamos!",
+  ].join("\n");
+}
+
+/** Enlace que abre WhatsApp con el mensaje escrito; el envío lo hace quien lo abre. */
+export function whatsappHref(number: string, message: string) {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
 /** Las canceladas no cuentan en los totales del día. */

@@ -20,7 +20,8 @@ _Última actualización: 2026-09-26_
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
 | F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | `895142e` |
-| F10 · Reservas | ✅ sin publicar (tiene migración) | ver `git log` |
+| F10 · Reservas | ✅ sin publicar (tiene migración) | `72b21f4` |
+| F11 · WhatsApp de confirmación + reporte de reservas | ✅ sin publicar | ver `git log` |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -52,7 +53,13 @@ npm test                                    # pruebas unitarias
 - Tabla `Reservation` (fecha `@db.Date` + hora `"HH:MM"`, personas, a nombre de, teléfono, ocasión, persona de la ocasión, observación, estado `CONFIRMED/ARRIVED/NO_SHOW/CANCELLED`). Migración `reservas`.
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
-- Ideas que quedaron fuera: mensaje de WhatsApp para confirmar, límite de cupo por hora, reporte de reservas.
+- Ideas que quedaron fuera: límite de cupo por hora.
+
+## F11 · WhatsApp de confirmación y reporte de reservas ✅
+
+- Botón **WhatsApp** en reservas confirmadas de hoy en adelante: `wa.me/<número>?text=<mensaje>` (`whatsappNumber`, `confirmationMessage`, `whatsappHref` en `src/lib/reservations.ts`). No envía nada solo: abre WhatsApp con el texto escrito. Indicativo por defecto `PHONE_COUNTRY_CODE=57`.
+- **Reportes → Reservas** (`src/lib/reservation-report.ts`): totales, % de llegada, por venir, canceladas, sin marcar, tablas por día/hora/ocasión y CSV `?tipo=reservas`.
+- `toCsv` antepone `'` a textos que Excel tomaría como fórmula (`=`, `@`, `+x`, `-x`).
 
 ---
 
@@ -156,7 +163,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (115).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (123).
 
 ## Notas técnicas conocidas
 

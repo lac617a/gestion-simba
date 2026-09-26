@@ -1,8 +1,17 @@
 import Link from "next/link";
-import { MessageSquareTextIcon, PartyPopperIcon, PencilIcon, PhoneIcon, TriangleAlertIcon, UsersIcon } from "lucide-react";
+import { MessageCircleIcon, MessageSquareTextIcon, PartyPopperIcon, PencilIcon, PhoneIcon, TriangleAlertIcon, UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BRAND_NAME } from "@/lib/brand";
+import { PHONE_COUNTRY_CODE } from "@/lib/config";
 import { formatTime } from "@/lib/hours";
-import { occasionLabel, RESERVATION_STATUS_CLASS, RESERVATION_STATUS_LABEL } from "@/lib/reservations";
+import {
+  confirmationMessage,
+  occasionLabel,
+  RESERVATION_STATUS_CLASS,
+  RESERVATION_STATUS_LABEL,
+  whatsappHref,
+  whatsappNumber,
+} from "@/lib/reservations";
 import type { ReservationRow } from "@/lib/reservations-data";
 import { cn } from "@/lib/utils";
 import { StatusActions } from "./status-actions";
@@ -12,15 +21,17 @@ export function ReservationList({ reservations, today }: { reservations: Reserva
   return (
     <ul className="divide-y rounded-lg border">
       {reservations.map((r) => (
-        <ReservationItem key={r.id} r={r} canMark={r.date <= today} />
+        <ReservationItem key={r.id} r={r} today={today} />
       ))}
     </ul>
   );
 }
 
-function ReservationItem({ r, canMark }: { r: ReservationRow; canMark: boolean }) {
+function ReservationItem({ r, today }: { r: ReservationRow; today: string }) {
   const cancelled = r.status === "CANCELLED";
   const occasion = occasionLabel(r.occasion, r.honoree);
+  // WhatsApp de confirmación: solo para reservas confirmadas de hoy en adelante.
+  const wa = r.status === "CONFIRMED" && r.date >= today ? whatsappNumber(r.phone, PHONE_COUNTRY_CODE) : null;
 
   return (
     <li className={cn("flex gap-3 px-4 py-3", cancelled && "text-muted-foreground")}>
@@ -59,7 +70,25 @@ function ReservationItem({ r, canMark }: { r: ReservationRow; canMark: boolean }
               <PhoneIcon /> {r.phone}
             </Button>
           )}
-          <StatusActions id={r.id} status={r.status} canMark={canMark} />
+          {wa && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-emerald-700 hover:text-emerald-800"
+              render={
+                <a
+                  href={whatsappHref(wa, confirmationMessage(r, BRAND_NAME, today))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abre WhatsApp con el mensaje de confirmación escrito"
+                />
+              }
+              nativeButton={false}
+            >
+              <MessageCircleIcon /> WhatsApp
+            </Button>
+          )}
+          <StatusActions id={r.id} status={r.status} canMark={r.date <= today} />
           <Button variant="ghost" size="sm" render={<Link href={`/reservas/${r.id}`} />} nativeButton={false}>
             <PencilIcon /> Editar
           </Button>

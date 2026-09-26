@@ -1,7 +1,8 @@
 /** CSV para Excel en español: separador ";" y BOM para que respete las tildes. */
 export function toCsv(lines: (string | number)[][]) {
   const esc = (v: string | number) => {
-    const s = String(v);
+    // Texto que Excel tomaría como fórmula (ej. "=…" escrito en una observación) va con ' delante.
+    const s = typeof v === "string" && /^[=@\t\r]|^[+-][^\d\s]/.test(v) ? `'${v}` : String(v);
     return /[";\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return "﻿" + lines.map((l) => l.map(esc).join(";")).join("\r\n") + "\r\n";

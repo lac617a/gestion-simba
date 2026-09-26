@@ -1,3 +1,6 @@
+/** Nombre del restaurante (mensajes a clientes). */
+export const BRAND_NAME = "Simba";
+
 /** Colores del logo de Simba (sacados de la imagen original). */
 export const BRAND_GREEN = "#022813";
 export const BRAND_GOLD = "#bfa889";
