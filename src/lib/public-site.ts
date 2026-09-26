@@ -2,15 +2,22 @@ import { formatDayMonth, type ISODate } from "@/lib/dates";
 import { formatHours, HOLIDAY_ROW, parseHours } from "@/lib/hours";
 import { occasionLabel } from "@/lib/reservations";
 
+/** Dirección pública del sitio (enlaces absolutos: redes, Google, sitemap). */
+export const SITE_URL = (process.env.SITE_URL || "https://simba.profiya.com").replace(/\/$/, "");
+
 /** Datos del restaurante para la página pública. */
 export const SITE = {
   name: "Simba",
+  /** Otros nombres con que lo buscan (ficha de Google, Instagram) */
+  alternateNames: ["Simba Parrilla", "SIMBA - Restaurante y Comidas Rápidas"],
   tagline: "Un reino de sabores, carnes a la parrilla y hamburguesas dignas de un rey",
   specialties: ["Parrilla", "Hamburguesas", "Carne a la llanera"],
   address: "Vía Guatiguará",
   city: "Piedecuesta, Santander",
   instagram: "https://www.instagram.com/simba_parrilla/",
   instagramHandle: "@simba_parrilla",
+  /** Ficha en Google Maps (por su CID) */
+  googleMaps: "https://www.google.com/maps?cid=15014617146106181898",
   /** Ubicación del restaurante (Google Maps) */
   geo: { lat: 7.0012835, lng: -73.0581301 },
 };
@@ -18,7 +25,7 @@ export const SITE = {
 export const MAPS_DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${SITE.geo.lat},${SITE.geo.lng}`;
 export const MAPS_EMBED_URL = `https://maps.google.com/maps?q=${SITE.geo.lat},${SITE.geo.lng}&z=16&output=embed`;
 
-/** Miles con punto siempre ("3.000", "26.000"): Intl en español no agrupa números de 4 cifras. */
+/** Miles con punto siempre ("3.000", "26.000"), sin depender de los datos regionales del servidor. */
 export function formatPesos(pesos: number) {
   return String(Math.round(pesos)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { BRAND_GREEN } from "@/lib/brand";
+import { SITE_URL } from "@/lib/public-site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   // Dominio público (enlaces absolutos para redes sociales y buscadores)
-  metadataBase: new URL(process.env.SITE_URL || "https://simba.profiya.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Simba",
 };
 
@@ -26,7 +27,7 @@ export const viewport: Viewport = { themeColor: BRAND_GREEN };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="es"
+      lang="es-CO"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

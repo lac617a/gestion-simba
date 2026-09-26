@@ -11,6 +11,7 @@ import {
   MAPS_EMBED_URL,
   orderMessage,
   SITE,
+  SITE_URL,
   weeklyHours,
 } from "@/lib/public-site";
 import { whatsappHref, whatsappNumber } from "@/lib/reservations";
@@ -27,13 +28,16 @@ import { ReviewsSection } from "./_landing/reviews-section";
 // y al guardar Configuración o una excepción de apertura.
 export const revalidate = 600;
 
-const TITLE = "Simba · Parrilla y hamburguesas en Piedecuesta";
-const DESCRIPTION = `${SITE.tagline}. ${SITE.specialties.join(", ")}. ${SITE.address}, ${SITE.city}. Reservas y pedidos por WhatsApp.`;
+// Título ≤ 60 y descripción ≤ 155 caracteres (lo que Google muestra sin cortar)
+const TITLE = "Simba Parrilla · Restaurante y hamburguesas en Piedecuesta";
+const DESCRIPTION = `Parrilla, hamburguesas y carne a la llanera en Piedecuesta, ${SITE.address}. Mira el menú con precios y reserva tu mesa por WhatsApp.`;
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/" },
+  // Verificación de Google Search Console por etiqueta (opcional; con DNS no hace falta)
+  ...(process.env.GOOGLE_SITE_VERIFICATION && { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }),
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
@@ -105,8 +109,12 @@ export default async function HomePage() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/40 to-black/10 md:bg-gradient-to-r md:from-black/90 md:via-black/60 md:to-black/5" />
         <div className="mx-auto w-full max-w-6xl px-4 pt-24 pb-12 sm:pb-20">
           <div className="max-w-xl">
-            <p className="text-sm font-semibold tracking-[0.2em] text-simba-gold uppercase">Restaurante en Piedecuesta</p>
-            <h1 className="mt-2 font-display text-6xl leading-none sm:text-8xl">SIMBA</h1>
+            <h1>
+              <span className="block text-sm font-semibold tracking-[0.2em] text-simba-gold uppercase">
+                Restaurante en Piedecuesta
+              </span>
+              <span className="mt-2 block font-display text-6xl leading-none sm:text-8xl">SIMBA</span>
+            </h1>
             <p className="mt-4 text-xl leading-snug text-white/90 sm:text-2xl">{SITE.tagline}.</p>
             <p className="mt-4 flex flex-wrap gap-2">
               {SITE.specialties.map((s) => (
@@ -316,13 +324,18 @@ function JsonLd({
   const data = {
     "@context": "https://schema.org",
     "@type": "Restaurant",
+    "@id": `${SITE_URL}/#restaurante`,
+    url: `${SITE_URL}/`,
     name: SITE.name,
+    alternateName: SITE.alternateNames,
     description: SITE.tagline,
-    image: "/landing/og.jpg",
+    image: [`${SITE_URL}/landing/og.jpg`, `${SITE_URL}/landing/hero.webp`],
+    logo: `${SITE_URL}${BRAND_LOGO}`,
+    hasMap: SITE.googleMaps,
     servesCuisine: SITE.specialties,
     priceRange: "$$",
     acceptsReservations: true,
-    menu: "/#menu",
+    menu: `${SITE_URL}/#menu`,
     ...(whatsapp && { telephone: `+${whatsapp}` }),
     address: {
       "@type": "PostalAddress",
@@ -332,7 +345,7 @@ function JsonLd({
       addressCountry: "CO",
     },
     geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
-    sameAs: [SITE.instagram],
+    sameAs: [SITE.instagram, SITE.googleMaps],
     ...(hours.length && { openingHoursSpecification: hours }),
   };
   return (

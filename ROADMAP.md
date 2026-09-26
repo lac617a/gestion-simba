@@ -78,6 +78,7 @@ npm test                                    # pruebas unitarias
 - `AppSettings.whatsapp` (Configuración). Migración `whatsapp_restaurante`.
 - Colores y letras de la carta como tokens de Tailwind (`simba-cream`, `simba-rust`, `simba-forest`, `font-display` = Alfa Slab One, `font-price` = Bree Serif).
 - Ideas: editar el menú desde la administración; más fotos (del Instagram, las que el restaurante entregue).
+- SEO (2026-09-26): título "Simba Parrilla · Restaurante y hamburguesas en Piedecuesta" (≤ 60) y descripción ≤ 155; h1 con "Restaurante en Piedecuesta"; `lang="es-CO"`; datos estructurados con URLs absolutas, `@id`, `url`, nombres alternos y ficha de Google Maps (CID); sitemap con `lastmod`. `SITE_URL` en `src/lib/public-site.ts`. Verificación de Search Console por DNS (o `GOOGLE_SITE_VERIFICATION`).
 
 ---
 
