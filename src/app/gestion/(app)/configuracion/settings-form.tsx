@@ -28,6 +28,22 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
     // key: tras guardar se remonta con los valores nuevos que llegan del servidor
     <form key={JSON.stringify(settings)} action={action} className="grid gap-5">
       <div className="grid gap-2">
+        <Label htmlFor="whatsapp">WhatsApp del restaurante</Label>
+        <Input
+          id="whatsapp"
+          name="whatsapp"
+          type="tel"
+          inputMode="tel"
+          defaultValue={settings.whatsapp}
+          className="max-w-48"
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          La página pública manda aquí las reservas y los pedidos de los clientes.
+        </p>
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor="payWeekStart">La semana de pago empieza el</Label>
         <select
           id="payWeekStart"

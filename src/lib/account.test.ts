@@ -68,8 +68,15 @@ describe("parseAccountForm", () => {
 
 const NO_HOURS = ["", "", "", "", "", "", "", ""];
 
-function settingsForm(fields: { payWeekStart?: string; payDay?: string; closed?: string[]; hours?: [string, string][] }) {
+function settingsForm(fields: {
+  payWeekStart?: string;
+  payDay?: string;
+  closed?: string[];
+  hours?: [string, string][];
+  whatsapp?: string;
+}) {
   const fd = new FormData();
+  fd.append("whatsapp", fields.whatsapp ?? "301 216 8273");
   fd.append("payWeekStart", fields.payWeekStart ?? "1");
   fd.append("payDay", fields.payDay ?? "1");
   for (const d of fields.closed ?? []) fd.append("closedWeekdays", d);
@@ -87,6 +94,7 @@ describe("parseSettingsForm", () => {
       payDay: 1,
       closedWeekdays: [1, 2],
       openingHours: NO_HOURS,
+      whatsapp: "301 216 8273",
     });
     const all = settingsForm({ payWeekStart: "7", closed: ["0", "1", "2", "3", "4", "5", "6"] });
     expect(parseSettingsForm(all).success).toBe(false);
@@ -98,7 +106,14 @@ describe("parseSettingsForm", () => {
       payDay: 0,
       closedWeekdays: [],
       openingHours: NO_HOURS,
+      whatsapp: "301 216 8273",
     });
+  });
+
+  it("WhatsApp del restaurante", () => {
+    expect(parseSettingsForm(settingsForm({ whatsapp: " +57 301 216 8273 " })).data?.whatsapp).toBe("+57 301 216 8273");
+    expect(parseSettingsForm(settingsForm({ whatsapp: "4441234" })).success).toBe(false);
+    expect(parseSettingsForm(settingsForm({ whatsapp: "" })).success).toBe(false);
   });
 
   it("día de pago inválido", () => {

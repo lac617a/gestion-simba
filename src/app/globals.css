@@ -4,6 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Colores de la carta de Simba (página pública): bg-simba-cream, text-simba-rust… */
+@theme {
+  --color-simba-cream: #f7ead9;
+  --color-simba-rust: #9b3a17;
+  --color-simba-forest: #1f3326;
+  --color-simba-green: #022813;
+  --color-simba-gold: #f2a73b;
+}
+
+/* inline: las variables de next/font se definen en la página, no en :root */
+@theme inline {
+  --font-display: var(--font-alfa-slab);
+  --font-price: var(--font-bree);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

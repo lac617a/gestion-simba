@@ -21,7 +21,8 @@ _Última actualización: 2026-09-26_
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
 | F9 · Horario de atención + recordatorio del día de pago | ✅ sin publicar (tiene migración) | `895142e` |
 | F10 · Reservas | ✅ sin publicar (tiene migración) | `72b21f4` |
-| F11 · WhatsApp de confirmación + reporte de reservas | ✅ sin publicar | ver `git log` |
+| F11 · WhatsApp de confirmación + reporte de reservas | ✅ sin publicar | `5dc60b9` |
+| F12 · Administración en `/gestion` + página pública | ✅ sin publicar (tiene migración) | `951ab6c` + commit «F12: página pública…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -43,7 +44,9 @@ npm test                                    # pruebas unitarias
 - [x] ~~Publicar F6~~ — publicado.
 - [x] ~~Publicar F7 y logo~~ — publicado el 2026-09-24.
 - [x] ~~Publicar F8~~ — publicado el 2026-09-24.
-- [ ] **Publicar F9 y F10:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago` y `reservas`), después `git push`. Luego llenar el horario en Configuración.
+- [ ] **Publicar F9–F12:** primero `npx prisma migrate deploy` en Neon (migraciones `horario_y_dia_de_pago`, `reservas` y `whatsapp_restaurante`), después `git push`. Luego llenar el horario en Configuración (se ve en la página pública).
+- [ ] Conectar el dominio `simba.profiya.com` en Vercel (ver [DEPLOY.md](DEPLOY.md) §8).
+- [ ] Revisar precios del menú en la página: en el PDF Buchanan's dice "270.00" (se puso 270.000) y los granizados/jugos se tomaron todos a 10.000.
 - [ ] Enviar el logo en mayor resolución o vector (opcional) para reemplazar los íconos.
 
 ---
@@ -54,6 +57,18 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F12 · Página pública y administración en /gestion ✅
+
+- Administración movida a `src/app/gestion/(app)` (URLs `/gestion/...`), login `/gestion/login`, `/gestion/salir`; redirecciones de las URLs viejas en `next.config.ts`; el proxy solo mira `/gestion`; manifiesto en `/gestion/manifest.webmanifest` (start_url `/gestion`), `/gestion` con `noindex`.
+- Página pública `src/app/page.tsx` + `src/app/_landing/` (menú, formulario de reserva). ISR `revalidate = 600`; Configuración y excepciones de apertura la revalidan.
+- Menú en `src/lib/menu.ts` (transcrito del PDF; **para cambiar precios se edita ese archivo**). PDF original en `public/menu-simba.pdf`. Fotos sacadas del PDF en `public/landing/` (portada, parrilla, perro, bebidas, imagen para redes).
+- Reservas web: `reservationRequestMessage` en `src/lib/public-site.ts`; se abre `wa.me/<WhatsApp del restaurante>`; no se guarda nada.
+- `AppSettings.whatsapp` (Configuración). Migración `whatsapp_restaurante`.
+- Colores y letras de la carta como tokens de Tailwind (`simba-cream`, `simba-rust`, `simba-forest`, `font-display` = Alfa Slab One, `font-price` = Bree Serif).
+- Ideas: editar el menú desde la administración; más fotos (del Instagram, las que el restaurante entregue).
+
+---
 
 ## F11 · WhatsApp de confirmación y reporte de reservas ✅
 
@@ -163,7 +178,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (123).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (132).
 
 ## Notas técnicas conocidas
 

@@ -27,6 +27,9 @@ export const DEFAULT_PAY_WEEK_START = (() => {
   return Number.isInteger(n) && n >= 0 && n <= 6 ? n : 1;
 })();
 
+/** WhatsApp del restaurante para la página pública (se cambia en Configuración). */
+export const DEFAULT_WHATSAPP = "3012168273";
+
 /** Día en que se paga la semana que terminó. Por defecto lunes (se cambia en Configuración). */
 export const DEFAULT_PAY_DAY = 1;
 

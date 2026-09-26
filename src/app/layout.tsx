@@ -15,6 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Dominio público (enlaces absolutos para redes sociales y buscadores)
+  metadataBase: new URL(process.env.SITE_URL || "https://simba.profiya.com"),
   title: "Simba",
 };
 

@@ -28,6 +28,8 @@ model AppSettings {
   openingHours   String[] @default([])
   /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
   payDay         Int      @default(1)
+  /// WhatsApp del restaurante: a donde la página pública manda reservas y pedidos
+  whatsapp       String   @default("3012168273")
   updatedAt      DateTime @updatedAt
 }
 

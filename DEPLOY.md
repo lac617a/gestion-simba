@@ -135,6 +135,20 @@ En la dirección de Vercel, desde la PC y desde el celular:
 
 ---
 
+## 8. Dominio propio (simba.profiya.com)
+
+La página pública queda en la raíz (`/`) y la administración en `/gestion`.
+
+1. En Vercel → tu proyecto → **Settings → Domains → Add** → escribe `simba.profiya.com`.
+2. Vercel muestra un registro DNS (normalmente **CNAME** `simba` → el valor que indique Vercel, tipo `…vercel-dns.com`). Créalo en el panel donde administras el dominio `profiya.com`.
+3. Espera a que Vercel marque el dominio como **Valid** (minutos, a veces horas). El certificado HTTPS es automático.
+4. (Opcional) Variable `SITE_URL=https://simba.profiya.com` en Vercel; si no está, se usa esa misma por defecto.
+5. La dirección `…vercel.app` sigue funcionando; la del dominio es la que se comparte.
+
+La app instalada en los celulares de los empleados: si abre la página pública en vez de la administración, bórrala de la pantalla de inicio y vuelve a agregarla desde `/gestion`.
+
+---
+
 ## 7. (Opcional) Pasar tus datos locales a Neon
 
 La app en Neon arranca **vacía**. Si quieres llevar lo que ya registraste en tu PC (empleados, días cerrados, pagos), dímelo y preparo un script que los copie. Se corre una vez, antes de empezar a usar la versión publicada.

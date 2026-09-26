@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { whatsappNumber } from "@/lib/reservations";
 
 export const MIN_PASSWORD = 10;
 
@@ -67,6 +68,11 @@ export const SettingsSchema = z.object({
     .max(6, { error: "El restaurante debe abrir al menos un día" })
     .transform((d) => [...new Set(d)].sort((a, b) => a - b)),
   openingHours: OpeningHoursSchema,
+  whatsapp: z
+    .string()
+    .trim()
+    // El indicativo real (PHONE_COUNTRY_CODE) se pone al armar el enlace; aquí solo se valida la forma.
+    .refine((v) => whatsappNumber(v, "57") !== null, { error: "Número de WhatsApp inválido (ej. 301 216 8273)" }),
 });
 
 export function parseSettingsForm(formData: FormData) {
@@ -75,6 +81,7 @@ export function parseSettingsForm(formData: FormData) {
     payWeekStart: formData.get("payWeekStart"),
     payDay: formData.get("payDay"),
     closedWeekdays: formData.getAll("closedWeekdays"),
+    whatsapp: get("whatsapp"),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),
   });
 }
