@@ -6,17 +6,17 @@ import { CalendarDaysIcon, ChartColumnIcon, ClipboardCheckIcon, HouseIcon, Users
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/", label: "Hoy", icon: HouseIcon },
-  { href: "/asistencia", label: "Asistencia", icon: ClipboardCheckIcon },
-  { href: "/reservas", label: "Reservas", icon: CalendarDaysIcon },
-  { href: "/pagos", label: "Pagos", icon: WalletIcon },
-  { href: "/reportes", label: "Reportes", icon: ChartColumnIcon },
-  { href: "/empleados", label: "Empleados", icon: UsersIcon },
+  { href: "/gestion", label: "Hoy", icon: HouseIcon },
+  { href: "/gestion/asistencia", label: "Asistencia", icon: ClipboardCheckIcon },
+  { href: "/gestion/reservas", label: "Reservas", icon: CalendarDaysIcon },
+  { href: "/gestion/pagos", label: "Pagos", icon: WalletIcon },
+  { href: "/gestion/reportes", label: "Reportes", icon: ChartColumnIcon },
+  { href: "/gestion/empleados", label: "Empleados", icon: UsersIcon },
 ];
 
 function useIsActive() {
   const pathname = usePathname();
-  return (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  return (href: string) => (href === "/gestion" ? pathname === "/gestion" : pathname.startsWith(href));
 }
 
 /** Navegación superior (pantallas medianas en adelante). */

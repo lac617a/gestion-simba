@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Reservas · Gestión Simba" };
 const VIEWS = { proximas: "Próximas", anteriores: "Anteriores" } as const;
 type View = keyof typeof VIEWS;
 
-export default async function ReservationsPage({ searchParams }: PageProps<"/reservas">) {
+export default async function ReservationsPage({ searchParams }: PageProps<"/gestion/reservas">) {
   await verifySession();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim() : "";
@@ -40,7 +40,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/res
 
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Reservas</h1>
-        <Button render={<Link href="/reservas/nueva" />} nativeButton={false} size="lg">
+        <Button render={<Link href="/gestion/reservas/nueva" />} nativeButton={false} size="lg">
           <PlusIcon />
           Nueva
         </Button>
@@ -56,7 +56,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/res
           {(Object.keys(VIEWS) as View[]).map((key) => (
             <Link
               key={key}
-              href={{ pathname: "/reservas", query: { ver: key, ...(q && { q }) } }}
+              href={{ pathname: "/gestion/reservas", query: { ver: key, ...(q && { q }) } }}
               aria-current={view === key ? "page" : undefined}
               className={cn(
                 "flex-1 rounded-md px-3 py-1 text-center text-muted-foreground",

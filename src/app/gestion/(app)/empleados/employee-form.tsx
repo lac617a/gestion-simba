@@ -130,7 +130,7 @@ export function EmployeeForm({ action, defaults, submitLabel }: Props) {
         <Button type="submit" size="lg" disabled={pending}>
           {pending ? "Guardando…" : submitLabel}
         </Button>
-        <Button variant="outline" size="lg" render={<Link href="/empleados" />} nativeButton={false}>
+        <Button variant="outline" size="lg" render={<Link href="/gestion/empleados" />} nativeButton={false}>
           Cancelar
         </Button>
       </div>

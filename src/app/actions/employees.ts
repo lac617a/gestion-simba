@@ -42,8 +42,8 @@ export async function createEmployee(
   }
 
   await db.employee.create({ data: parsed.data });
-  revalidatePath("/empleados");
-  redirect("/empleados?creado=1");
+  revalidatePath("/gestion/empleados");
+  redirect("/gestion/empleados?creado=1");
 }
 
 export async function updateEmployee(
@@ -60,14 +60,14 @@ export async function updateEmployee(
   const { count } = await db.employee.updateMany({ where: { id }, data: parsed.data });
   if (count === 0) return { message: "El empleado ya no existe", values: submittedValues(formData) };
 
-  revalidatePath("/empleados");
-  redirect("/empleados?actualizado=1");
+  revalidatePath("/gestion/empleados");
+  redirect("/gestion/empleados?actualizado=1");
 }
 
 /** Baja lógica / reactivación. Nunca se borra el registro para conservar el historial. */
 export async function setEmployeeActive(id: string, active: boolean) {
   await verifySession();
   await db.employee.updateMany({ where: { id }, data: { active } });
-  revalidatePath("/empleados");
-  revalidatePath(`/empleados/${id}`);
+  revalidatePath("/gestion/empleados");
+  revalidatePath(`/gestion/empleados/${id}`);
 }

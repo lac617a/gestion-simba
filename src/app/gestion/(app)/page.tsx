@@ -99,12 +99,12 @@ export default async function TodayPage() {
               <DoorClosedIcon className="size-4" /> Hoy el restaurante está cerrado
             </p>
             <p className="text-sm text-muted-foreground">{scheduleLabel(view.schedule)}</p>
-            <GoTo href="/asistencia">Abrir hoy igual</GoTo>
+            <GoTo href="/gestion/asistencia">Abrir hoy igual</GoTo>
           </>
         ) : view.rows.length === 0 ? (
           <>
             <p className="font-medium">Todavía no hay empleados registrados.</p>
-            <Button className="justify-self-start" render={<Link href="/empleados/nuevo" />} nativeButton={false}>
+            <Button className="justify-self-start" render={<Link href="/gestion/empleados/nuevo" />} nativeButton={false}>
               Registrar empleado
             </Button>
           </>
@@ -117,14 +117,14 @@ export default async function TodayPage() {
               <Stat label="Venta" value={money(view.closing?.totalSales ?? 0)} />
               <Stat label="Propinas" value={money(view.closing?.tipsTotal ?? 0)} />
             </dl>
-            <GoTo href="/asistencia">Ver el cierre</GoTo>
+            <GoTo href="/gestion/asistencia">Ver el cierre</GoTo>
           </>
         ) : pending.length > 0 ? (
           <>
             <p className="font-medium">
               Falta marcar la asistencia de {pending.length} {pending.length === 1 ? "empleado" : "empleados"}.
             </p>
-            <Button className="justify-self-start" render={<Link href="/asistencia" />} nativeButton={false}>
+            <Button className="justify-self-start" render={<Link href="/gestion/asistencia" />} nativeButton={false}>
               Marcar asistencia <ArrowRightIcon />
             </Button>
           </>
@@ -133,7 +133,7 @@ export default async function TodayPage() {
             <p className="flex items-center gap-2 font-medium">
               <CircleCheckIcon className="size-4 text-emerald-600" /> Asistencia completa. Falta cerrar el día.
             </p>
-            <Button className="justify-self-start" render={<Link href="/asistencia#cierre" />} nativeButton={false}>
+            <Button className="justify-self-start" render={<Link href="/gestion/asistencia#cierre" />} nativeButton={false}>
               Cerrar el día <ArrowRightIcon />
             </Button>
           </>
@@ -159,8 +159,8 @@ export default async function TodayPage() {
           <p className="text-sm text-muted-foreground">No hay reservas para hoy.</p>
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <GoTo href="/reservas">Ver todas</GoTo>
-          <Link href="/reservas/nueva" className="inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline">
+          <GoTo href="/gestion/reservas">Ver todas</GoTo>
+          <Link href="/gestion/reservas/nueva" className="inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline">
             <PlusIcon className="size-3.5" /> Nueva reserva
           </Link>
         </div>
@@ -207,8 +207,8 @@ export default async function TodayPage() {
           />
         </dl>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <GoTo href="/reportes">Ver reportes</GoTo>
-          <GoTo href="/pagos">Ver pagos</GoTo>
+          <GoTo href="/gestion/reportes">Ver reportes</GoTo>
+          <GoTo href="/gestion/pagos">Ver pagos</GoTo>
         </div>
       </section>
     </div>
@@ -260,7 +260,7 @@ function PayDueCard({
       )}
       <Button
         className="justify-self-start"
-        render={<Link href={`/pagos?desde=${due.week.from}&hasta=${due.week.to}`} />}
+        render={<Link href={`/gestion/pagos?desde=${due.week.from}&hasta=${due.week.to}`} />}
         nativeButton={false}
       >
         Ir a pagar <ArrowRightIcon />

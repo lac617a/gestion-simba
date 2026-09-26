@@ -14,11 +14,11 @@ import { decrypt, SESSION_COOKIE } from "@/lib/session";
 export const verifySession = cache(async () => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await decrypt(token);
-  if (!session) redirect("/login");
+  if (!session) redirect("/gestion/login");
 
   const user = await db.user.findUnique({ where: { id: session.userId }, select: { sessionVersion: true } });
   // /salir borra la cookie (una página no puede hacerlo) y lleva al login.
-  if (!user || user.sessionVersion !== session.v) redirect("/salir");
+  if (!user || user.sessionVersion !== session.v) redirect("/gestion/salir");
 
   return session;
 });

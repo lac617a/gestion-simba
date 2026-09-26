@@ -15,10 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gestión Simba",
-  description: "Empleados, asistencia y propinas del restaurante",
-  // Nombre al agregarla a la pantalla de inicio en iPhone
-  appleWebApp: { title: "Simba", capable: true },
+  title: "Simba",
 };
 
 /** Color de la barra del navegador en el celular: el verde del logo. */

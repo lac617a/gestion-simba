@@ -89,7 +89,7 @@ function ReservationItem({ r, today }: { r: ReservationRow; today: string }) {
             </Button>
           )}
           <StatusActions id={r.id} status={r.status} canMark={r.date <= today} />
-          <Button variant="ghost" size="sm" render={<Link href={`/reservas/${r.id}`} />} nativeButton={false}>
+          <Button variant="ghost" size="sm" render={<Link href={`/gestion/reservas/${r.id}`} />} nativeButton={false}>
             <PencilIcon /> Editar
           </Button>
         </div>

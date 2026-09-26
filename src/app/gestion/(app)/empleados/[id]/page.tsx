@@ -10,7 +10,7 @@ import { TimeOffSection } from "./time-off-section";
 
 export const metadata: Metadata = { title: "Editar empleado · Gestión Simba" };
 
-export default async function EditEmployeePage({ params }: PageProps<"/empleados/[id]">) {
+export default async function EditEmployeePage({ params }: PageProps<"/gestion/empleados/[id]">) {
   await verifySession();
   const { id } = await params;
   const employee = await db.employee.findUnique({ where: { id } });

@@ -21,7 +21,7 @@ const closedAtFormat = new Intl.DateTimeFormat("es-CO", {
   timeStyle: "short",
 });
 
-export default async function AttendancePage({ searchParams }: PageProps<"/asistencia">) {
+export default async function AttendancePage({ searchParams }: PageProps<"/gestion/asistencia">) {
   await verifySession();
   const { fecha } = await searchParams;
   const todayIso = today();
@@ -62,7 +62,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/asist
       {view.mode === "dayoff" ? null : view.rows.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           No hay empleados activos para esta fecha.{" "}
-          <Link href="/empleados/nuevo" className="text-foreground underline underline-offset-4">
+          <Link href="/gestion/empleados/nuevo" className="text-foreground underline underline-offset-4">
             Registrar empleado
           </Link>
         </div>

@@ -188,7 +188,7 @@ function Fields({
           {pending ? "Guardando…" : submitLabel}
         </Button>
         {/* "Volver" y no "Cancelar": en la edición existe "Cancelar reserva" */}
-        <Button variant="outline" size="lg" render={<Link href="/reservas" />} nativeButton={false}>
+        <Button variant="outline" size="lg" render={<Link href="/gestion/reservas" />} nativeButton={false}>
           Volver
         </Button>
       </div>

@@ -53,8 +53,8 @@ export async function createTimeOff(
     }),
   ]);
 
-  revalidatePath(`/empleados/${employeeId}`);
-  revalidatePath("/asistencia");
+  revalidatePath(`/gestion/empleados/${employeeId}`);
+  revalidatePath("/gestion/asistencia");
   return { success: `${TIME_OFF_LABEL[type]} asignado` };
 }
 
@@ -104,6 +104,6 @@ export async function deleteTimeOff(id: string) {
     }
   });
 
-  revalidatePath(`/empleados/${timeOff.employeeId}`);
-  revalidatePath("/asistencia");
+  revalidatePath(`/gestion/empleados/${timeOff.employeeId}`);
+  revalidatePath("/gestion/asistencia");
 }

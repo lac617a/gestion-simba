@@ -21,7 +21,7 @@ export async function setAttendanceStatus(attendanceId: string, status: Attendan
     data: { status },
   });
   if (count === 0) return CLOSED_ERROR;
-  revalidatePath("/asistencia");
+  revalidatePath("/gestion/asistencia");
   return { ok: true };
 }
 
@@ -33,7 +33,7 @@ export async function setAttendanceNote(attendanceId: string, note: string): Pro
     data: { note: clean === "" ? null : clean },
   });
   if (count === 0) return CLOSED_ERROR;
-  revalidatePath("/asistencia");
+  revalidatePath("/gestion/asistencia");
   return { ok: true };
 }
 
@@ -48,6 +48,6 @@ export async function markPendingAsWorked(date: string): Promise<ActionResult & 
     },
     data: { status: "WORKED" },
   });
-  revalidatePath("/asistencia");
+  revalidatePath("/gestion/asistencia");
   return { ok: true, count };
 }

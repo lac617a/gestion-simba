@@ -11,7 +11,7 @@ import { CancelOrDelete } from "./cancel-or-delete";
 
 export const metadata: Metadata = { title: "Editar reserva · Gestión Simba" };
 
-export default async function EditReservationPage({ params }: PageProps<"/reservas/[id]">) {
+export default async function EditReservationPage({ params }: PageProps<"/gestion/reservas/[id]">) {
   await verifySession();
   const { id } = await params;
   const r = await getReservation(id);

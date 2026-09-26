@@ -13,7 +13,7 @@ import { EmployeePayActions, MarkAllPaidButton } from "./pay-actions";
 
 export const metadata: Metadata = { title: "Pagos · Gestión Simba" };
 
-export default async function PayrollPage({ searchParams }: PageProps<"/pagos">) {
+export default async function PayrollPage({ searchParams }: PageProps<"/gestion/pagos">) {
   await verifySession();
   const { desde, hasta } = await searchParams;
   const period = await periodFromParams(desde, hasta);
@@ -32,10 +32,10 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Pagos</h1>
-        <CsvButton href={`/pagos/csv?desde=${period.from}&hasta=${period.to}`} />
+        <CsvButton href={`/gestion/pagos/csv?desde=${period.from}&hasta=${period.to}`} />
       </div>
 
-      <PeriodNav basePath="/pagos" period={period} presets={await periodPresets()} />
+      <PeriodNav basePath="/gestion/pagos" period={period} presets={await periodPresets()} />
 
       <UnclosedWarning days={unclosedDays} what="sus pagos y propinas todavía no cuentan." />
 
@@ -93,7 +93,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/pagos">)
                       {e.entries.map((x) => (
                         <tr key={x.date}>
                           <td className="py-1.5 whitespace-nowrap">
-                            <Link href={`/asistencia?fecha=${x.date}`} prefetch={false} className="hover:underline">
+                            <Link href={`/gestion/asistencia?fecha=${x.date}`} prefetch={false} className="hover:underline">
                               {formatDayShort(x.date)}
                             </Link>
                           </td>

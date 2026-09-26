@@ -45,7 +45,7 @@ export async function updateAccount(_prev: AccountState, formData: FormData): Pr
   });
   if (changingPassword) await createSession(updated.id, updated.sessionVersion);
 
-  revalidatePath("/configuracion");
+  revalidatePath("/gestion/configuracion");
   return {
     success: changingPassword
       ? "Contraseña cambiada. Se cerró la sesión en los demás dispositivos."

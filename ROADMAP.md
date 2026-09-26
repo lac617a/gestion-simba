@@ -76,7 +76,7 @@ npm test                                    # pruebas unitarias
 ## F7 · Configuración y seguridad ✅
 
 - `/configuracion`: cuenta (correo/contraseña con contraseña actual), cerrar otras sesiones, ajustes del restaurante (inicio de semana de pago, días de cierre) guardados en `AppSettings`.
-- Sesiones con versión (`User.sessionVersion` en la cookie); `verifySession` la compara con la BD y manda a `/salir` si no coincide. Las cookies anteriores cuentan como versión 0.
+- Sesiones con versión (`User.sessionVersion` en la cookie); `verifySession` la compara con la BD y manda a `/gestion/salir` si no coincide. Las cookies anteriores cuentan como versión 0.
 - Límite de intentos de login en `LoginThrottle` (`src/lib/throttle.ts`, `src/lib/auth.ts`).
 - Arreglado: correos con espacio al final daban "Correo inválido" en el login.
 
@@ -118,7 +118,7 @@ Alternativa considerada: `react-currency-input-field` (también válida; se desc
    - Mantener el `$` como adorno a la izquierda (como ahora) en vez de `prefix`, para que el valor enviado no lleve símbolo.
    - Exponer `onValueChange` → valor en **unidades mínimas** (entero) para las vistas previas en vivo.
    - Seguir enviando el texto formateado en el `name` del input: el servidor lo valida con `parseMoney` (que ya acepta `1.250.000`). **La validación del servidor no cambia.**
-3. Reemplazar `MoneyField` en `src/app/(app)/asistencia/close-day-panel.tsx` (venta total, propinas y pago del día de cada empleado) y borrar `formatPlain`/`tidy` si quedan sin uso.
+3. Reemplazar `MoneyField` en `src/app/gestion/(app)/asistencia/close-day-panel.tsx` (venta total, propinas y pago del día de cada empleado) y borrar `formatPlain`/`tidy` si quedan sin uso.
 4. Mantener el comportamiento actual de errores: la `key` del formulario remonta los campos con lo enviado cuando la acción devuelve error.
 
 **Listo cuando:**
@@ -169,5 +169,5 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 
 - La BD local de `prisma dev` (PGlite) no soporta conexiones en paralelo → `DATABASE_POOL_MAX=1` en `.env` y `.env.e2e`.
 - Después de cada migración hay que **reiniciar** `npm run dev` (el cliente de Prisma queda en memoria). Migrar también la BD de pruebas: `DATABASE_URL=<url de pruebas> npx prisma migrate deploy`.
-- Los enlaces que abren días (`/asistencia?fecha=…`) llevan `prefetch={false}`: abrir un día lo crea en la BD.
-- En desarrollo, al editar el layout la recarga completa a veces vuelve a `/asistencia`; no pasa en producción.
+- Los enlaces que abren días (`/gestion/asistencia?fecha=…`) llevan `prefetch={false}`: abrir un día lo crea en la BD.
+- En desarrollo, al editar el layout la recarga completa a veces vuelve a `/gestion/asistencia`; no pasa en producción.

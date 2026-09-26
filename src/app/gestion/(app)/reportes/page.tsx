@@ -23,7 +23,7 @@ const SECTIONS = [
   { id: "reservas", label: "Reservas" },
 ] as const;
 
-export default async function ReportsPage({ searchParams }: PageProps<"/reportes">) {
+export default async function ReportsPage({ searchParams }: PageProps<"/gestion/reportes">) {
   await verifySession();
   const { desde, hasta } = await searchParams;
   const period = await periodFromParams(desde, hasta);
@@ -33,7 +33,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
   ]);
 
   const money = (v: number) => formatMoney(v, CURRENCY);
-  const csv = (tipo: string) => `/reportes/csv?tipo=${tipo}&desde=${period.from}&hasta=${period.to}`;
+  const csv = (tipo: string) => `/gestion/reportes/csv?tipo=${tipo}&desde=${period.from}&hasta=${period.to}`;
   const columns = ATTENDANCE_COLUMNS.filter((s) => s !== "PENDING" || attendance.totals.PENDING > 0);
   const chartTo = period.to < today() ? period.to : today();
   const series = salesSeries(sales.days, period.from, chartTo < period.from ? period.from : chartTo);
@@ -42,7 +42,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
     <div className="grid gap-6">
       <div className="grid gap-5">
         <h1 className="text-2xl font-semibold">Reportes</h1>
-        <PeriodNav basePath="/reportes" period={period} presets={await periodPresets()} />
+        <PeriodNav basePath="/gestion/reportes" period={period} presets={await periodPresets()} />
         <UnclosedWarning days={unclosedDays} what="sus ventas y propinas todavía no cuentan." />
         <nav className="flex flex-wrap gap-2 text-sm" aria-label="Secciones">
           {SECTIONS.map((s) => (
@@ -84,7 +84,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
             {sales.days.map((d) => (
               <tr key={d.date}>
                 <td className="sticky left-0 bg-background px-3 py-2 whitespace-nowrap">
-                  <Link href={`/asistencia?fecha=${d.date}`} prefetch={false} className="hover:underline">
+                  <Link href={`/gestion/asistencia?fecha=${d.date}`} prefetch={false} className="hover:underline">
                     {formatDayShort(d.date)}
                   </Link>
                 </td>
@@ -172,7 +172,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reportes
                   ? "1 reserva de días pasados sigue sin marcar"
                   : `${reservations.status.unmarked} reservas de días pasados siguen sin marcar`}{" "}
                 (Llegó / No vino).{" "}
-                <Link href="/reservas?ver=anteriores" className="font-medium underline underline-offset-4">
+                <Link href="/gestion/reservas?ver=anteriores" className="font-medium underline underline-offset-4">
                   Marcarlas
                 </Link>
               </p>

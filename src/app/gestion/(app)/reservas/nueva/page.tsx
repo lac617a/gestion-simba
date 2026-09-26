@@ -7,7 +7,7 @@ import { ReservationForm } from "../reservation-form";
 
 export const metadata: Metadata = { title: "Nueva reserva · Gestión Simba" };
 
-export default async function NewReservationPage({ searchParams }: PageProps<"/reservas/nueva">) {
+export default async function NewReservationPage({ searchParams }: PageProps<"/gestion/reservas/nueva">) {
   await verifySession();
   const { fecha } = await searchParams;
 

@@ -42,8 +42,8 @@ function submittedValues(formData: FormData): ReservationFormValues {
 }
 
 function refresh() {
-  revalidatePath("/reservas", "layout");
-  revalidatePath("/");
+  revalidatePath("/gestion/reservas", "layout");
+  revalidatePath("/gestion");
 }
 
 export async function createReservation(_prev: ReservationFormState, formData: FormData): Promise<ReservationFormState> {
@@ -56,7 +56,7 @@ export async function createReservation(_prev: ReservationFormState, formData: F
   const { date, ...data } = parsed.data;
   await db.reservation.create({ data: { ...data, date: isoToDate(date) } });
   refresh();
-  redirect(`/reservas?creado=1#dia-${date}`);
+  redirect(`/gestion/reservas?creado=1#dia-${date}`);
 }
 
 export async function updateReservation(
@@ -75,7 +75,7 @@ export async function updateReservation(
   if (count === 0) return { message: "La reserva ya no existe", values: submittedValues(formData) };
 
   refresh();
-  redirect(`/reservas?actualizado=1#dia-${date}`);
+  redirect(`/gestion/reservas?actualizado=1#dia-${date}`);
 }
 
 const STATUSES = Object.keys(RESERVATION_STATUS_LABEL) as ReservationStatus[];
@@ -95,5 +95,5 @@ export async function deleteReservation(id: string) {
   await verifySession();
   await db.reservation.deleteMany({ where: { id } });
   refresh();
-  redirect("/reservas?eliminado=1");
+  redirect("/gestion/reservas?eliminado=1");
 }

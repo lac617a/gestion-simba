@@ -21,7 +21,7 @@ const FILTERS = {
 
 type Filter = keyof typeof FILTERS;
 
-export default async function EmployeesPage({ searchParams }: PageProps<"/empleados">) {
+export default async function EmployeesPage({ searchParams }: PageProps<"/gestion/empleados">) {
   await verifySession();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim() : "";
@@ -44,7 +44,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/emplea
 
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Empleados</h1>
-        <Button render={<Link href="/empleados/nuevo" />} nativeButton={false} size="lg">
+        <Button render={<Link href="/gestion/empleados/nuevo" />} nativeButton={false} size="lg">
           <PlusIcon />
           Nuevo
         </Button>
@@ -60,7 +60,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/emplea
           {(Object.keys(FILTERS) as Filter[]).map((key) => (
             <Link
               key={key}
-              href={{ pathname: "/empleados", query: { estado: key, ...(q && { q }) } }}
+              href={{ pathname: "/gestion/empleados", query: { estado: key, ...(q && { q }) } }}
               aria-current={filter === key ? "page" : undefined}
               className={cn(
                 "flex-1 rounded-md px-3 py-1 text-center text-muted-foreground",
@@ -82,7 +82,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/emplea
           {employees.map((e) => (
             <li key={e.id}>
               <Link
-                href={`/empleados/${e.id}`}
+                href={`/gestion/empleados/${e.id}`}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50"
               >
                 <div className="min-w-0 flex-1">

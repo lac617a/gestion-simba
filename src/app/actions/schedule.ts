@@ -40,7 +40,8 @@ export async function setDayOverride(date: string, open: boolean | null): Promis
     await db.dayOverride.upsert({ where: { date: d }, update: { open: override }, create: { date: d, open: override } });
   }
 
-  revalidatePath("/asistencia");
-  revalidatePath("/");
+  revalidatePath("/gestion/asistencia");
+  revalidatePath("/gestion");
+  revalidatePath("/"); // página pública
   return { ok: true };
 }

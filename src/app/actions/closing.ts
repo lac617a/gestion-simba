@@ -104,7 +104,7 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
   if (!result.ok) {
     return fail({ message: result.error, errors: "payErrors" in result ? { pays: result.payErrors } : undefined });
   }
-  revalidatePath("/asistencia");
+  revalidatePath("/gestion/asistencia");
   return undefined;
 }
 
@@ -119,5 +119,5 @@ export async function reopenDay(date: string) {
     db.workDay.update({ where: { id: day.id }, data: { status: "OPEN", closedAt: null } }),
     db.tipShare.deleteMany({ where: { workDayId: day.id } }),
   ]);
-  revalidatePath("/asistencia");
+  revalidatePath("/gestion/asistencia");
 }

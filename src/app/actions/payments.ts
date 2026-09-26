@@ -43,8 +43,8 @@ export async function markPaid(employeeId: string, from: string, to: string, exp
       amount: toDecimalString(e.total, CURRENCY.decimals),
     },
   });
-  revalidatePath("/pagos");
-  revalidatePath("/");
+  revalidatePath("/gestion/pagos");
+  revalidatePath("/gestion");
   return { ok: true, count: 1 };
 }
 
@@ -69,8 +69,8 @@ export async function markAllPaid(from: string, to: string, expectedPending: num
       amount: toDecimalString(e.total, CURRENCY.decimals),
     })),
   });
-  revalidatePath("/pagos");
-  revalidatePath("/");
+  revalidatePath("/gestion/pagos");
+  revalidatePath("/gestion");
   return { ok: true, count: payable.length };
 }
 
@@ -94,8 +94,8 @@ export async function settlePaymentDifference(id: string, expectedCurrent: numbe
   }
 
   await db.payment.update({ where: { id }, data: { amount: toDecimalString(current, CURRENCY.decimals) } });
-  revalidatePath("/pagos");
-  revalidatePath("/");
+  revalidatePath("/gestion/pagos");
+  revalidatePath("/gestion");
   return { ok: true };
 }
 
@@ -104,7 +104,7 @@ export async function deletePayment(id: string): Promise<ActionResult> {
   await verifySession();
   const { count } = await db.payment.deleteMany({ where: { id } });
   if (count === 0) return { ok: false, error: "Ese pago ya no existe." };
-  revalidatePath("/pagos");
-  revalidatePath("/");
+  revalidatePath("/gestion/pagos");
+  revalidatePath("/gestion");
   return { ok: true };
 }

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { addDays, isISODate } from "@/lib/dates";
 
 // Sin prefetch: abrir la página de un día lo crea en la BD, y no debe pasar solo por mostrar el enlace.
-const href = (date: string) => `/asistencia?fecha=${date}`;
+const href = (date: string) => `/gestion/asistencia?fecha=${date}`;
 
 export function DateNav({ date, today }: { date: string; today: string }) {
   const router = useRouter();

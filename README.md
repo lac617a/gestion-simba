@@ -52,7 +52,7 @@ Abre http://localhost:3000 y entra con el admin.
 
 ```
 prisma/schema.prisma        modelos
-src/proxy.ts                redirección optimista a /login
+src/proxy.ts                redirección optimista a /gestion/login (solo rutas /gestion)
 src/lib/session.ts          cookie de sesión firmada (JWT)
 src/lib/dal.ts              verifySession(): usar en cada página y Server Action
 src/lib/employees.ts        validación y helpers de empleados
@@ -69,8 +69,9 @@ src/lib/reports.ts          reportes de ventas, propinas y asistencia
 src/lib/csv.ts              armado de CSV para Excel en español
 src/components/             selector de periodo y piezas compartidas de reportes
 src/app/actions/            Server Actions (auth, empleados, asistencia, días libres, cierre)
-src/app/login/              pantalla de login
-src/app/(app)/              pantallas autenticadas (layout con navegación)
+src/app/page.tsx            página pública (/)
+src/app/gestion/login/      pantalla de login (/gestion/login)
+src/app/gestion/(app)/      administración autenticada (/gestion, /gestion/asistencia, …)
 ```
 
 ## Probar sin tocar los datos reales

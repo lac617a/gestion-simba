@@ -34,10 +34,10 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (!result.ok) return { error: result.error, email };
 
   await createSession(result.userId, result.sessionVersion);
-  redirect("/");
+  redirect("/gestion");
 }
 
 export async function logout() {
   await deleteSession();
-  redirect("/login");
+  redirect("/gestion/login");
 }
