@@ -122,8 +122,8 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Exportar a CSV.
 
 ### RF-9 · Días de cierre y festivos
-- El restaurante **cierra los lunes** (configurable con `CLOSED_WEEKDAYS`).
-- Si el lunes es **festivo de Colombia**, el restaurante **abre** ese lunes y **cierra el martes** siguiente.
+- **Opcional.** Por defecto el restaurante **abre todos los días** (decisión del 2026-09-28: Simba trabaja de corrido). En Configuración → "Días de cierre (opcional)" se puede marcar uno o más días de cierre semanal.
+- Solo si hay días de cierre: cuando un día de cierre es **festivo de Colombia**, el restaurante **abre** ese día y **cierra el siguiente** (ej. lunes festivo → cierra el martes). Sin días de cierre, esta regla no aplica y no se muestra.
 - Festivos calculados automáticamente (Ley 51 de 1983: fijos, trasladados al lunes y los que dependen de la Pascua).
 - En un día de cierre no hay asistencia ni cierre que registrar, y Pagos/Reportes no lo cuentan como "día sin cerrar".
 - En un lunes festivo, el descanso fijo de lunes de los empleados no aplica (quedan Pendiente).
@@ -325,7 +325,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F3b ✅ | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
 | F4 ✅ | Pantalla "Hoy", reportes y exportación CSV. |
 | F5 ✅ | Deploy en Vercel + BD en producción. |
-| F6 ✅ | Días de cierre (lunes) y festivos de Colombia, con excepciones manuales (RF-9). |
+| F6 ✅ | Días de cierre (opcionales) y festivos de Colombia, con excepciones manuales (RF-9). |
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 | F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |

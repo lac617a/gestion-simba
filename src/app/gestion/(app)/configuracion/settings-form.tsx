@@ -75,7 +75,7 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
       </div>
 
       <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-medium">El restaurante cierra los</legend>
+        <legend className="mb-2 text-sm font-medium">Días de cierre (opcional)</legend>
         <div className="flex flex-wrap gap-2">
           {WEEKDAYS.map((day, i) => (
             <label key={day} className="cursor-pointer">
@@ -84,6 +84,7 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
                 name="closedWeekdays"
                 value={i}
                 defaultChecked={settings.closedWeekdays.includes(i)}
+                aria-label={`Cierra los ${day.toLowerCase()}`}
                 className="peer sr-only"
               />
               <span
@@ -96,8 +97,8 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Si ese día es festivo, el restaurante abre y cierra el día siguiente. Para días puntuales usa las excepciones en
-          Asistencia.
+          Déjalos sin marcar si el restaurante abre todos los días. Si marcas uno y cae festivo, ese día se abre y se
+          cierra el siguiente. Para cerrar un día puntual usa “Marcar como día cerrado” en Asistencia.
         </p>
       </fieldset>
 
@@ -166,9 +167,8 @@ function OpeningHoursFields({ initial }: { initial: string[] }) {
         </Button>
       )}
       <p className="text-xs text-muted-foreground">
-        Solo informativo: se muestra en Hoy y en Asistencia. Deja un día vacío si no quieres mostrar horario. En los días
-        de cierre se usa cuando el restaurante abre por festivo o excepción. “Festivos” reemplaza al horario del día si lo
-        llenas.
+        Se muestra en la página pública, en Hoy y en Asistencia. Llena todos los días en que abren; un día vacío sale sin
+        horario. “Festivos” reemplaza al horario del día si lo llenas.
       </p>
     </fieldset>
   );
