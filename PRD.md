@@ -122,12 +122,10 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Aviso si en el periodo hay días **sin cerrar** (sus pagos y propinas aún no cuentan).
 - Exportar a CSV.
 
-### RF-9 · Apertura diaria y festivos
-- El restaurante **abre de lunes a domingo, festivos incluidos** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni la regla "lunes festivo → cierra el martes".
-- Festivos calculados automáticamente (Ley 51 de 1983: fijos, trasladados al lunes y los que dependen de la Pascua).
-- Los festivos de Colombia se siguen calculando: se muestran como información y usan el horario de "Festivos" si está lleno.
+### RF-9 · Apertura diaria
+- El restaurante **abre de lunes a domingo** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni **festivos**: un festivo es un día normal con el horario de su día de la semana.
 - **Cierre puntual:** en Asistencia, "Marcar como día cerrado" (ej. 25 de diciembre) y "Abrir este día" para deshacerlo. Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero. Un día marcado como cerrado no tiene asistencia y Pagos/Reportes no lo cuentan como "día sin cerrar".
-- **Hoy** indica el horario del día y el próximo festivo.
+- **Hoy** indica el horario del día.
 
 ### RF-10 · Configuración y seguridad
 - Pantalla **Configuración** (ícono de engranaje arriba):
@@ -150,8 +148,8 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Los días sin cierre quedan como hueco; se marca el valor del mejor día; al pasar o tocar una barra se ve fecha, venta y propinas. La tabla de abajo sigue siendo el detalle.
 
 ### RF-13 · Horario de atención y día de pago
-- **Horario** (Configuración): hora de apertura y de cierre para cada día de la semana y una fila **Festivos**. Es **informativo**: se muestra en Hoy y en Asistencia. El día de trabajo sigue cambiando a medianoche (siempre cierran antes de las 12).
-  - Un día vacío no muestra horario. En festivo se usa la fila Festivos si está llena; si no, la del día. En días de cierre no se muestra; el horario de un día de cierre (ej. lunes) solo se usa si abre por festivo o excepción.
+- **Horario** (Configuración): hora de apertura y de cierre para cada día de la semana (lunes a domingo). Es **informativo**: se muestra en Hoy y en Asistencia. El día de trabajo sigue cambiando a medianoche (siempre cierran antes de las 12).
+  - Un día vacío no muestra horario. Un día marcado como cerrado no muestra horario.
   - La hora de cierre debe ser posterior a la de apertura.
 - **Día de pago** (Configuración, por defecto lunes): la semana se paga el primer día de pago desde que termina (semana lunes–domingo → se paga el lunes siguiente).
   - Hoy muestra la tarjeta **"Hoy es día de pago"** con lo que falta pagar de la semana que terminó, cuántos empleados y un botón **Ir a pagar** (abre esa semana en Pagos). Si pasa el día y sigue sin pagar: **"Pago pendiente desde…"**. Desaparece cuando todo queda marcado como pagado.
@@ -324,7 +322,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F3b ✅ | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
 | F4 ✅ | Pantalla "Hoy", reportes y exportación CSV. |
 | F5 ✅ | Deploy en Vercel + BD en producción. |
-| F6 ✅ | Festivos de Colombia y cierres puntuales (RF-9). Los días de cierre semanal se quitaron el 2026-09-28. |
+| F6 ✅ | Cierres puntuales (RF-9). Los días de cierre semanal y los festivos se quitaron el 2026-09-28. |
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 | F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |

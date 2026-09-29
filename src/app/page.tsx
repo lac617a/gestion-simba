@@ -6,7 +6,6 @@ import { BRAND_LOGO } from "@/lib/brand";
 import { PHONE_COUNTRY_CODE, today } from "@/lib/config";
 import { formatHours, hoursFor } from "@/lib/hours";
 import {
-  holidayHours,
   MAPS_DIRECTIONS_URL,
   MAPS_EMBED_URL,
   orderMessage,
@@ -59,7 +58,6 @@ export default async function HomePage() {
   const wa = whatsappNumber(settings.whatsapp, PHONE_COUNTRY_CODE);
   const orderHref = wa ? whatsappHref(wa, orderMessage(SITE.name)) : null;
   const week = weeklyHours(settings.openingHours);
-  const holiday = holidayHours(settings.openingHours);
   const hasHours = week.some((r) => r.hours);
 
   const todayLabel = !schedule.open
@@ -232,12 +230,6 @@ export default async function HomePage() {
                       <dd className="text-right">{r.hours ?? "Abierto"}</dd>
                     </div>
                   ))}
-                  {holiday && (
-                    <div className="flex justify-between gap-4 py-2.5">
-                      <dt className="font-medium">Festivos</dt>
-                      <dd className="text-right">{holiday}</dd>
-                    </div>
-                  )}
                 </dl>
               </div>
             )}

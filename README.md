@@ -62,7 +62,6 @@ src/lib/money.ts            montos en unidades enteras, parseo y formato (COP)
 src/lib/closing.ts          reglas de cierre, reparto de propinas y pago del día
 src/lib/payroll.ts          resumen de pagos por empleado
 src/lib/periods.ts          semana / quincena / mes y navegación entre periodos
-src/lib/holidays.ts         festivos de Colombia (Ley 51 de 1983 + Pascua)
 src/lib/schedule.ts         si el restaurante abre un día (abre todos los días; solo cierra un día marcado a mano)
 src/lib/reports.ts          reportes de ventas, propinas y asistencia
 src/lib/csv.ts              armado de CSV para Excel en español

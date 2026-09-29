@@ -38,11 +38,11 @@ export function parseAccountForm(formData: FormData) {
   });
 }
 
-const HOURS_ROWS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Festivos"];
+const HOURS_ROWS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 const Time = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$|^$/, { error: "Hora inválida" });
 
-/** Horario de los 7 días + festivos. Vacío = sin horario. Siempre cierran antes de medianoche. */
+/** Horario de los 7 días (0 = domingo). Vacío = sin horario. Siempre cierran antes de medianoche. */
 const OpeningHoursSchema = z
   .array(z.object({ open: Time, close: Time }))
   .length(HOURS_ROWS.length)

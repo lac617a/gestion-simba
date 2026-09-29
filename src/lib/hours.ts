@@ -1,9 +1,6 @@
 import { weekdayOf } from "@/lib/dates";
 import type { DaySchedule } from "@/lib/schedule";
 
-/** Índice de la fila "Festivos" en `openingHours` (0–6 son los días de la semana). */
-export const HOLIDAY_ROW = 7;
-
 /** Horario de atención de un día. Informativo: el día de trabajo sigue cambiando a medianoche. */
 export type OpeningHours = { open: string; close: string };
 
@@ -19,14 +16,10 @@ export function serializeHours(h: OpeningHours | null) {
   return h ? `${h.open}-${h.close}` : "";
 }
 
-/**
- * Horario que aplica a un día abierto: el de festivos si es festivo y hay uno
- * configurado; si no, el de su día de la semana. Día cerrado → null.
- */
+/** Horario de un día: el de su día de la semana. Día marcado como cerrado → null. */
 export function hoursFor(schedule: DaySchedule, openingHours: string[]): OpeningHours | null {
   if (!schedule.open) return null;
-  const holiday = schedule.holiday ? parseHours(openingHours[HOLIDAY_ROW]) : null;
-  return holiday ?? parseHours(openingHours[weekdayOf(schedule.date)]);
+  return parseHours(openingHours[weekdayOf(schedule.date)]);
 }
 
 const timeFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", hour: "numeric", minute: "2-digit" });

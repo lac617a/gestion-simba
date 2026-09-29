@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { MENU } from "./menu";
-import { formatPesos, holidayHours, orderMessage, reservationRequestMessage, weeklyHours } from "./public-site";
+import { formatPesos, orderMessage, reservationRequestMessage, weeklyHours } from "./public-site";
 
 const norm = (s: string | null) => s?.replace(/\s/g, " ") ?? null; // Intl usa espacios finos
 
 describe("horario de la semana", () => {
-  // lunes a viernes 18–23, sábado y domingo 12–23, festivos 12–23 (como en producción)
-  const HOURS = ["12:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "12:00-23:00", "12:00-23:00"];
+  // lunes a viernes 18–23, sábado y domingo 12–23 (como en producción)
+  const HOURS = ["12:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "12:00-23:00"];
 
   it("agrupa días seguidos iguales, de lunes a domingo", () => {
     expect(weeklyHours(HOURS).map((r) => ({ ...r, hours: norm(r.hours) }))).toEqual([
@@ -23,11 +23,6 @@ describe("horario de la semana", () => {
     const hours = ["", "", "12:00-22:00", "12:00-22:00", "11:00-23:00", "11:00-23:00", "11:00-23:00"];
     expect(weeklyHours(hours).map((r) => r.days)).toEqual(["Lunes", "Martes y miércoles", "Jueves a sábado", "Domingo"]);
     expect(weeklyHours(hours).at(-1)).toEqual({ days: "Domingo", hours: null });
-  });
-
-  it("horario de festivos", () => {
-    expect(norm(holidayHours(HOURS))).toBe("12:00 p. m. a 11:00 p. m.");
-    expect(holidayHours([])).toBeNull();
   });
 });
 

@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WEEKDAYS } from "@/lib/employees";
-import { HOLIDAY_ROW, parseHours } from "@/lib/hours";
+import { parseHours } from "@/lib/hours";
 import type { AppSettings } from "@/lib/settings";
 
 const SELECT_CLASS =
   "h-9 w-full max-w-48 rounded-lg border bg-background px-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
-/** Filas del horario empezando el lunes; los festivos al final. */
-const HOURS_ORDER = [1, 2, 3, 4, 5, 6, 0, HOLIDAY_ROW];
-const rowLabel = (i: number) => (i === HOLIDAY_ROW ? "Festivos" : WEEKDAYS[i]);
+/** Filas del horario, de lunes a domingo. */
+const HOURS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const rowLabel = (i: number) => WEEKDAYS[i];
 
 export function SettingsForm({ settings }: { settings: AppSettings }) {
   const [state, action, pending] = useActionState(updateSettings, undefined);
@@ -92,7 +92,7 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
 /** Horario de atención por día (informativo). Vacío = sin horario. */
 function OpeningHoursFields({ initial }: { initial: string[] }) {
   const [hours, setHours] = useState(() =>
-    Array.from({ length: HOLIDAY_ROW + 1 }, (_, i) => parseHours(initial[i]) ?? { open: "", close: "" })
+    Array.from({ length: 7 }, (_, i) => parseHours(initial[i]) ?? { open: "", close: "" })
   );
   const set = (i: number, key: "open" | "close", value: string) =>
     setHours((h) => h.map((row, j) => (j === i ? { ...row, [key]: value } : row)));
@@ -139,8 +139,7 @@ function OpeningHoursFields({ initial }: { initial: string[] }) {
         </Button>
       )}
       <p className="text-xs text-muted-foreground">
-        Se muestra en la página pública, en Hoy y en Asistencia. Llena todos los días en que abren; un día vacío sale sin
-        horario. “Festivos” reemplaza al horario del día si lo llenas.
+        Se muestra en la página pública, en Hoy y en Asistencia. Llena todos los días; un día vacío sale sin horario.
       </p>
     </fieldset>
   );

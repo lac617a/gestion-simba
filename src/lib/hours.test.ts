@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { formatHours, hoursFor, parseHours, serializeHours } from "./hours";
 import { daySchedule } from "./schedule";
 
-// Lunes a jueves 12–22, viernes y sábado 12–23:30, domingo 12–17, festivos 12–18.
+// Lunes a jueves 12–22, viernes y sábado 12–23:30, domingo 12–17.
+// (Un 8.º valor viejo de "festivos" en la BD se ignora.)
 const HOURS = ["12:00-17:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-23:30", "12:00-23:30", "12:00-18:00"];
 
 describe("horario de atención", () => {
@@ -25,10 +26,9 @@ describe("horario de atención", () => {
     expect(hoursFor(daySchedule("2026-12-25", false), HOURS)).toBeNull();
   });
 
-  it("festivo: usa la fila de festivos; sin ella, la del día", () => {
-    expect(hoursFor(daySchedule("2026-10-12"), HOURS)).toEqual({ open: "12:00", close: "18:00" }); // lunes festivo
-    const noHoliday = HOURS.slice(0, 7);
-    expect(hoursFor(daySchedule("2026-12-08"), noHoliday)).toEqual({ open: "12:00", close: "22:00" }); // martes festivo
+  it("un antiguo festivo usa el horario de su día de la semana", () => {
+    expect(hoursFor(daySchedule("2026-10-12"), HOURS)).toEqual({ open: "12:00", close: "22:00" }); // lunes
+    expect(hoursFor(daySchedule("2026-12-08"), HOURS)).toEqual({ open: "12:00", close: "22:00" }); // martes
   });
 
   it("sin horario configurado", () => {

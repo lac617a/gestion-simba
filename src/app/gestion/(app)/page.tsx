@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
-  CalendarHeartIcon,
   CircleCheckIcon,
   ClockIcon,
   DoorClosedIcon,
@@ -17,9 +16,8 @@ import { Button } from "@/components/ui/button";
 import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
-import { addDays, formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/lib/dates";
+import { formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/lib/dates";
 import { WEEKDAYS } from "@/lib/employees";
-import { nextHoliday } from "@/lib/holidays";
 import { formatHours, hoursFor } from "@/lib/hours";
 import { formatMoney } from "@/lib/money";
 import { payDue, type PayDue } from "@/lib/payday";
@@ -42,7 +40,6 @@ export default async function TodayPage() {
   const settings = await getSettings();
   const week = weekRange(date, settings.payWeekStart);
   const due = payDue(date, settings.payWeekStart, settings.payDay);
-  const holiday = nextHoliday(addDays(date, 1));
   const [view, payroll, duePayroll, reports, reservations] = await Promise.all([
     getDayView(date),
     getPayroll(week),
@@ -66,7 +63,6 @@ export default async function TodayPage() {
         <h1 className="text-2xl font-semibold">Hoy</h1>
         <p className="text-sm text-muted-foreground first-letter:uppercase">
           {formatLongDate(date)}
-          {view.schedule.holiday && ` · Festivo: ${view.schedule.holiday}`}
         </p>
         {hours && (
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -173,15 +169,6 @@ export default async function TodayPage() {
           {absent.length > 0 && <PeopleGroup title="Faltaron" rows={absent} />}
         </section>
       )}
-
-      {/* Próximo festivo */}
-      <p className="flex items-start gap-2 text-sm text-muted-foreground">
-        <CalendarHeartIcon className="mt-0.5 size-4 shrink-0" />
-        <span>
-          Próximo festivo: <span className="font-medium text-foreground first-letter:uppercase">{formatDayShort(holiday.date)}</span> ·{" "}
-          {holiday.name}
-        </span>
-      </p>
 
       {/* La semana */}
       <section className="grid gap-3">

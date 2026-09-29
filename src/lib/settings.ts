@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 export type AppSettings = {
   payWeekStart: number;
   payDay: number;
-  /** 8 textos "HH:MM-HH:MM" (0–6 = domingo…sábado, 7 = festivos); "" = sin horario */
+  /** 7 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado); "" = sin horario. Un 8.º valor viejo (festivos) se ignora. */
   openingHours: string[];
   /** WhatsApp del restaurante (página pública) */
   whatsapp: string;

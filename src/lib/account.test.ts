@@ -66,7 +66,7 @@ describe("parseAccountForm", () => {
   });
 });
 
-const NO_HOURS = ["", "", "", "", "", "", "", ""];
+const NO_HOURS = ["", "", "", "", "", "", ""];
 
 function settingsForm(fields: {
   payWeekStart?: string;
@@ -114,19 +114,19 @@ describe("parseSettingsForm", () => {
   });
 
   it("horario: guarda los días llenos, vacío = sin horario", () => {
-    const hours: [string, string][] = [["12:00", "17:00"], ["", ""], ["12:00", "22:00"], ["", ""], ["", ""], ["", ""], ["", ""], ["12:00", "18:00"]];
+    const hours: [string, string][] = [["12:00", "17:00"], ["", ""], ["12:00", "22:00"], ["", ""], ["", ""], ["", ""], ["11:00", "23:30"]];
     expect(parseSettingsForm(settingsForm({ hours })).data?.openingHours).toEqual([
-      "12:00-17:00", "", "12:00-22:00", "", "", "", "", "12:00-18:00",
+      "12:00-17:00", "", "12:00-22:00", "", "", "", "11:00-23:30",
     ]);
   });
 
   it("horario: falta una hora o cierra antes de abrir", () => {
     const row = (i: number, open: string, close: string) =>
-      Array.from({ length: 8 }, (_, j): [string, string] => (j === i ? [open, close] : ["", ""]));
+      Array.from({ length: 7 }, (_, j): [string, string] => (j === i ? [open, close] : ["", ""]));
     const error = (hours: [string, string][]) => parseSettingsForm(settingsForm({ hours })).error?.issues[0].message;
 
     expect(error(row(2, "12:00", ""))).toBe("Martes: falta la hora de cierre.");
-    expect(error(row(7, "", "18:00"))).toBe("Festivos: falta la hora de apertura.");
+    expect(error(row(0, "", "18:00"))).toBe("Domingo: falta la hora de apertura.");
     expect(error(row(6, "22:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
     expect(error(row(6, "12:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
     expect(error(row(6, "12:00", "25:00"))).toBe("Hora inválida");

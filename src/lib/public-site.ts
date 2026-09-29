@@ -1,5 +1,5 @@
 import { formatDayMonth, type ISODate } from "@/lib/dates";
-import { formatHours, HOLIDAY_ROW, parseHours } from "@/lib/hours";
+import { formatHours, parseHours } from "@/lib/hours";
 import { occasionLabel } from "@/lib/reservations";
 
 /** Dirección pública del sitio (enlaces absolutos: redes, Google, sitemap). */
@@ -60,12 +60,6 @@ export function weeklyHours(openingHours: string[]): HoursRow[] {
         : `${capital(DAY_NAMES[from])} ${span === 1 ? "y" : "a"} ${DAY_NAMES[to]}`;
     return { days, hours: value || null };
   });
-}
-
-/** Horario de festivos, si se configuró. */
-export function holidayHours(openingHours: string[]) {
-  const h = parseHours(openingHours[HOLIDAY_ROW]);
-  return h ? formatHours(h) : null;
 }
 
 export type ReservationRequest = {

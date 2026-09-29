@@ -25,7 +25,8 @@ model AppSettings {
   /// SIN USO desde 2026-09-28: el restaurante abre de lunes a domingo. Se deja la
   /// columna para no romper la versión publicada; se puede borrar en una migración futura.
   closedWeekdays    Int[]
-  /// Horario de atención, informativo: 8 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado, 7 = festivos); "" = sin horario
+  /// Horario de atención, informativo: 7 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado); "" = sin horario.
+  /// Filas guardadas antes de 2026-09-28 pueden traer un 8.º valor (festivos) que ya no se usa.
   openingHours      String[] @default([])
   /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
   payDay            Int      @default(1)
