@@ -26,7 +26,8 @@ _Última actualización: 2026-09-26_
 | F13 · Reseñas en la página pública | ✅ en producción | commit «F13: reseñas…» |
 | F14 · Puestos con pago diario fijo (configurables) | ✅ sin publicar (tiene migración) | `eeed426` |
 | Se quitan los festivos | ✅ sin publicar | `f0f553c` |
-| F15 · Doble turno (propinas por turno) | ✅ sin publicar (tiene migración) | commit «F15: doble turno…» |
+| F15 · Doble turno (propinas por turno) | ✅ sin publicar (tiene migración) | `1f78a19` |
+| F16 · Producción + menú "Más" | ✅ sin publicar (tiene migración) | commits «F16: producción…» y «Navegación: menú Más…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -62,6 +63,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F16 · Producción y menú "Más" ✅
+
+- Tablas `ProductionDay` (fecha única, nota) y `ProductionAttendance` (empleado, `basePay` guardado al registrarlo, `extraPay`); `AppSettings.productionPay` (50.000). Migración `produccion` (solo agrega).
+- Pantallas `/gestion/produccion` (historial), `/nueva` y `/[id]` (editar, eliminar). Lógica en `src/lib/production.ts`, consultas en `src/lib/production-data.ts`, acciones en `src/app/actions/production.ts`. El pago fijo se cambia en Configuración (`production-pay-form.tsx`).
+- Pagos: `PayEntry` con `kind: "production"` y `production`; `entryTotal` suma pago + propina + producción; `EmployeePayroll.productionDays/production`. `getPayroll` agrega las jornadas del periodo. CSV con columna Producción y concepto en el detalle.
+- Navegación (`nav-links.tsx`): principales Hoy/Asistencia/Reservas; secundarias en un `Menu` de Base UI ("Más"), en la barra inferior y en la superior por debajo de `lg`.
+
+---
 
 ## F15 · Doble turno ✅
 
@@ -221,7 +231,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (150).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (157).
 
 ## Notas técnicas conocidas
 

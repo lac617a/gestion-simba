@@ -1,7 +1,10 @@
 import { moneyCell, toCsv } from "@/lib/csv";
 import type { ISODate } from "@/lib/dates";
 
-/** Un día trabajado (en un día cerrado): lo que se le paga al empleado. */
+/**
+ * Lo que se le paga a un empleado por una fecha: un día trabajado (en un día
+ * cerrado: pago del día + propina) o una jornada de producción (pago fijo + excedente).
+ */
 export type PayEntry = {
   employeeId: string;
   name: string;
@@ -9,24 +12,36 @@ export type PayEntry = {
   /** Pago del día en unidades mínimas (0 si no se capturó) */
   dailyPay: number;
   tip: number;
+  /** Jornada de producción: pago fijo + excedente (solo en entradas de producción) */
+  production?: number;
+  kind?: "work" | "production";
 };
+
+/** Total de una entrada: pago del día + propina + producción. */
+export const entryTotal = (x: PayEntry) => x.dailyPay + x.tip + (x.production ?? 0);
 
 export type EmployeePayroll = {
   employeeId: string;
   name: string;
+  /** Días trabajados (sin contar producción) */
   days: number;
   pay: number;
   tips: number;
+  /** Jornadas de producción y lo que suman */
+  productionDays: number;
+  production: number;
   total: number;
   entries: PayEntry[];
 };
 
+type Totals = { days: number; pay: number; tips: number; productionDays: number; production: number; total: number };
+
 export type PayrollSummary = {
   employees: EmployeePayroll[];
-  totals: { days: number; pay: number; tips: number; total: number };
+  totals: Totals;
 };
 
-/** Agrupa por empleado: días trabajados, pagos diarios + propinas = total a pagar (RF-8). */
+/** Agrupa por empleado: días trabajados, pagos diarios + propinas + producción = total a pagar (RF-8). */
 export function summarizePayroll(entries: PayEntry[]): PayrollSummary {
   const byEmployee = new Map<string, EmployeePayroll>();
   for (const e of entries) {
@@ -36,13 +51,17 @@ export function summarizePayroll(entries: PayEntry[]): PayrollSummary {
       days: 0,
       pay: 0,
       tips: 0,
+      productionDays: 0,
+      production: 0,
       total: 0,
       entries: [],
     };
-    acc.days++;
+    if (e.kind === "production") acc.productionDays++;
+    else acc.days++;
     acc.pay += e.dailyPay;
     acc.tips += e.tip;
-    acc.total += e.dailyPay + e.tip;
+    acc.production += e.production ?? 0;
+    acc.total += entryTotal(e);
     acc.entries.push(e);
     byEmployee.set(e.employeeId, acc);
   }
@@ -52,8 +71,15 @@ export function summarizePayroll(entries: PayEntry[]): PayrollSummary {
     .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
 
   const totals = employees.reduce(
-    (t, e) => ({ days: t.days + e.days, pay: t.pay + e.pay, tips: t.tips + e.tips, total: t.total + e.total }),
-    { days: 0, pay: 0, tips: 0, total: 0 }
+    (t, e): Totals => ({
+      days: t.days + e.days,
+      pay: t.pay + e.pay,
+      tips: t.tips + e.tips,
+      productionDays: t.productionDays + e.productionDays,
+      production: t.production + e.production,
+      total: t.total + e.total,
+    }),
+    { days: 0, pay: 0, tips: 0, productionDays: 0, production: 0, total: 0 }
   );
   return { employees, totals };
 }
@@ -119,7 +145,7 @@ export function applyPayments(
     let pending = 0;
     let pendingDays = 0;
     for (const x of e.entries) {
-      const amount = x.dailyPay + x.tip;
+      const amount = entryTotal(x);
       if (own.some((p) => inside(x.date, p))) paid += amount;
       else {
         pending += amount;
@@ -130,7 +156,7 @@ export function applyPayments(
       ...p,
       currentAmount:
         p.from >= period.from && p.to <= period.to
-          ? e.entries.filter((x) => inside(x.date, p)).reduce((s, x) => s + x.dailyPay + x.tip, 0)
+          ? e.entries.filter((x) => inside(x.date, p)).reduce((s, x) => s + entryTotal(x), 0)
           : null,
     }));
     // "Pagado" es lo que realmente se pagó: si los días cambiaron después de
@@ -171,13 +197,24 @@ export function payrollCsv(summary: PayrollWithPayments, from: ISODate, to: ISOD
   return toCsv([
     ["Periodo", `${from} a ${to}`],
     [],
-    ["Empleado", "Días trabajados", "Pagos diarios", "Propinas", "Total", "Pagado", "Pendiente", "Estado"],
-    ...summary.employees.map((e) => [e.name, e.days, m(e.pay), m(e.tips), m(e.total), m(e.paid), m(e.pending), estado(e)]),
+    ["Empleado", "Días trabajados", "Pagos diarios", "Propinas", "Producción", "Total", "Pagado", "Pendiente", "Estado"],
+    ...summary.employees.map((e) => [
+      e.name,
+      e.days,
+      m(e.pay),
+      m(e.tips),
+      m(e.production),
+      m(e.total),
+      m(e.paid),
+      m(e.pending),
+      estado(e),
+    ]),
     [
       "TOTAL",
       summary.totals.days,
       m(summary.totals.pay),
       m(summary.totals.tips),
+      m(summary.totals.production),
       m(summary.totals.total),
       m(summary.totals.paid),
       m(summary.totals.pending),
@@ -185,9 +222,17 @@ export function payrollCsv(summary: PayrollWithPayments, from: ISODate, to: ISOD
     ],
     [],
     ["Detalle"],
-    ["Empleado", "Fecha", "Pago del día", "Propina", "Total"],
+    ["Empleado", "Fecha", "Concepto", "Pago del día", "Propina", "Producción", "Total"],
     ...summary.employees.flatMap((e) =>
-      e.entries.map((x) => [e.name, x.date, m(x.dailyPay), m(x.tip), m(x.dailyPay + x.tip)])
+      e.entries.map((x) => [
+        e.name,
+        x.date,
+        x.kind === "production" ? "Producción" : "Día trabajado",
+        m(x.dailyPay),
+        m(x.tip),
+        m(x.production ?? 0),
+        m(entryTotal(x)),
+      ])
     ),
   ]);
 }

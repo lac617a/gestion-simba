@@ -71,7 +71,11 @@ export function EmployeePayActions({ employee: e, period, periodLabel, currency,
             disabled={pending}
             label={`Marcar pagado · ${money(e.total)}`}
             title={`¿Registrar el pago a ${e.name}?`}
-            description={`${money(e.total)} por ${e.days} ${e.days === 1 ? "día" : "días"} trabajados (${periodLabel}).`}
+            description={`${money(e.total)} por ${e.days} ${e.days === 1 ? "día" : "días"} trabajados${
+              e.productionDays > 0
+                ? ` y ${e.productionDays} ${e.productionDays === 1 ? "jornada" : "jornadas"} de producción`
+                : ""
+            } (${periodLabel}).`}
             unclosedDays={unclosedDays}
             onConfirm={pay}
           />

@@ -9,6 +9,7 @@ import { getJobPositions } from "@/lib/job-positions-data";
 import { getSettings } from "@/lib/settings";
 import { AccountForm } from "./account-form";
 import { JobPositionsForm } from "./job-positions-form";
+import { ProductionPayForm } from "./production-pay-form";
 import { LogoutEverywhereButton } from "./logout-everywhere";
 import { SettingsForm } from "./settings-form";
 
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
         description="Los puestos que se eligen al registrar un empleado y lo que se le paga por día trabajado."
       >
         <JobPositionsForm positions={positions} currency={CURRENCY} />
+        <ProductionPayForm amount={settings.productionPay} currency={CURRENCY} />
       </Section>
 
       <Section title="Cuenta" description="Correo y contraseña para entrar. Siempre se pide la contraseña actual.">

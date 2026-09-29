@@ -44,11 +44,14 @@ describe("summarizePayroll", () => {
       ["Bruno", 1, 80_000, 30_000, 110_000],
     ]);
     expect(s.employees[0].entries.map((x) => x.date)).toEqual(["2026-09-21", "2026-09-23"]);
-    expect(s.totals).toEqual({ days: 3, pay: 230_000, tips: 95_000, total: 325_000 });
+    expect(s.totals).toEqual({ days: 3, pay: 230_000, tips: 95_000, productionDays: 0, production: 0, total: 325_000 });
   });
 
   it("sin datos → vacío", () => {
-    expect(summarizePayroll([])).toEqual({ employees: [], totals: { days: 0, pay: 0, tips: 0, total: 0 } });
+    expect(summarizePayroll([])).toEqual({
+      employees: [],
+      totals: { days: 0, pay: 0, tips: 0, productionDays: 0, production: 0, total: 0 },
+    });
   });
 });
 
@@ -130,12 +133,49 @@ describe("payrollCsv", () => {
       0
     );
     expect(csv.startsWith("﻿")).toBe(true);
-    expect(csv).toContain('"Ana ""La jefa""";1;70000;25000;95000;0;95000;Pendiente');
-    expect(csv).toContain("TOTAL;1;70000;25000;95000;0;95000;");
+    expect(csv).toContain('"Ana ""La jefa""";1;70000;25000;0;95000;0;95000;Pendiente');
+    expect(csv).toContain("TOTAL;1;70000;25000;0;95000;0;95000;");
   });
 
   it("con centavos usa coma decimal", () => {
     const csv = payrollCsv(view([{ employeeId: "a", name: "Ana", date: "2026-09-21", dailyPay: 12_550, tip: 0 }]), "2026-09-21", "2026-09-27", 2);
-    expect(csv).toContain("Ana;1;125,50;0,00;125,50;0,00;125,50;Pendiente");
+    expect(csv).toContain("Ana;1;125,50;0,00;0,00;125,50;0,00;125,50;Pendiente");
+  });
+});
+
+describe("producción en el pago", () => {
+  const work = (date: string, dailyPay: number, tip: number): PayEntry => ({ employeeId: "a", name: "Ana", date, dailyPay, tip });
+  const prod = (date: string, amount: number): PayEntry => ({
+    employeeId: "a",
+    name: "Ana",
+    date,
+    dailyPay: 0,
+    tip: 0,
+    production: amount,
+    kind: "production",
+  });
+
+  it("se suma al total pero no cuenta como día trabajado", () => {
+    const s = summarizePayroll([work("2026-09-21", 60_000, 20_000), prod("2026-09-22", 50_000), prod("2026-09-24", 70_000)]);
+    expect(s.employees[0]).toMatchObject({ days: 1, productionDays: 2, production: 120_000, total: 200_000 });
+    expect(s.totals).toMatchObject({ days: 1, productionDays: 2, production: 120_000, total: 200_000 });
+  });
+
+  it("un pago de la semana la cubre; si se agrega después, queda por pagar", () => {
+    const period = { from: "2026-09-21", to: "2026-09-27" };
+    const payment = { id: "p", employeeId: "a", from: period.from, to: period.to, amount: 80_000, paidAt: "", note: null };
+    const r = applyPayments(summarizePayroll([work("2026-09-21", 60_000, 20_000), prod("2026-09-22", 50_000)]), [payment], period);
+    expect(r.employees[0]).toMatchObject({ paid: 80_000, pending: 50_000 });
+  });
+
+  it("CSV con columna y detalle de producción", () => {
+    const csv = payrollCsv(
+      applyPayments(summarizePayroll([prod("2026-09-22", 50_000)]), [], { from: "2026-09-21", to: "2026-09-27" }),
+      "2026-09-21",
+      "2026-09-27",
+      0
+    );
+    expect(csv).toContain("Ana;0;0;0;50000;50000;0;50000;Pendiente");
+    expect(csv).toContain("Ana;2026-09-22;Producción;0;0;50000;50000");
   });
 });

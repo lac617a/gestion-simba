@@ -20,6 +20,9 @@ export const DEFAULT_PAY_WEEK_START = (() => {
 export const DEFAULT_DOUBLE_SHIFT_WEEKDAYS = [0, 6];
 export const DEFAULT_SHIFT_HOURS = ["11:00-16:00", "17:30-23:30"];
 
+/** Pago fijo por jornada de producción, en pesos (se cambia en Configuración). */
+export const DEFAULT_PRODUCTION_PAY = 50_000;
+
 /** WhatsApp del restaurante para la página pública (se cambia en Configuración). */
 export const DEFAULT_WHATSAPP = "3012168273";
 

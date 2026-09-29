@@ -8,6 +8,7 @@ import { verifySession } from "@/lib/dal";
 import { formatDateRange, formatDayShort } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
+import { entryTotal } from "@/lib/payroll";
 import { getPayroll } from "@/lib/payroll-data";
 import { EmployeePayActions, MarkAllPaidButton } from "./pay-actions";
 
@@ -43,7 +44,9 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
         <Stat
           label="Total del periodo"
           value={money(summary.totals.total)}
-          hint={`${money(summary.totals.pay)} + ${money(summary.totals.tips)} propinas`}
+          hint={`${money(summary.totals.pay)} + ${money(summary.totals.tips)} propinas${
+            summary.totals.production > 0 ? ` + ${money(summary.totals.production)} producción` : ""
+          }`}
         />
         <Stat label="Pagado" value={money(summary.totals.paid)} />
         <Stat label="Por pagar" value={money(summary.totals.pending)} strong />
@@ -59,7 +62,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
 
       {summary.employees.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
-          No hay días trabajados en días cerrados de este periodo.
+          No hay días trabajados (en días cerrados) ni jornadas de producción en este periodo.
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">
@@ -72,6 +75,13 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
                     <div className="truncate font-medium">{e.name}</div>
                     <div className="text-sm text-muted-foreground tabular-nums">
                       {e.days} {e.days === 1 ? "día" : "días"} · {money(e.pay)} + propinas {money(e.tips)}
+                      {e.productionDays > 0 && (
+                        <>
+                          {" "}
+                          + producción {money(e.production)} ({e.productionDays}{" "}
+                          {e.productionDays === 1 ? "jornada" : "jornadas"})
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -90,18 +100,31 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {e.entries.map((x) => (
-                        <tr key={x.date}>
-                          <td className="py-1.5 whitespace-nowrap">
-                            <Link href={`/gestion/asistencia?fecha=${x.date}`} prefetch={false} className="hover:underline">
-                              {formatDayShort(x.date)}
-                            </Link>
-                          </td>
-                          <td className="py-1.5 text-right">{money(x.dailyPay)}</td>
-                          <td className="py-1.5 text-right">{money(x.tip)}</td>
-                          <td className="py-1.5 text-right font-medium">{money(x.dailyPay + x.tip)}</td>
-                        </tr>
-                      ))}
+                      {e.entries.map((x) =>
+                        x.kind === "production" ? (
+                          <tr key={`produccion-${x.date}`}>
+                            <td className="py-1.5 whitespace-nowrap">
+                              <Link href="/gestion/produccion" className="hover:underline">
+                                {formatDayShort(x.date)} · Producción
+                              </Link>
+                            </td>
+                            <td className="py-1.5 text-right">{money(x.production ?? 0)}</td>
+                            <td className="py-1.5 text-right text-muted-foreground">—</td>
+                            <td className="py-1.5 text-right font-medium">{money(entryTotal(x))}</td>
+                          </tr>
+                        ) : (
+                          <tr key={x.date}>
+                            <td className="py-1.5 whitespace-nowrap">
+                              <Link href={`/gestion/asistencia?fecha=${x.date}`} prefetch={false} className="hover:underline">
+                                {formatDayShort(x.date)}
+                              </Link>
+                            </td>
+                            <td className="py-1.5 text-right">{money(x.dailyPay)}</td>
+                            <td className="py-1.5 text-right">{money(x.tip)}</td>
+                            <td className="py-1.5 text-right font-medium">{money(entryTotal(x))}</td>
+                          </tr>
+                        )
+                      )}
                     </tbody>
                   </table>
                 </div>

@@ -1,13 +1,16 @@
 import "server-only";
 import { cache } from "react";
 import {
+  CURRENCY,
   DEFAULT_DOUBLE_SHIFT_WEEKDAYS,
   DEFAULT_PAY_DAY,
   DEFAULT_PAY_WEEK_START,
+  DEFAULT_PRODUCTION_PAY,
   DEFAULT_SHIFT_HOURS,
   DEFAULT_WHATSAPP,
 } from "@/lib/config";
 import { db } from "@/lib/db";
+import { fromDecimal } from "@/lib/money";
 
 export type AppSettings = {
   payWeekStart: number;
@@ -23,6 +26,8 @@ export type AppSettings = {
   doubleShiftWeekdays: number[];
   /** ["HH:MM-HH:MM" de la mañana, "HH:MM-HH:MM" de la tarde] */
   shiftHours: string[];
+  /** Pago fijo por jornada de producción (unidades mínimas) */
+  productionPay: number;
 };
 
 /** Ajustes del restaurante (Configuración). Sin fila guardada, los del .env. Una consulta por petición. */
@@ -38,6 +43,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         googleReviewCount: row.googleReviewCount,
         doubleShiftWeekdays: row.doubleShiftWeekdays,
         shiftHours: row.shiftHours,
+        productionPay: fromDecimal(row.productionPay, CURRENCY.decimals)!,
       }
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
@@ -48,5 +54,6 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         googleReviewCount: 243,
         doubleShiftWeekdays: DEFAULT_DOUBLE_SHIFT_WEEKDAYS,
         shiftHours: DEFAULT_SHIFT_HOURS,
+        productionPay: DEFAULT_PRODUCTION_PAY * 10 ** CURRENCY.decimals,
       };
 });

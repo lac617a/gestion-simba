@@ -94,6 +94,17 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Vista previa del reparto antes de cerrar.
 - El reparto se guarda como registro (snapshot) al cerrar; cambios posteriores en empleados no lo alteran.
 
+### RF-19 · Producción (preparación)
+- Uno o dos días a la semana (cualquier día) algunos empleados ayudan a preparar todo. Pantalla **Producción** (menú "Más"): historial de jornadas con fecha, nota, quién asistió, excedentes y total.
+- Cada asistente cobra un **pago fijo** (Configuración → Puestos y pago diario → "Producción: pago por asistir"; inicial **$50.000**) más un **excedente** opcional por persona.
+- El pago fijo se guarda en cada asistente al registrarlo: si luego cambia en Configuración, las jornadas pasadas no cambian (al editar una jornada, los que ya estaban conservan el suyo).
+- Una jornada por fecha. Se puede editar (fecha, nota, asistentes, excedentes) y eliminar.
+- Se **suma al pago semanal** en Pagos (total del periodo, por empleado "+ producción", detalle y CSV con columna Producción); si se registra después de marcar pagada la semana, la diferencia queda por pagar.
+
+### RF-20 · Navegación
+- Celular: barra inferior con **Hoy · Asistencia · Reservas · Más**; "Más" abre Producción, Pagos, Reportes y Empleados (la pestaña muestra el nombre de la sección abierta).
+- Pantallas medianas: igual en la barra superior ("Más ▾"); pantallas anchas: todo a la vista.
+
 ### RF-18 · Doble turno (uso interno de empleados)
 - En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
@@ -340,6 +351,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F13 ✅ | Reseñas en la página pública, administradas en /gestion/resenas (RF-17). |
 | F14 ✅ | Puestos con pago diario fijo, configurables (RF-7). |
 | F15 ✅ | Doble turno con propinas por turno (RF-18). |
+| F16 ✅ | Producción con pago fijo + excedente en el pago semanal (RF-19) y menú "Más" (RF-20). |
 
 ## 11. Preguntas abiertas
 

@@ -39,6 +39,8 @@ model AppSettings {
   doubleShiftWeekdays Int[]    @default([0, 6])
   /// Horario de cada turno: ["HH:MM-HH:MM" de la mañana, "HH:MM-HH:MM" de la tarde] (informativo)
   shiftHours          String[] @default(["11:00-16:00", "17:30-23:30"])
+  /// Pago fijo por asistir a una jornada de producción (el excedente va aparte)
+  productionPay       Decimal  @default(50000) @db.Decimal(14, 2)
   updatedAt           DateTime @updatedAt
 }
 
@@ -77,23 +79,24 @@ enum DayStatus {
 }
 
 model Employee {
-  id            String       @id @default(cuid())
-  name          String
+  id                    String                 @id @default(cuid())
+  name                  String
   /// SIN USO desde 2026-09-28 (era texto libre); el puesto está en jobPosition.
-  position      String?
-  jobPositionId String?
-  jobPosition   JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
-  phone         String?
-  hireDate      DateTime?    @db.Date
+  position              String?
+  jobPositionId         String?
+  jobPosition           JobPosition?           @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+  phone                 String?
+  hireDate              DateTime?              @db.Date
   /// Días de descanso fijo: 0 = domingo ... 6 = sábado
-  restDays      Int[]
-  active        Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  attendances   Attendance[]
-  timeOff       TimeOff[]
-  tipShares     TipShare[]
-  payments      Payment[]
+  restDays              Int[]
+  active                Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  attendances           Attendance[]
+  timeOff               TimeOff[]
+  tipShares             TipShare[]
+  payments              Payment[]
+  productionAttendances ProductionAttendance[]
 
   @@index([active, name])
 }
@@ -245,4 +248,31 @@ model JobPosition {
   sortOrder Int        @default(0)
   updatedAt DateTime   @updatedAt
   employees Employee[]
+}
+
+/// Jornada de producción / preparación: uno o dos días a la semana (cualquiera) en
+/// que algunos empleados ayudan a preparar todo. Queda el historial de quién asistió.
+model ProductionDay {
+  id        String                 @id @default(cuid())
+  date      DateTime               @unique @db.Date
+  note      String?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  attendees ProductionAttendance[]
+}
+
+/// Asistente a una jornada de producción. Cobra el pago fijo + un excedente; se suma al pago semanal (Pagos).
+model ProductionAttendance {
+  id              String        @id @default(cuid())
+  productionDayId String
+  employeeId      String
+  /// Pago fijo de producción cuando se registró (se guarda: el historial no cambia si luego sube)
+  basePay         Decimal       @db.Decimal(14, 2)
+  /// Excedente (0 si no hay)
+  extraPay        Decimal       @default(0) @db.Decimal(14, 2)
+  productionDay   ProductionDay @relation(fields: [productionDayId], references: [id], onDelete: Cascade)
+  employee        Employee      @relation(fields: [employeeId], references: [id])
+
+  @@unique([productionDayId, employeeId])
+  @@index([employeeId])
 }
