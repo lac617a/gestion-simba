@@ -17,6 +17,8 @@ type Props = {
   placeholder?: string;
   invalid?: boolean;
   className?: string;
+  /** Nombre accesible cuando no hay <label> visible */
+  "aria-label"?: string;
 };
 
 /**

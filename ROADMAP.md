@@ -24,6 +24,7 @@ _Última actualización: 2026-09-26_
 | F11 · WhatsApp de confirmación + reporte de reservas | ✅ en producción | `5dc60b9` |
 | F12 · Administración en `/gestion` + página pública | ✅ en producción | `951ab6c` + commit «F12: página pública…» |
 | F13 · Reseñas en la página pública | ✅ en producción | commit «F13: reseñas…» |
+| F14 · Puestos con pago diario fijo (configurables) | ✅ sin publicar (tiene migración) | commit «F14: puestos…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -59,6 +60,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F14 · Puestos y pago diario ✅
+
+- Tabla `JobPosition` (nombre único, `dailyPay`, orden) y `Employee.jobPositionId` (FK, `onDelete: SetNull`). La migración `puestos` crea Cocinero 80.000, Mesero 60.000, Cajero 80.000, Jefe de mesa 70.000 y Bartender 80.000, y asigna el puesto a los empleados cuyo texto viejo coincidía (mesero/mesera, cocinero/cocinera, …). La columna de texto `Employee.position` queda en la BD sin uso.
+- Configuración → **Puestos y pago diario** (`job-positions-form.tsx`, acción `saveJobPositions`): agregar, renombrar, cambiar pago, reordenar por posición y quitar (solo si ningún empleado lo tiene). Validación en `src/lib/job-positions.ts` (nombres únicos sin importar mayúsculas/tildes, pago > 0).
+- Empleado: "Puesto *" es un selector con la tarifa ("Mesero · $ 60.000 por día"). Empleados sin puesto: la ficha muestra lo que tenían escrito para elegir el correcto.
+- Cierre del día: el pago sugerido es el del puesto (`suggestedPays` en `workdays.ts`); sin puesto, el último pago. Sigue siendo editable ese día.
+
+---
 
 ## F13 · Reseñas en la página pública ✅
 
@@ -197,7 +207,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (146).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (149).
 
 ## Notas técnicas conocidas
 

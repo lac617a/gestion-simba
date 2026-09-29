@@ -48,7 +48,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 ## 4. Requisitos funcionales
 
 ### RF-1 · Gestión de empleados
-- Registrar empleado con: **nombre** (obligatorio), **puesto** (mesero, cocinero, etc.), teléfono, fecha de ingreso y **día(s) de descanso fijo** semanal (0 = domingo … 6 = sábado; puede ser más de uno).
+- Registrar empleado con: **nombre** y **puesto** (obligatorios; el puesto se elige de la lista de Configuración), teléfono, fecha de ingreso y **día(s) de descanso fijo** semanal (0 = domingo … 6 = sábado; puede ser más de uno).
 - Editar cualquier dato del empleado.
 - Eliminar = **baja lógica** (`activo = false`). El empleado deja de aparecer en la asistencia diaria, pero su historial de asistencias y propinas se conserva. Se puede reactivar.
 - Listado con búsqueda por nombre y filtro Activos / Inactivos / Todos.
@@ -109,8 +109,9 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 
 ### RF-7 · Pago diario
 - Aplica a **todos** los empleados.
-- En el cierre del día se escribe el **pago del día** de cada empleado que **Trabajó** (ej. $70.000 un día, $80.000 otro). No hay tarifa fija: se anota cada día.
-- Para agilizar, el campo se sugiere con el último pago registrado de ese empleado; se puede cambiar.
+- **Tarifa fija por puesto** (desde 2026-09-28). En Configuración → **Puestos y pago diario** se agregan, renombran, quitan y cambian de pago los puestos. Iniciales: Cocinero $80.000, Mesero $60.000, Cajero $80.000, Jefe de mesa $70.000, Bartender $80.000.
+- En el cierre del día, el **pago del día** de cada empleado que **Trabajó** se llena con el de su puesto; se puede ajustar ese día si hace falta (ej. media jornada). Un empleado sin puesto usa el último pago que se le hizo.
+- Cambiar la tarifa de un puesto no modifica los días ya cerrados (ahí queda lo que se pagó). Un puesto que tiene empleados no se puede quitar.
 - Es obligatorio para cerrar (puede ser $0). Los demás estados (descanso, permiso, falta, vacaciones/incapacidad) **no se pagan**.
 - Queda guardado con el cierre; al reabrir el día se puede corregir.
 

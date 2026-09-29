@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { APP_TIMEZONE, CURRENCY, DAY_CUTOFF_HOUR } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { getJobPositions } from "@/lib/job-positions-data";
 import { getSettings } from "@/lib/settings";
 import { AccountForm } from "./account-form";
+import { JobPositionsForm } from "./job-positions-form";
 import { LogoutEverywhereButton } from "./logout-everywhere";
 import { SettingsForm } from "./settings-form";
 
@@ -14,14 +16,22 @@ export const metadata: Metadata = { title: "Configuración · Gestión Simba" };
 
 export default async function SettingsPage() {
   const session = await verifySession();
-  const [user, settings] = await Promise.all([
+  const [user, settings, positions] = await Promise.all([
     db.user.findUniqueOrThrow({ where: { id: session.userId }, select: { email: true } }),
     getSettings(),
+    getJobPositions(),
   ]);
 
   return (
     <div className="grid max-w-xl gap-6">
       <h1 className="text-2xl font-semibold">Configuración</h1>
+
+      <Section
+        title="Puestos y pago diario"
+        description="Los puestos que se eligen al registrar un empleado y lo que se le paga por día trabajado."
+      >
+        <JobPositionsForm positions={positions} currency={CURRENCY} />
+      </Section>
 
       <Section title="Cuenta" description="Correo y contraseña para entrar. Siempre se pide la contraseña actual.">
         <AccountForm currentEmail={user.email} />

@@ -108,7 +108,7 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
       status: true,
       note: true,
       dailyPay: true,
-      employee: { select: { id: true, name: true, position: true } },
+      employee: { select: { id: true, name: true, jobPosition: { select: { name: true } } } },
     },
     orderBy: { employee: { name: "asc" } },
   });
@@ -116,23 +116,36 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
     attendanceId: a.id,
     employeeId: a.employee.id,
     name: a.employee.name,
-    position: a.employee.position,
+    position: a.employee.jobPosition?.name ?? null,
     status: a.status,
     note: a.note,
     dailyPay: fromDecimal(a.dailyPay, CURRENCY.decimals),
   }));
 }
 
-/** Último pago del día de cada empleado en días anteriores a `date`. */
-async function lastPays(employeeIds: string[], date: Date) {
+/**
+ * Pago del día sugerido al cerrar: el del puesto del empleado (Configuración).
+ * Si no tiene puesto, el último que se le pagó antes de `date`.
+ */
+async function suggestedPays(employeeIds: string[], date: Date): Promise<Record<string, number>> {
   if (!employeeIds.length) return {};
-  const last = await db.attendance.findMany({
-    where: { employeeId: { in: employeeIds }, dailyPay: { not: null }, workDay: { date: { lt: date } } },
-    orderBy: { workDay: { date: "desc" } },
-    distinct: ["employeeId"],
-    select: { employeeId: true, dailyPay: true },
-  });
-  return Object.fromEntries(last.map((a) => [a.employeeId, fromDecimal(a.dailyPay, CURRENCY.decimals)!]));
+  const d = CURRENCY.decimals;
+  const [employees, last] = await Promise.all([
+    db.employee.findMany({
+      where: { id: { in: employeeIds }, jobPosition: { isNot: null } },
+      select: { id: true, jobPosition: { select: { dailyPay: true } } },
+    }),
+    db.attendance.findMany({
+      where: { employeeId: { in: employeeIds }, dailyPay: { not: null }, workDay: { date: { lt: date } } },
+      orderBy: { workDay: { date: "desc" } },
+      distinct: ["employeeId"],
+      select: { employeeId: true, dailyPay: true },
+    }),
+  ]);
+  return {
+    ...Object.fromEntries(last.map((a) => [a.employeeId, fromDecimal(a.dailyPay, d)!])),
+    ...Object.fromEntries(employees.map((e) => [e.id, fromDecimal(e.jobPosition!.dailyPay, d)!])),
+  };
 }
 
 export async function getDayView(iso: ISODate): Promise<DayView> {
@@ -155,7 +168,7 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
     loadDayRows(db, id),
   ]);
   const mode = day.status === ("CLOSED" satisfies DayStatus) ? "closed" : "open";
-  const suggestedPay = mode === "open" ? await lastPays(rows.map((r) => r.employeeId), day.date) : {};
+  const suggestedPay = mode === "open" ? await suggestedPays(rows.map((r) => r.employeeId), day.date) : {};
 
   const d = CURRENCY.decimals;
   return {
@@ -181,14 +194,14 @@ async function previewRows(iso: ISODate): Promise<DayRow[]> {
   const date = isoToDate(iso);
   const employees = await db.employee.findMany({
     where: employedOn(date),
-    select: { id: true, name: true, position: true, restDays: true, timeOff: timeOffOn(date) },
+    select: { id: true, name: true, jobPosition: { select: { name: true } }, restDays: true, timeOff: timeOffOn(date) },
     orderBy: { name: "asc" },
   });
   return employees.map((e) => ({
     attendanceId: null,
     employeeId: e.id,
     name: e.name,
-    position: e.position,
+    position: e.jobPosition?.name ?? null,
     status: initialStatus(e.restDays, iso, toRanges(e.timeOff)),
     note: null,
     dailyPay: null,

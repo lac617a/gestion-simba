@@ -17,7 +17,8 @@ export const EmployeeSchema = z.object({
     .trim()
     .min(2, { error: "El nombre debe tener al menos 2 caracteres" })
     .max(80, { error: "Máximo 80 caracteres" }),
-  position: optionalText(40),
+  /** Puesto de la lista de Configuración (define el pago diario) */
+  jobPositionId: z.string().trim().min(1, { error: "Elige el puesto" }),
   phone: optionalText(20).refine((v) => v === null || /^[\d\s()+-]{7,20}$/.test(v), {
     error: "Teléfono inválido",
   }),
@@ -38,7 +39,7 @@ export type EmployeeFieldErrors = Partial<Record<keyof EmployeeInput, string[]>>
 export function parseEmployeeForm(formData: FormData) {
   return EmployeeSchema.safeParse({
     name: formData.get("name") ?? "",
-    position: formData.get("position") ?? "",
+    jobPositionId: formData.get("jobPositionId") ?? "",
     phone: formData.get("phone") ?? "",
     hireDate: formData.get("hireDate") ?? "",
     restDays: formData.getAll("restDays"),

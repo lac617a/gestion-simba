@@ -10,6 +10,8 @@ import { toDateInputValue, WEEKDAYS, WEEKDAYS_SHORT } from "@/lib/employees";
 
 type EmployeeDefaults = {
   name: string;
+  jobPositionId: string | null;
+  /** Puesto viejo escrito a mano (antes de la lista de puestos) */
   position: string | null;
   phone: string | null;
   hireDate: Date | null;
@@ -20,6 +22,8 @@ type Props = {
   action: (state: EmployeeFormState, formData: FormData) => Promise<EmployeeFormState>;
   defaults?: EmployeeDefaults;
   submitLabel: string;
+  /** Puestos de Configuración, con su etiqueta ("Mesero · $60.000 por día") */
+  positions: { id: string; label: string }[];
 };
 
 function FieldError({ messages }: { messages?: string[] }) {
@@ -27,13 +31,16 @@ function FieldError({ messages }: { messages?: string[] }) {
   return <p className="text-sm text-destructive">{messages[0]}</p>;
 }
 
-export function EmployeeForm({ action, defaults, submitLabel }: Props) {
+const SELECT_CLASS =
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm dark:bg-input/30";
+
+export function EmployeeForm({ action, defaults, submitLabel, positions }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const errors = state?.errors;
   // Tras un error se muestran los valores enviados; si no, los guardados.
   const values: EmployeeFormValues = state?.values ?? {
     name: defaults?.name ?? "",
-    position: defaults?.position ?? "",
+    jobPositionId: defaults?.jobPositionId ?? "",
     phone: defaults?.phone ?? "",
     hireDate: toDateInputValue(defaults?.hireDate),
     restDays: defaults?.restDays ?? [],
@@ -57,15 +64,28 @@ export function EmployeeForm({ action, defaults, submitLabel }: Props) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="grid content-start gap-2">
-          <Label htmlFor="position">Puesto</Label>
-          <Input
-            id="position"
-            name="position"
-            placeholder="Mesero, cocinero…"
-            defaultValue={values.position}
-            aria-invalid={!!errors?.position}
-          />
-          <FieldError messages={errors?.position} />
+          <Label htmlFor="jobPositionId">Puesto *</Label>
+          <select
+            id="jobPositionId"
+            name="jobPositionId"
+            defaultValue={values.jobPositionId}
+            aria-invalid={!!errors?.jobPositionId}
+            className={SELECT_CLASS}
+            required
+          >
+            <option value="" disabled>
+              Elige el puesto
+            </option>
+            {positions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          {defaults?.position && !defaults.jobPositionId && (
+            <p className="text-xs text-muted-foreground">Tenía escrito “{defaults.position}”: elige el puesto que corresponde.</p>
+          )}
+          <FieldError messages={errors?.jobPositionId} />
         </div>
         <div className="grid content-start gap-2">
           <Label htmlFor="phone">Teléfono</Label>
@@ -103,6 +123,7 @@ export function EmployeeForm({ action, defaults, submitLabel }: Props) {
                 name="restDays"
                 value={i}
                 defaultChecked={values.restDays.includes(i)}
+                aria-label={`Descansa los ${day.toLowerCase()}`}
                 className="peer sr-only"
               />
               <span

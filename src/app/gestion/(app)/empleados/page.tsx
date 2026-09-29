@@ -34,6 +34,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
       ...(q && { name: { contains: q, mode: "insensitive" } }),
     },
     orderBy: { name: "asc" },
+    include: { jobPosition: { select: { name: true } } },
   });
 
   const flash = params.creado ? "Empleado registrado" : params.actualizado ? "Cambios guardados" : null;
@@ -91,7 +92,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
                     {!e.active && <Badge variant="secondary">Baja</Badge>}
                   </div>
                   <div className="truncate text-sm text-muted-foreground">
-                    {[e.position, e.phone].filter(Boolean).join(" · ") || "—"}
+                    {[e.jobPosition?.name ?? "Sin puesto", e.phone].filter(Boolean).join(" · ")}
                   </div>
                 </div>
                 <div className="shrink-0 text-right text-xs text-muted-foreground">

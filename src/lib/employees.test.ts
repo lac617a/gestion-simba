@@ -10,12 +10,12 @@ function form(fields: Record<string, string | string[]>) {
 }
 
 describe("parseEmployeeForm", () => {
-  it("acepta solo el nombre y normaliza los opcionales vacíos a null", () => {
-    const result = parseEmployeeForm(form({ name: "  Ana López  ", position: "", phone: "", hireDate: "" }));
+  it("acepta nombre y puesto; normaliza los opcionales vacíos a null", () => {
+    const result = parseEmployeeForm(form({ name: "  Ana López  ", jobPositionId: "mesero", phone: "", hireDate: "" }));
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       name: "Ana López",
-      position: null,
+      jobPositionId: "mesero",
       phone: null,
       hireDate: null,
       restDays: [],
@@ -23,12 +23,12 @@ describe("parseEmployeeForm", () => {
   });
 
   it("convierte la fecha de ingreso a medianoche UTC", () => {
-    const result = parseEmployeeForm(form({ name: "Ana", hireDate: "2026-03-15" }));
+    const result = parseEmployeeForm(form({ name: "Ana", jobPositionId: "mesero", hireDate: "2026-03-15" }));
     expect(result.data?.hireDate?.toISOString()).toBe("2026-03-15T00:00:00.000Z");
   });
 
   it("ordena y quita duplicados de los días de descanso", () => {
-    const result = parseEmployeeForm(form({ name: "Ana", restDays: ["3", "0", "3"] }));
+    const result = parseEmployeeForm(form({ name: "Ana", jobPositionId: "mesero", restDays: ["3", "0", "3"] }));
     expect(result.data?.restDays).toEqual([0, 3]);
   });
 
@@ -36,7 +36,7 @@ describe("parseEmployeeForm", () => {
     const result = parseEmployeeForm(form({ name: "A", phone: "abc", restDays: ["7"] }));
     expect(result.success).toBe(false);
     const paths = result.error!.issues.map((i) => i.path[0]);
-    expect(paths).toEqual(expect.arrayContaining(["name", "phone", "restDays"]));
+    expect(paths).toEqual(expect.arrayContaining(["name", "jobPositionId", "phone", "restDays"]));
   });
 
   it("rechaza descansar los 7 días", () => {

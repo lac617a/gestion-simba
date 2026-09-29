@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createEmployee } from "@/app/actions/employees";
 import { verifySession } from "@/lib/dal";
+import { getPositionOptions } from "@/lib/job-positions-data";
 import { EmployeeForm } from "../employee-form";
 
 export const metadata: Metadata = { title: "Nuevo empleado · Gestión Simba" };
@@ -10,7 +11,7 @@ export default async function NewEmployeePage() {
   return (
     <div className="grid max-w-xl gap-6">
       <h1 className="text-2xl font-semibold">Nuevo empleado</h1>
-      <EmployeeForm action={createEmployee} submitLabel="Registrar" />
+      <EmployeeForm action={createEmployee} submitLabel="Registrar" positions={await getPositionOptions()} />
     </div>
   );
 }

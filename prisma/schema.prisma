@@ -19,22 +19,22 @@ model User {
 /// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
 /// Si no existe, se usan los valores de las variables de entorno.
 model AppSettings {
-  id             Int      @id @default(1)
+  id                Int      @id @default(1)
   /// Día en que empieza la semana de pago (0 = domingo … 6 = sábado)
-  payWeekStart   Int
+  payWeekStart      Int
   /// SIN USO desde 2026-09-28: el restaurante abre de lunes a domingo. Se deja la
   /// columna para no romper la versión publicada; se puede borrar en una migración futura.
-  closedWeekdays Int[]
+  closedWeekdays    Int[]
   /// Horario de atención, informativo: 8 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado, 7 = festivos); "" = sin horario
-  openingHours   String[] @default([])
+  openingHours      String[] @default([])
   /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
-  payDay         Int      @default(1)
+  payDay            Int      @default(1)
   /// WhatsApp del restaurante: a donde la página pública manda reservas y pedidos
-  whatsapp       String   @default("3012168273")
+  whatsapp          String   @default("3012168273")
   /// Calificación y total de opiniones en Google, escritos a mano (página pública)
-  googleRating      Float @default(4.6)
-  googleReviewCount Int   @default(243)
-  updatedAt      DateTime @updatedAt
+  googleRating      Float    @default(4.6)
+  googleReviewCount Int      @default(243)
+  updatedAt         DateTime @updatedAt
 }
 
 /// Intentos fallidos de inicio de sesión, por conexión (ip:...) o por correo (email:...).
@@ -65,20 +65,23 @@ enum DayStatus {
 }
 
 model Employee {
-  id          String       @id @default(cuid())
-  name        String
-  position    String?
-  phone       String?
-  hireDate    DateTime?    @db.Date
+  id            String       @id @default(cuid())
+  name          String
+  /// SIN USO desde 2026-09-28 (era texto libre); el puesto está en jobPosition.
+  position      String?
+  jobPositionId String?
+  jobPosition   JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+  phone         String?
+  hireDate      DateTime?    @db.Date
   /// Días de descanso fijo: 0 = domingo ... 6 = sábado
-  restDays    Int[]
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  attendances Attendance[]
-  timeOff     TimeOff[]
-  tipShares   TipShare[]
-  payments    Payment[]
+  restDays      Int[]
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  attendances   Attendance[]
+  timeOff       TimeOff[]
+  tipShares     TipShare[]
+  payments      Payment[]
 
   @@index([active, name])
 }
@@ -210,4 +213,15 @@ model Review {
   position   Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+/// Puestos del restaurante y su pago diario: se agregan, renombran y quitan en
+/// Configuración. Al cerrar el día, el pago de cada empleado se llena con el de su puesto.
+model JobPosition {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  dailyPay  Decimal    @db.Decimal(14, 2)
+  sortOrder Int        @default(0)
+  updatedAt DateTime   @updatedAt
+  employees Employee[]
 }

@@ -9,7 +9,7 @@ import { parseEmployeeForm, type EmployeeFieldErrors } from "@/lib/employees";
 
 export type EmployeeFormValues = {
   name: string;
-  position: string;
+  jobPositionId: string;
   phone: string;
   hireDate: string;
   restDays: number[];
@@ -24,11 +24,15 @@ function submittedValues(formData: FormData): EmployeeFormValues {
   const get = (k: string) => String(formData.get(k) ?? "");
   return {
     name: get("name"),
-    position: get("position"),
+    jobPositionId: get("jobPositionId"),
     phone: get("phone"),
     hireDate: get("hireDate"),
     restDays: formData.getAll("restDays").map(Number),
   };
+}
+
+async function positionExists(id: string) {
+  return (await db.jobPosition.count({ where: { id } })) > 0;
 }
 
 export async function createEmployee(
@@ -41,6 +45,9 @@ export async function createEmployee(
     return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
   }
 
+  if (!(await positionExists(parsed.data.jobPositionId))) {
+    return { errors: { jobPositionId: ["Ese puesto ya no existe"] }, values: submittedValues(formData) };
+  }
   await db.employee.create({ data: parsed.data });
   revalidatePath("/gestion/empleados");
   redirect("/gestion/empleados?creado=1");
@@ -57,6 +64,9 @@ export async function updateEmployee(
     return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
   }
 
+  if (!(await positionExists(parsed.data.jobPositionId))) {
+    return { errors: { jobPositionId: ["Ese puesto ya no existe"] }, values: submittedValues(formData) };
+  }
   const { count } = await db.employee.updateMany({ where: { id }, data: parsed.data });
   if (count === 0) return { message: "El empleado ya no existe", values: submittedValues(formData) };
 
