@@ -6,7 +6,7 @@ import type { EmployeeFormState, EmployeeFormValues } from "@/app/actions/employ
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toDateInputValue, WEEKDAYS, WEEKDAYS_SHORT } from "@/lib/employees";
+import { toDateInputValue, WEEKDAYS, WEEKDAYS_SHORT, weekdayPlural } from "@/lib/employees";
 
 type EmployeeDefaults = {
   name: string;
@@ -123,7 +123,7 @@ export function EmployeeForm({ action, defaults, submitLabel, positions }: Props
                 name="restDays"
                 value={i}
                 defaultChecked={values.restDays.includes(i)}
-                aria-label={`Descansa los ${day.toLowerCase()}`}
+                aria-label={`Descansa los ${weekdayPlural(i)}`}
                 className="peer sr-only"
               />
               <span

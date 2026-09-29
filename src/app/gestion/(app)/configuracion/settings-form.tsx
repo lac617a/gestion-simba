@@ -6,7 +6,7 @@ import { updateSettings } from "@/app/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { WEEKDAYS } from "@/lib/employees";
+import { WEEKDAYS, WEEKDAYS_SHORT, weekdayPlural } from "@/lib/employees";
 import { parseHours } from "@/lib/hours";
 import type { AppSettings } from "@/lib/settings";
 
@@ -76,6 +76,8 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
 
       <OpeningHoursFields initial={settings.openingHours} />
 
+      <DoubleShiftFields weekdays={settings.doubleShiftWeekdays} shiftHours={settings.shiftHours} />
+
       {state?.error && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}
@@ -140,6 +142,58 @@ function OpeningHoursFields({ initial }: { initial: string[] }) {
       )}
       <p className="text-xs text-muted-foreground">
         Se muestra en la página pública, en Hoy y en Asistencia. Llena todos los días; un día vacío sale sin horario.
+      </p>
+    </fieldset>
+  );
+}
+
+/** Días con doble turno y horario de cada turno (propinas por turno, pago por turno). */
+function DoubleShiftFields({ weekdays, shiftHours }: { weekdays: number[]; shiftHours: string[] }) {
+  const shifts = [0, 1].map((i) => parseHours(shiftHours[i]) ?? { open: "", close: "" });
+  return (
+    <fieldset className="grid gap-3">
+      <legend className="mb-1 text-sm font-medium">Doble turno</legend>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Días con doble turno">
+        {HOURS_ORDER.map((i) => (
+          <label key={i} className="cursor-pointer">
+            <input
+              type="checkbox"
+              name="doubleShiftWeekdays"
+              value={i}
+              defaultChecked={weekdays.includes(i)}
+              aria-label={`Doble turno los ${weekdayPlural(i)}`}
+              className="peer sr-only"
+            />
+            <span
+              title={WEEKDAYS[i]}
+              className="inline-flex h-9 min-w-12 items-center justify-center rounded-lg border px-3 text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50"
+            >
+              {WEEKDAYS_SHORT[i]}
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="grid grid-cols-[5.5rem_1fr_1fr] items-center gap-x-2 gap-y-1.5 text-sm">
+        <span />
+        <span className="text-xs text-muted-foreground">Empieza</span>
+        <span className="text-xs text-muted-foreground">Termina</span>
+        {["Mañana", "Tarde"].map((label, i) => (
+          <div key={label} className="contents">
+            <label htmlFor={`shiftOpen${i}`}>{label}</label>
+            <Input id={`shiftOpen${i}`} name={`shiftOpen${i}`} type="time" defaultValue={shifts[i].open} required />
+            <Input
+              name={`shiftClose${i}`}
+              type="time"
+              defaultValue={shifts[i].close}
+              aria-label={`${label}: termina`}
+              required
+            />
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Esos días hay turno de mañana y de tarde: cada empleado que trabajó se marca en Mañana, Tarde o Ambos. Las
+        propinas se reparten por turno y el pago es la tarifa del puesto por cada turno (Ambos = doble).
       </p>
     </fieldset>
   );

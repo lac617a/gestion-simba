@@ -16,6 +16,10 @@ export const DEFAULT_PAY_WEEK_START = (() => {
   return Number.isInteger(n) && n >= 0 && n <= 6 ? n : 1;
 })();
 
+/** Doble turno: días (sábado y domingo) y horario de cada turno. Se cambian en Configuración. */
+export const DEFAULT_DOUBLE_SHIFT_WEEKDAYS = [0, 6];
+export const DEFAULT_SHIFT_HOURS = ["11:00-16:00", "17:30-23:30"];
+
 /** WhatsApp del restaurante para la página pública (se cambia en Configuración). */
 export const DEFAULT_WHATSAPP = "3012168273";
 

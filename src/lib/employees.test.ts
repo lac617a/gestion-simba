@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRestDays, parseEmployeeForm, toDateInputValue } from "./employees";
+import { formatRestDays, parseEmployeeForm, toDateInputValue, weekdayPlural } from "./employees";
 
 function form(fields: Record<string, string | string[]>) {
   const fd = new FormData();
@@ -54,5 +54,11 @@ describe("helpers", () => {
   it("convierte Date a valor de input date", () => {
     expect(toDateInputValue(new Date("2026-03-15T00:00:00Z"))).toBe("2026-03-15");
     expect(toDateInputValue(null)).toBe("");
+  });
+});
+
+describe("weekdayPlural", () => {
+  it("plural del día para las etiquetas", () => {
+    expect([0, 1, 6].map(weekdayPlural)).toEqual(["domingos", "lunes", "sábados"]);
   });
 });

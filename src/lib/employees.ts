@@ -51,6 +51,12 @@ export function toDateInputValue(date: Date | null | undefined) {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
+/** "los sábados", "los lunes" */
+export function weekdayPlural(day: number) {
+  const name = WEEKDAYS[day].toLowerCase();
+  return name.endsWith("s") ? name : `${name}s`;
+}
+
 export function formatRestDays(restDays: number[]) {
   return restDays.length ? restDays.map((d) => WEEKDAYS_SHORT[d]).join(", ") : "Sin descanso fijo";
 }

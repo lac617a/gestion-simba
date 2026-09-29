@@ -8,6 +8,7 @@ import {
   DoorClosedIcon,
   LockIcon,
   PlusIcon,
+  SunIcon,
   WalletIcon,
 } from "lucide-react";
 import type { AttendanceStatus } from "@/generated/prisma/enums";
@@ -131,6 +132,14 @@ export default async function TodayPage() {
               Cerrar el día <ArrowRightIcon />
             </Button>
           </>
+        )}
+        {view.doubleShift && view.mode === "open" && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <SunIcon className="size-4 shrink-0" />
+            {view.morningClosedAt
+              ? "Doble turno: el turno de la mañana ya se cerró."
+              : "Doble turno: al terminar la mañana, cierra ese turno en Asistencia (sus propinas)."}
+          </p>
         )}
       </section>
 

@@ -7,63 +7,105 @@ import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { payField, splitTips, type ClosingRow } from "@/lib/closing";
+import {
+  inShift,
+  missingShift,
+  payField,
+  perPersonLabel,
+  SHIFT_LABEL,
+  shiftCount,
+  splitShiftTips,
+  splitTips,
+  type ClosingRow,
+} from "@/lib/closing";
 import { formatMoney, parseMoney, type Currency } from "@/lib/money";
 import type { DayClosing } from "@/lib/workdays";
 
 export type CloseDayRow = ClosingRow & {
-  /** Pago guardado (tras reabrir) o, si no hay, el último pago del empleado */
-  defaultPay: number | null;
+  /** Pago guardado (tras reabrir el día) */
+  savedPay: number | null;
+  /** Tarifa del puesto por turno (Configuración); null si no tiene puesto */
+  payRate: number | null;
+  /** Último pago del empleado (para quien no tiene puesto) */
+  lastPay: number | null;
 };
 
 type Props = {
   action: (state: CloseDayState, formData: FormData) => Promise<CloseDayState>;
   currency: Currency;
-  /** Asistencia con los estados actuales (incluye cambios aún no confirmados) */
+  /** Asistencia con los estados y turnos actuales (incluye cambios aún no confirmados) */
   rows: CloseDayRow[];
   saved: DayClosing | null;
+  /** Día de doble turno: propinas por turno y pago por turno */
+  doubleShift: boolean;
+  /** Las propinas de la mañana ya se anotaron al cerrar ese turno */
+  morningClosed: boolean;
 };
 
 /** Montos iniciales del formulario, en unidades mínimas (null = vacío). */
 type Initial = {
   totalSales: number | null;
   tipsTotal: number | null;
+  tipsMorning: number | null;
+  tipsEvening: number | null;
   note: string;
+  /** Pagos escritos a mano (tras un error); el resto sigue la tarifa */
   pays: Record<string, number | null>;
 };
 
-export function CloseDayPanel({ action, currency, rows, saved }: Props) {
+/** Pago sugerido: el guardado; si no, tarifa del puesto × turnos; si no tiene puesto, su último pago. */
+function suggestedPay(r: CloseDayRow, doubleShift: boolean) {
+  if (r.savedPay !== null) return r.savedPay;
+  if (r.payRate !== null) return r.payRate * (doubleShift ? Math.max(1, shiftCount(r.shift)) : 1);
+  return r.lastPay;
+}
+
+export function CloseDayPanel({ action, currency, rows, saved, doubleShift, morningClosed }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
-  // Tras un error se muestra lo enviado; si no, lo guardado (o el último pago de cada uno).
+  // Tras un error se muestra lo enviado; si no, lo guardado.
   const sent = state?.values;
   const parse = (v: string | undefined) => (v ? parseMoney(v, currency.decimals) : null);
   const initial: Initial = sent
     ? {
         totalSales: parse(sent.totalSales),
         tipsTotal: parse(sent.tipsTotal),
+        tipsMorning: parse(sent.tipsMorning),
+        tipsEvening: parse(sent.tipsEvening),
         note: sent.note,
         pays: Object.fromEntries(rows.map((r) => [r.employeeId, parse(sent.pays[r.employeeId])])),
       }
     : {
         totalSales: saved?.totalSales ?? null,
         tipsTotal: saved?.tipsTotal ?? null,
+        tipsMorning: saved?.tipsMorning ?? null,
+        tipsEvening: saved?.tipsEvening ?? null,
         note: saved?.note ?? "",
-        pays: Object.fromEntries(rows.map((r) => [r.employeeId, r.defaultPay])),
+        pays: {},
       };
 
   return (
     <section id="cierre" className="grid scroll-mt-20 gap-4 rounded-lg border p-4">
       <div>
-        <h2 className="font-medium">Cierre del día</h2>
+        <h2 className="font-medium">{doubleShift ? "Cierre del día (turno de la tarde)" : "Cierre del día"}</h2>
         <p className="text-sm text-muted-foreground">
-          Anota la venta, las propinas y el pago del día de cada empleado. Las propinas se reparten en partes
-          iguales entre quienes trabajaron.
+          {doubleShift
+            ? "Al final de la noche: venta total del día, propinas de la tarde y el pago de cada empleado (tarifa del puesto por cada turno). Las propinas de cada turno se reparten entre quienes lo hicieron."
+            : "Anota la venta, las propinas y el pago del día de cada empleado. Las propinas se reparten en partes iguales entre quienes trabajaron."}
         </p>
       </div>
       {/* key: remonta los campos con lo enviado cuando la acción devuelve un error */}
       <form key={JSON.stringify(sent ?? null)} action={formAction} className="grid gap-4">
-        <CloseDayFields initial={initial} currency={currency} rows={rows} state={state} pending={pending} />
+        <CloseDayFields
+          initial={initial}
+          currency={currency}
+          rows={rows}
+          state={state}
+          pending={pending}
+          doubleShift={doubleShift}
+          morningClosed={morningClosed}
+          savedMorning={saved?.tipsMorning ?? 0}
+        />
       </form>
     </section>
   );
@@ -75,27 +117,46 @@ function CloseDayFields({
   rows,
   state,
   pending,
+  doubleShift,
+  morningClosed,
+  savedMorning,
 }: {
   initial: Initial;
   currency: Currency;
   rows: CloseDayRow[];
   state: CloseDayState;
   pending: boolean;
+  doubleShift: boolean;
+  morningClosed: boolean;
+  savedMorning: number;
 }) {
   const [sales, setSales] = useState(initial.totalSales);
   const [tips, setTips] = useState(initial.tipsTotal);
-  const [pays, setPays] = useState(initial.pays);
+  const [morning, setMorning] = useState(initial.tipsMorning);
+  const [evening, setEvening] = useState(initial.tipsEvening);
+  const [overrides, setOverrides] = useState(initial.pays);
 
-  const tipsMinor = tips ?? 0;
   const pendingCount = rows.filter((r) => r.status === "PENDING").length;
-  const shares = splitTips(tipsMinor, rows);
-  const tipOf = new Map(shares.map((s) => [s.employeeId, s.amount]));
   const workers = rows.filter((r) => r.status === "WORKED");
-  const noWorkers = tipsMinor > 0 && workers.length === 0;
+
+  const morningTips = doubleShift ? (morningClosed ? savedMorning : (morning ?? 0)) : 0;
+  const eveningTips = doubleShift ? (evening ?? 0) : 0;
+  const shares = doubleShift ? splitShiftTips(morningTips, eveningTips, rows) : splitTips(tips ?? 0, rows);
+  const tipOf = new Map(shares.map((s) => [s.employeeId, s.amount]));
+
+  const missing = doubleShift ? missingShift(rows) : [];
+  const emptyShift = doubleShift
+    ? (["MORNING", "EVENING"] as const).find(
+        (s) => (s === "MORNING" ? morningTips : eveningTips) > 0 && !rows.some((r) => inShift(r, s))
+      )
+    : undefined;
+  const noWorkers = !doubleShift && (tips ?? 0) > 0 && workers.length === 0;
+
+  const payOf = (r: CloseDayRow) => (r.employeeId in overrides ? overrides[r.employeeId] : suggestedPay(r, doubleShift));
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <MoneyField
           id="totalSales"
           label={`Venta total del día (${currency.code})`}
@@ -105,38 +166,81 @@ function CloseDayFields({
           error={state?.errors?.totalSales}
           required
         />
-        <MoneyField
-          id="tipsTotal"
-          label={`Propinas (${currency.code})`}
-          currency={currency}
-          value={tips}
-          onValueChange={setTips}
-          error={state?.errors?.tipsTotal}
-          placeholder="0"
-        />
+        {doubleShift ? (
+          <>
+            {morningClosed ? (
+              <div className="grid content-start gap-2">
+                <span className="text-sm font-medium">Propinas de la mañana</span>
+                <p className="flex h-8 items-center gap-1.5 text-sm tabular-nums">
+                  <LockIcon className="size-3.5 text-muted-foreground" /> {formatMoney(savedMorning, currency)}
+                </p>
+              </div>
+            ) : (
+              <MoneyField
+                id="tipsMorning"
+                label="Propinas de la mañana"
+                currency={currency}
+                value={morning}
+                onValueChange={setMorning}
+                error={state?.errors?.tipsMorning}
+                placeholder="0"
+              />
+            )}
+            <MoneyField
+              id="tipsEvening"
+              label="Propinas de la tarde"
+              currency={currency}
+              value={evening}
+              onValueChange={setEvening}
+              error={state?.errors?.tipsEvening}
+              placeholder="0"
+            />
+          </>
+        ) : (
+          <MoneyField
+            id="tipsTotal"
+            label={`Propinas (${currency.code})`}
+            currency={currency}
+            value={tips}
+            onValueChange={setTips}
+            error={state?.errors?.tipsTotal}
+            placeholder="0"
+          />
+        )}
       </div>
 
       {workers.length > 0 && (
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-sm font-medium">Pago del día</legend>
-          {tipsMinor > 0 && <TipLine shares={shares} total={tipsMinor} currency={currency} />}
+          {doubleShift ? (
+            <ShiftTipLines rows={rows} morning={morningTips} evening={eveningTips} currency={currency} />
+          ) : (
+            (tips ?? 0) > 0 && <TipLine shares={shares} total={tips ?? 0} currency={currency} />
+          )}
           <ul className="divide-y rounded-lg border">
             {workers.map((w) => {
-              const pay = pays[w.employeeId] ?? null;
+              const pay = payOf(w);
               const tip = tipOf.get(w.employeeId) ?? 0;
               return (
                 <li
                   key={w.employeeId}
                   className="grid gap-2 px-3 py-2 sm:grid-cols-[1fr_9rem_auto] sm:items-center sm:gap-4"
                 >
-                  <span className="truncate font-medium">{w.name}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{w.name}</span>
+                    {doubleShift && (
+                      <span className="text-xs text-muted-foreground">
+                        {w.shift ? `${SHIFT_LABEL[w.shift]}${w.shift === "BOTH" ? " (2 turnos)" : ""}` : "Sin turno"}
+                      </span>
+                    )}
+                  </span>
                   <MoneyField
                     id={payField(w.employeeId)}
                     label={`Pago del día de ${w.name}`}
                     hideLabel
                     currency={currency}
                     value={pay}
-                    onValueChange={(v) => setPays((p) => ({ ...p, [w.employeeId]: v }))}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [w.employeeId]: v }))}
                     error={state?.errors?.pays?.[w.employeeId]}
                     placeholder="0"
                     required
@@ -164,6 +268,12 @@ function CloseDayFields({
           Falta marcar la asistencia de {pendingCount} empleado{pendingCount === 1 ? "" : "s"}.
         </Warning>
       )}
+      {missing.length > 0 && <Warning>Falta indicar el turno de {missing.map((r) => r.name).join(", ")}.</Warning>}
+      {emptyShift && (
+        <Warning>
+          Nadie hizo el turno de la {emptyShift === "MORNING" ? "mañana" : "tarde"}: no hay a quién repartir sus propinas.
+        </Warning>
+      )}
       {noWorkers && <Warning>Nadie está marcado como “Trabajó”: no hay a quién repartir las propinas.</Warning>}
       {state?.message && <Warning role="alert">{state.message}</Warning>}
 
@@ -171,7 +281,7 @@ function CloseDayFields({
         type="submit"
         size="lg"
         className="justify-self-start"
-        disabled={pending || pendingCount > 0 || noWorkers}
+        disabled={pending || pendingCount > 0 || noWorkers || missing.length > 0 || !!emptyShift}
       >
         <LockIcon />
         {pending ? "Cerrando…" : "Cerrar día"}
@@ -208,27 +318,48 @@ function MoneyField({
   );
 }
 
-function TipLine({
-  shares,
-  total,
-  currency,
-}: {
-  shares: { amount: number }[];
-  total: number;
-  currency: Currency;
-}) {
+function TipLine({ shares, total, currency }: { shares: { amount: number }[]; total: number; currency: Currency }) {
   if (shares.length === 0) return null;
-  const amounts = shares.map((s) => s.amount);
-  const min = Math.min(...amounts);
-  const max = Math.max(...amounts);
-  const perPerson =
-    min === max ? formatMoney(min, currency) : `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
   return (
     <p className="text-sm text-muted-foreground">
-      Propinas: {formatMoney(total, currency)} entre {shares.length}{" "}
-      {shares.length === 1 ? "persona" : "personas"} → <span className="font-medium text-foreground">{perPerson}</span>{" "}
-      c/u
+      Propinas: {formatMoney(total, currency)} entre {shares.length} {shares.length === 1 ? "persona" : "personas"} →{" "}
+      <span className="font-medium text-foreground">{perPersonLabel(shares.map((s) => s.amount), currency)}</span> c/u
     </p>
+  );
+}
+
+/** Una línea por turno con su reparto. */
+function ShiftTipLines({
+  rows,
+  morning,
+  evening,
+  currency,
+}: {
+  rows: ClosingRow[];
+  morning: number;
+  evening: number;
+  currency: Currency;
+}) {
+  const lines = (
+    [
+      ["Mañana", morning, rows.filter((r) => inShift(r, "MORNING"))],
+      ["Tarde", evening, rows.filter((r) => inShift(r, "EVENING"))],
+    ] as const
+  ).filter(([, total, people]) => total > 0 && people.length > 0);
+  if (lines.length === 0) return null;
+  return (
+    <div className="grid gap-0.5 text-sm text-muted-foreground">
+      {lines.map(([label, total, people]) => (
+        <p key={label}>
+          Propinas {label.toLowerCase()}: {formatMoney(total, currency)} entre {people.length}{" "}
+          {people.length === 1 ? "persona" : "personas"} →{" "}
+          <span className="font-medium text-foreground">
+            {perPersonLabel(splitTips(total, [...people]).map((s) => s.amount), currency)}
+          </span>{" "}
+          c/u
+        </p>
+      ))}
+    </div>
   );
 }
 
@@ -236,7 +367,7 @@ function Warning({ children, role }: { children: React.ReactNode; role?: string 
   return (
     <p role={role} className="flex items-start gap-2 text-sm text-amber-700">
       <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-      {children}
+      <span>{children}</span>
     </p>
   );
 }

@@ -59,11 +59,31 @@ const OpeningHoursSchema = z
   })
   .transform((rows) => rows.map(({ open, close }) => (open && close ? `${open}-${close}` : "")));
 
+/** Horario de los dos turnos: la mañana termina antes de que empiece la tarde. */
+const ShiftHoursSchema = z
+  .array(z.object({ open: Time, close: Time }))
+  .length(2)
+  .superRefine((rows, ctx) => {
+    const labels = ["Turno de la mañana", "Turno de la tarde"];
+    rows.forEach(({ open, close }, i) => {
+      if (!open || !close) ctx.addIssue({ code: "custom", message: `${labels[i]}: escribe la hora de inicio y de fin.` });
+      else if (close <= open) ctx.addIssue({ code: "custom", message: `${labels[i]}: la hora de fin debe ser después de la de inicio.` });
+    });
+    if (rows[0].close && rows[1].open && rows[1].open < rows[0].close) {
+      ctx.addIssue({ code: "custom", message: "El turno de la tarde debe empezar después de que termine el de la mañana." });
+    }
+  })
+  .transform((rows) => rows.map(({ open, close }) => `${open}-${close}`));
+
 /** Ajustes del restaurante. */
 export const SettingsSchema = z.object({
   payWeekStart: z.coerce.number().int().min(0).max(6, { error: "Día inválido" }),
   payDay: z.coerce.number().int().min(0).max(6, { error: "Día de pago inválido" }),
   openingHours: OpeningHoursSchema,
+  doubleShiftWeekdays: z
+    .array(z.coerce.number().int().min(0).max(6))
+    .transform((d) => [...new Set(d)].sort((a, b) => a - b)),
+  shiftHours: ShiftHoursSchema,
   whatsapp: z
     .string()
     .trim()
@@ -77,6 +97,8 @@ export function parseSettingsForm(formData: FormData) {
     payWeekStart: formData.get("payWeekStart"),
     payDay: formData.get("payDay"),
     whatsapp: get("whatsapp"),
+    doubleShiftWeekdays: formData.getAll("doubleShiftWeekdays"),
+    shiftHours: [0, 1].map((i) => ({ open: get(`shiftOpen${i}`), close: get(`shiftClose${i}`) })),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),
   });
 }

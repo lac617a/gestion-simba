@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarClockIcon } from "lucide-react";
-import { closeDay, reopenDay } from "@/app/actions/closing";
+import { closeDay, closeMorningShift, reopenDay, reopenMorningShift } from "@/app/actions/closing";
 import { APP_TIMEZONE, CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { formatLongDate, isISODate } from "@/lib/dates";
-import { formatHours, hoursFor } from "@/lib/hours";
+import { formatHours, hoursFor, parseHours } from "@/lib/hours";
 import { getSettings } from "@/lib/settings";
 import { getDayView } from "@/lib/workdays";
 import { AttendanceList } from "./attendance-list";
 import { ClosedSummary } from "./closed-summary";
 import { DateNav } from "./date-nav";
 import { ScheduleBar } from "./schedule-bar";
+import { ShiftBar } from "./shift-bar";
 
 export const metadata: Metadata = { title: "Asistencia · Gestión Simba" };
 
@@ -28,6 +29,9 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
   const date = isISODate(fecha) ? fecha : todayIso;
   const [view, settings] = await Promise.all([getDayView(date), getSettings()]);
   const hours = hoursFor(view.schedule, settings.openingHours);
+  const shifts = settings.shiftHours.map(parseHours);
+  const shiftLabels = shifts[0] && shifts[1] ? ([formatHours(shifts[0]), formatHours(shifts[1])] as [string, string]) : null;
+  const morningClosed = view.morningClosedAt !== null;
 
   return (
     <div className="grid gap-5">
@@ -42,6 +46,15 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
 
       <ScheduleBar date={date} mode={view.mode} schedule={view.schedule} hours={hours && formatHours(hours)} />
 
+      {view.mode !== "dayoff" && (
+        <ShiftBar
+          date={date}
+          doubleShift={view.doubleShift}
+          shiftLabels={shiftLabels}
+          canToggle={view.mode === "open" && !morningClosed}
+        />
+      )}
+
       {view.mode === "future" && (
         <div className="flex items-start gap-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
           <CalendarClockIcon className="mt-0.5 size-4 shrink-0" />
@@ -53,6 +66,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
         <ClosedSummary
           closing={view.closing}
           rows={view.rows}
+          doubleShift={view.doubleShift}
           currency={CURRENCY}
           closedAtLabel={view.closing.closedAt ? `cerrado ${closedAtFormat.format(new Date(view.closing.closedAt))}` : null}
           reopenAction={reopenDay.bind(null, date)}
@@ -68,16 +82,21 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
         </div>
       ) : (
         <AttendanceList
-          key={`${date}-${view.mode}`}
+          key={`${date}-${view.mode}-${view.doubleShift}-${morningClosed}`}
           date={date}
           rows={view.rows}
           editable={view.mode === "open"}
+          doubleShift={view.doubleShift}
+          morningClosed={morningClosed}
           closing={
             view.mode === "open"
               ? {
                   action: closeDay.bind(null, date),
+                  morningAction: closeMorningShift.bind(null, date),
+                  reopenMorning: reopenMorningShift.bind(null, date),
                   currency: CURRENCY,
                   saved: view.closing,
+                  payRates: view.payRates,
                   suggestedPay: view.suggestedPay,
                 }
               : undefined

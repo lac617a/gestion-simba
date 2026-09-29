@@ -19,23 +19,27 @@ model User {
 /// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
 /// Si no existe, se usan los valores de las variables de entorno.
 model AppSettings {
-  id                Int      @id @default(1)
+  id                  Int      @id @default(1)
   /// Día en que empieza la semana de pago (0 = domingo … 6 = sábado)
-  payWeekStart      Int
+  payWeekStart        Int
   /// SIN USO desde 2026-09-28: el restaurante abre de lunes a domingo. Se deja la
   /// columna para no romper la versión publicada; se puede borrar en una migración futura.
-  closedWeekdays    Int[]
+  closedWeekdays      Int[]
   /// Horario de atención, informativo: 7 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado); "" = sin horario.
   /// Filas guardadas antes de 2026-09-28 pueden traer un 8.º valor (festivos) que ya no se usa.
-  openingHours      String[] @default([])
+  openingHours        String[] @default([])
   /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
-  payDay            Int      @default(1)
+  payDay              Int      @default(1)
   /// WhatsApp del restaurante: a donde la página pública manda reservas y pedidos
-  whatsapp          String   @default("3012168273")
+  whatsapp            String   @default("3012168273")
   /// Calificación y total de opiniones en Google, escritos a mano (página pública)
-  googleRating      Float    @default(4.6)
-  googleReviewCount Int      @default(243)
-  updatedAt         DateTime @updatedAt
+  googleRating        Float    @default(4.6)
+  googleReviewCount   Int      @default(243)
+  /// Días con doble turno (0 = domingo … 6 = sábado): mañana y tarde, con propinas por turno
+  doubleShiftWeekdays Int[]    @default([0, 6])
+  /// Horario de cada turno: ["HH:MM-HH:MM" de la mañana, "HH:MM-HH:MM" de la tarde] (informativo)
+  shiftHours          String[] @default(["11:00-16:00", "17:30-23:30"])
+  updatedAt           DateTime @updatedAt
 }
 
 /// Intentos fallidos de inicio de sesión, por conexión (ip:...) o por correo (email:...).
@@ -58,6 +62,13 @@ enum AttendanceStatus {
 enum TimeOffType {
   EXTRA_REST
   LEAVE
+}
+
+/// Turno que hizo un empleado en un día de doble turno.
+enum WorkShift {
+  MORNING
+  EVENING
+  BOTH
 }
 
 enum DayStatus {
@@ -89,17 +100,24 @@ model Employee {
 
 /// Un día de operación del restaurante. Se crea al abrir la asistencia de esa fecha.
 model WorkDay {
-  id          String       @id @default(cuid())
+  id              String       @id @default(cuid())
   /// Día local del restaurante (APP_TIMEZONE), guardado a medianoche UTC
-  date        DateTime     @unique @db.Date
-  totalSales  Decimal?     @db.Decimal(14, 2)
-  tipsTotal   Decimal?     @db.Decimal(14, 2)
-  note        String?
-  status      DayStatus    @default(OPEN)
-  closedAt    DateTime?
-  createdAt   DateTime     @default(now())
-  attendances Attendance[]
-  tipShares   TipShare[]
+  date            DateTime     @unique @db.Date
+  totalSales      Decimal?     @db.Decimal(14, 2)
+  tipsTotal       Decimal?     @db.Decimal(14, 2)
+  note            String?
+  status          DayStatus    @default(OPEN)
+  closedAt        DateTime?
+  /// Día de doble turno (se decide al abrir el día según Configuración; se puede cambiar a mano)
+  doubleShift     Boolean      @default(false)
+  /// Propinas de cada turno (días de doble turno); tipsTotal es la suma
+  tipsMorning     Decimal?     @db.Decimal(14, 2)
+  tipsEvening     Decimal?     @db.Decimal(14, 2)
+  /// Cuándo se cerró el turno de la mañana; mientras tanto se puede cambiar quién lo hizo
+  morningClosedAt DateTime?
+  createdAt       DateTime     @default(now())
+  attendances     Attendance[]
+  tipShares       TipShare[]
 }
 
 /// Pago hecho a un empleado por los días trabajados (pago diario + propinas)
@@ -148,6 +166,8 @@ model Attendance {
   note       String?
   /// Pago del día (solo si trabajó). Se captura al cerrar el día.
   dailyPay   Decimal?         @db.Decimal(14, 2)
+  /// Turno que hizo (solo días de doble turno y estado Trabajó)
+  shift      WorkShift?
   updatedAt  DateTime         @updatedAt
   workDay    WorkDay          @relation(fields: [workDayId], references: [id], onDelete: Cascade)
   employee   Employee         @relation(fields: [employeeId], references: [id])

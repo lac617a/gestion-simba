@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkClose, splitTips, type ClosingRow } from "./closing";
+import { checkClose, checkMorningClose, shiftCount, splitShiftTips, splitTips, type ClosingRow } from "./closing";
 import { currencyOf, formatMoney, fromDecimal, parseMoney, toDecimalString } from "./money";
 
 const row = (name: string, status: ClosingRow["status"] = "WORKED"): ClosingRow => ({
@@ -97,5 +97,62 @@ describe("money (con decimales)", () => {
 
   it("rechaza más decimales de los permitidos", () => {
     expect(parseMoney("12.345.6789", 2)).toBeNull();
+  });
+});
+
+describe("doble turno", () => {
+  const row = (name: string, status: ClosingRow["status"], shift: ClosingRow["shift"] = null): ClosingRow => ({
+    employeeId: name.toLowerCase(),
+    name,
+    status,
+    shift,
+  });
+  const rows = [
+    row("Ana", "WORKED", "MORNING"),
+    row("Bruno", "WORKED", "EVENING"),
+    row("Carla", "WORKED", "BOTH"),
+    row("Diego", "WORKED", "EVENING"),
+    row("Elena", "REST"),
+  ];
+
+  it("cuántos turnos se pagan", () => {
+    expect([shiftCount("MORNING"), shiftCount("EVENING"), shiftCount("BOTH"), shiftCount(null)]).toEqual([1, 1, 2, 0]);
+  });
+
+  it("propinas por turno: Ambos recibe de los dos", () => {
+    // Mañana: Ana y Carla (100.001 → 50.001 + 50.000). Tarde: Bruno, Carla y Diego (90.000 → 30.000 c/u).
+    expect(splitShiftTips(100_001, 90_000, rows)).toEqual([
+      { employeeId: "ana", name: "Ana", morning: 50_001, evening: 0, amount: 50_001 },
+      { employeeId: "bruno", name: "Bruno", morning: 0, evening: 30_000, amount: 30_000 },
+      { employeeId: "carla", name: "Carla", morning: 50_000, evening: 30_000, amount: 80_000 },
+      { employeeId: "diego", name: "Diego", morning: 0, evening: 30_000, amount: 30_000 },
+    ]);
+    const total = splitShiftTips(100_001, 90_000, rows).reduce((s, x) => s + x.amount, 0);
+    expect(total).toBe(190_001);
+  });
+
+  it("cierre de la mañana: puede haber pendientes, pero no Trabajó sin turno", () => {
+    expect(checkMorningClose([...rows, row("Fabio", "PENDING")], 50_000)).toEqual({ ok: true });
+    expect(checkMorningClose([...rows, row("Fabio", "WORKED")], 50_000)).toEqual({
+      ok: false,
+      error: "Falta indicar el turno de Fabio.",
+    });
+    expect(checkMorningClose([row("Bruno", "WORKED", "EVENING")], 50_000)).toEqual({
+      ok: false,
+      error: "Nadie hizo el turno de la mañana: no se pueden repartir sus propinas.",
+    });
+    expect(checkMorningClose([row("Bruno", "WORKED", "EVENING")], 0)).toEqual({ ok: true });
+  });
+
+  it("cierre del día con doble turno", () => {
+    expect(checkClose(rows, { morning: 100_001, evening: 90_000 })).toMatchObject({ ok: true });
+    expect(checkClose([...rows, row("Fabio", "PENDING")], { morning: 0, evening: 0 })).toEqual({
+      ok: false,
+      error: "Falta marcar la asistencia de 1 empleado.",
+    });
+    expect(checkClose([row("Ana", "WORKED", "MORNING")], { morning: 0, evening: 10_000 })).toEqual({
+      ok: false,
+      error: "Nadie hizo el turno de la tarde: no se pueden repartir sus propinas.",
+    });
   });
 });

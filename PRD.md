@@ -94,6 +94,14 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Vista previa del reparto antes de cerrar.
 - El reparto se guarda como registro (snapshot) al cerrar; cambios posteriores en empleados no lo alteran.
 
+### RF-18 · Doble turno (uso interno de empleados)
+- En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
+- En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
+- **Cierre del turno de la mañana** (al terminar la mañana): se anotan sus propinas y se reparten en partes iguales entre quienes hicieron la mañana (Mañana o Ambos). Desde ahí queda fijo quién hizo la mañana (nadie entra ni sale de ese turno) hasta que se reabra el turno.
+- **Cierre del día** (en la noche): venta total del día, propinas de la tarde (repartidas entre Tarde y Ambos) y el pago de cada empleado. Si no se cerró la mañana, sus propinas se anotan aquí mismo.
+- **Pago por turno:** se sugiere la tarifa del puesto **por cada turno** (Ambos = doble); se puede ajustar.
+- Pagos y Reportes suman ambos turnos (pago y propinas del día por empleado).
+
 ### RF-5 · Reportes
 Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - **Ventas:** total del periodo, promedio diario, venta por día.
@@ -330,6 +338,8 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F11 ✅ | Confirmación por WhatsApp y reporte de reservas (RF-14, RF-15). |
 | F12 ✅ | Administración en `/gestion` y página pública con menú y reservas por WhatsApp (RF-16). |
 | F13 ✅ | Reseñas en la página pública, administradas en /gestion/resenas (RF-17). |
+| F14 ✅ | Puestos con pago diario fijo, configurables (RF-7). |
+| F15 ✅ | Doble turno con propinas por turno (RF-18). |
 
 ## 11. Preguntas abiertas
 

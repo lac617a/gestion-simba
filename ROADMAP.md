@@ -24,7 +24,9 @@ _Última actualización: 2026-09-26_
 | F11 · WhatsApp de confirmación + reporte de reservas | ✅ en producción | `5dc60b9` |
 | F12 · Administración en `/gestion` + página pública | ✅ en producción | `951ab6c` + commit «F12: página pública…» |
 | F13 · Reseñas en la página pública | ✅ en producción | commit «F13: reseñas…» |
-| F14 · Puestos con pago diario fijo (configurables) | ✅ sin publicar (tiene migración) | commit «F14: puestos…» |
+| F14 · Puestos con pago diario fijo (configurables) | ✅ sin publicar (tiene migración) | `eeed426` |
+| Se quitan los festivos | ✅ sin publicar | `f0f553c` |
+| F15 · Doble turno (propinas por turno) | ✅ sin publicar (tiene migración) | commit «F15: doble turno…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -60,6 +62,16 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F15 · Doble turno ✅
+
+- `AppSettings.doubleShiftWeekdays` (por defecto `[0, 6]`) y `shiftHours` (`["11:00-16:00", "17:30-23:30"]`), en Configuración → Doble turno. `WorkDay.doubleShift` se fija al crear el día (`isDoubleShiftDay`) y se cambia a mano con `setDoubleShift` (Asistencia, barra "Doble turno"). Migración `doble_turno` (solo agrega columnas y el enum `WorkShift`).
+- `Attendance.shift` (MORNING/EVENING/BOTH) con selector en Asistencia para quien Trabajó (`setAttendanceShift`).
+- Cierre del turno de la mañana: `closeMorningShift` guarda `tipsMorning` y `morningClosedAt`; desde ahí `setAttendanceStatus`/`setAttendanceShift`/`markPendingAsWorked` no dejan entrar ni salir de la mañana (los nuevos Trabajó quedan en Tarde). `reopenMorningShift` lo reabre.
+- Cierre del día: `closeDay` con `tipsEvening` (+ `tipsMorning` si la mañana no se cerró); `checkClose(rows, { morning, evening })` y `splitShiftTips` en `src/lib/closing.ts`. `tipsTotal` = suma; `TipShare` sigue siendo uno por empleado y día (suma de los dos turnos), así Pagos y Reportes no cambian.
+- Pago sugerido: tarifa del puesto × turnos (`payRates` en `DayView`; la sugerencia sigue al turno mientras no se escriba a mano).
+
+---
 
 ## F14 · Puestos y pago diario ✅
 
@@ -209,7 +221,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (149).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (150).
 
 ## Notas técnicas conocidas
 

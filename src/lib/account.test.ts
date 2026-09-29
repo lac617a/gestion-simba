@@ -73,8 +73,15 @@ function settingsForm(fields: {
   payDay?: string;
   hours?: [string, string][];
   whatsapp?: string;
+  doubleShift?: string[];
+  shifts?: [string, string][];
 }) {
   const fd = new FormData();
+  for (const d of fields.doubleShift ?? ["0", "6"]) fd.append("doubleShiftWeekdays", d);
+  (fields.shifts ?? [["11:00", "16:00"], ["17:30", "23:30"]]).forEach(([open, close], i) => {
+    fd.append(`shiftOpen${i}`, open);
+    fd.append(`shiftClose${i}`, close);
+  });
   fd.append("whatsapp", fields.whatsapp ?? "301 216 8273");
   fd.append("payWeekStart", fields.payWeekStart ?? "1");
   fd.append("payDay", fields.payDay ?? "1");
@@ -92,6 +99,8 @@ describe("parseSettingsForm", () => {
       payDay: 1,
       openingHours: NO_HOURS,
       whatsapp: "301 216 8273",
+      doubleShiftWeekdays: [0, 6],
+      shiftHours: ["11:00-16:00", "17:30-23:30"],
     });
     expect(parseSettingsForm(settingsForm({ payWeekStart: "0", payDay: "0" })).data).toMatchObject({
       payWeekStart: 0,
@@ -107,6 +116,17 @@ describe("parseSettingsForm", () => {
     expect(parseSettingsForm(settingsForm({ whatsapp: " +57 301 216 8273 " })).data?.whatsapp).toBe("+57 301 216 8273");
     expect(parseSettingsForm(settingsForm({ whatsapp: "4441234" })).success).toBe(false);
     expect(parseSettingsForm(settingsForm({ whatsapp: "" })).success).toBe(false);
+  });
+
+  it("doble turno: días y horario de cada turno", () => {
+    expect(parseSettingsForm(settingsForm({ doubleShift: ["6", "0", "6"] })).data?.doubleShiftWeekdays).toEqual([0, 6]);
+    expect(parseSettingsForm(settingsForm({ doubleShift: [] })).data?.doubleShiftWeekdays).toEqual([]);
+    const error = (shifts: [string, string][]) => parseSettingsForm(settingsForm({ shifts })).error?.issues[0].message;
+    expect(error([["11:00", ""], ["17:30", "23:30"]])).toBe("Turno de la mañana: escribe la hora de inicio y de fin.");
+    expect(error([["11:00", "16:00"], ["23:30", "17:30"]])).toBe("Turno de la tarde: la hora de fin debe ser después de la de inicio.");
+    expect(error([["11:00", "18:00"], ["17:30", "23:30"]])).toBe(
+      "El turno de la tarde debe empezar después de que termine el de la mañana."
+    );
   });
 
   it("día de pago inválido", () => {

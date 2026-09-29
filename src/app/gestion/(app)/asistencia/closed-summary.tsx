@@ -15,25 +15,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { SHIFT_LABEL } from "@/lib/closing";
 import { formatMoney, type Currency } from "@/lib/money";
 import type { DayClosing, DayRow } from "@/lib/workdays";
 
 type Props = {
   closing: DayClosing;
   rows: DayRow[];
+  /** Día de doble turno: propinas por turno */
+  doubleShift: boolean;
   currency: Currency;
   /** "10:42 p. m." en la zona del restaurante */
   closedAtLabel: string | null;
   reopenAction: () => Promise<void>;
 };
 
-export function ClosedSummary({ closing, rows, currency, closedAtLabel, reopenAction }: Props) {
+export function ClosedSummary({ closing, rows, doubleShift, currency, closedAtLabel, reopenAction }: Props) {
   const [pending, startTransition] = useTransition();
   const money = (v: number | null) => formatMoney(v ?? 0, currency);
   const tipOf = new Map(closing.shares.map((s) => [s.employeeId, s.amount]));
   const payouts = rows
     .filter((r) => r.status === "WORKED")
-    .map((r) => ({ employeeId: r.employeeId, name: r.name, pay: r.dailyPay, tip: tipOf.get(r.employeeId) ?? 0 }));
+    .map((r) => ({
+      employeeId: r.employeeId,
+      name: r.name,
+      shift: r.shift,
+      pay: r.dailyPay,
+      tip: tipOf.get(r.employeeId) ?? 0,
+    }));
 
   return (
     <section className="grid gap-4 rounded-lg border p-4">
@@ -43,9 +52,15 @@ export function ClosedSummary({ closing, rows, currency, closedAtLabel, reopenAc
         {closedAtLabel && <span className="text-sm text-muted-foreground">· {closedAtLabel}</span>}
       </div>
 
-      <dl className="grid grid-cols-2 gap-3">
+      <dl className={doubleShift ? "grid grid-cols-2 gap-3 sm:grid-cols-4" : "grid grid-cols-2 gap-3"}>
         <Stat label="Venta total" value={money(closing.totalSales)} />
         <Stat label="Propinas" value={money(closing.tipsTotal)} />
+        {doubleShift && (
+          <>
+            <Stat label="Propinas mañana" value={money(closing.tipsMorning)} />
+            <Stat label="Propinas tarde" value={money(closing.tipsEvening)} />
+          </>
+        )}
       </dl>
 
       {payouts.length > 0 && (
@@ -56,6 +71,7 @@ export function ClosedSummary({ closing, rows, currency, closedAtLabel, reopenAc
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left font-normal">Empleado</th>
+                  {doubleShift && <th className="px-3 py-2 text-left font-normal">Turno</th>}
                   <th className="px-3 py-2 text-right font-normal">Pago</th>
                   <th className="px-3 py-2 text-right font-normal">Propina</th>
                   <th className="px-3 py-2 text-right font-normal">Total</th>
@@ -65,6 +81,7 @@ export function ClosedSummary({ closing, rows, currency, closedAtLabel, reopenAc
                 {payouts.map((p) => (
                   <tr key={p.employeeId}>
                     <td className="max-w-40 truncate px-3 py-2">{p.name}</td>
+                    {doubleShift && <td className="px-3 py-2 text-muted-foreground">{p.shift ? SHIFT_LABEL[p.shift] : "—"}</td>}
                     <td className="px-3 py-2 text-right">{p.pay === null ? "—" : money(p.pay)}</td>
                     <td className="px-3 py-2 text-right">{money(p.tip)}</td>
                     <td className="px-3 py-2 text-right font-medium">{money((p.pay ?? 0) + p.tip)}</td>
