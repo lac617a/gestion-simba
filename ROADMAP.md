@@ -15,7 +15,7 @@ _Última actualización: 2026-09-26_
 | F4 · Pantalla "Hoy", reportes y CSV, barra inferior en celular | ✅ | `6484c51` |
 | T1 · Inputs de moneda con librería | ✅ | `e328c56` |
 | F5 · Deploy (Vercel + Neon) | ✅ en producción | `b5b7311` |
-| F6 · Días de cierre (opcionales) y festivos de Colombia | ✅ en producción | `2985038` |
+| F6 · Festivos de Colombia y cierres puntuales (sin días de cierre desde 2026-09-28) | ✅ en producción | `2985038` |
 | F7 · Configuración + límite de intentos de login | ✅ en producción | `55aca31` |
 | Logo de Simba (favicon, app instalable, encabezado, login) | ✅ en producción | `7aa7ecd` |
 | F8 · Pagos realizados + gráfico de ventas | ✅ en producción | `a294a55` + `9596229` |
@@ -118,7 +118,7 @@ npm test                                    # pruebas unitarias
 
 ## F6 · Días de cierre y festivos ✅
 
-> **2026-09-28:** Simba no tiene días de cierre (trabaja de corrido). Los días de cierre quedan **opcionales** y por defecto ninguno (`CLOSED_WEEKDAYS` vacío). En producción basta con desmarcar el lunes en Configuración; sin días marcados no aparecen "Cerrado", "Hoy estamos cerrados" ni la regla del festivo. Las excepciones manuales ("Marcar como día cerrado" en Asistencia) siguen disponibles para días puntuales.
+> **2026-09-28:** el restaurante abre **de lunes a domingo**. Se quitó por completo la regla de días de cierre (lunes) y la de "festivo en día de cierre → abre y cierra el siguiente": `daySchedule(fecha, excepción)` solo cierra un día marcado a mano ("Marcar como día cerrado" en Asistencia, acción `setDayClosed`). Se quitaron `closedWeekdays` de Configuración y `CLOSED_WEEKDAYS` del `.env`; la columna `AppSettings.closedWeekdays` sigue en la BD sin uso (borrarla con una migración cuando convenga). Las excepciones viejas de "abrir" se ignoran.
 
 - Regla: cierra los lunes (`CLOSED_WEEKDAYS`, por defecto `1`); lunes festivo abre y cierra el martes. Festivos de Colombia calculados en `src/lib/holidays.ts`.
 - Días de cierre: sin asistencia ni cierre; no cuentan como "sin cerrar" en Pagos/Reportes.

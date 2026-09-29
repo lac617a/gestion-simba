@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as z from "zod";
-import { DEFAULT_CLOSED_WEEKDAYS, DEFAULT_PAY_WEEK_START } from "@/lib/config";
+import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isoToDate } from "@/lib/dates";
@@ -91,7 +91,7 @@ export async function updateRatingSummary(_prev: RatingSummaryState, formData: F
   await db.appSettings.upsert({
     where: { id: 1 },
     update: parsed.data,
-    create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, closedWeekdays: DEFAULT_CLOSED_WEEKDAYS, ...parsed.data },
+    create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, ...parsed.data },
   });
   refresh();
   return { success: "Calificación guardada." };

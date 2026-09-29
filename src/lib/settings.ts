@@ -1,12 +1,11 @@
 import "server-only";
 import { cache } from "react";
-import { DEFAULT_CLOSED_WEEKDAYS, DEFAULT_PAY_DAY, DEFAULT_PAY_WEEK_START, DEFAULT_WHATSAPP } from "@/lib/config";
+import { DEFAULT_PAY_DAY, DEFAULT_PAY_WEEK_START, DEFAULT_WHATSAPP } from "@/lib/config";
 import { db } from "@/lib/db";
 
 export type AppSettings = {
   payWeekStart: number;
   payDay: number;
-  closedWeekdays: number[];
   /** 8 textos "HH:MM-HH:MM" (0–6 = domingo…sábado, 7 = festivos); "" = sin horario */
   openingHours: string[];
   /** WhatsApp del restaurante (página pública) */
@@ -23,7 +22,6 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
     ? {
         payWeekStart: row.payWeekStart,
         payDay: row.payDay,
-        closedWeekdays: row.closedWeekdays,
         openingHours: row.openingHours,
         whatsapp: row.whatsapp,
         googleRating: row.googleRating,
@@ -32,7 +30,6 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
         payDay: DEFAULT_PAY_DAY,
-        closedWeekdays: DEFAULT_CLOSED_WEEKDAYS,
         openingHours: [],
         whatsapp: DEFAULT_WHATSAPP,
         googleRating: 4.6,

@@ -5,25 +5,28 @@ import { formatPesos, holidayHours, orderMessage, reservationRequestMessage, wee
 const norm = (s: string | null) => s?.replace(/\s/g, " ") ?? null; // Intl usa espacios finos
 
 describe("horario de la semana", () => {
-  // domingo 12–17, lunes vacío (cierra), martes a sábado 12–22, festivos 12–18
-  const HOURS = ["12:00-17:00", "", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-18:00"];
+  // lunes a viernes 18–23, sábado y domingo 12–23, festivos 12–23 (como en producción)
+  const HOURS = ["12:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "18:00-23:00", "12:00-23:00", "12:00-23:00"];
 
-  it("agrupa días seguidos iguales, empezando el lunes", () => {
-    expect(weeklyHours(HOURS, [1]).map((r) => ({ ...r, hours: norm(r.hours) }))).toEqual([
-      { days: "Lunes", hours: null, closed: true },
-      { days: "Martes a sábado", hours: "12:00 p. m. a 10:00 p. m.", closed: false },
-      { days: "Domingo", hours: "12:00 p. m. a 5:00 p. m.", closed: false },
+  it("agrupa días seguidos iguales, de lunes a domingo", () => {
+    expect(weeklyHours(HOURS).map((r) => ({ ...r, hours: norm(r.hours) }))).toEqual([
+      { days: "Lunes a viernes", hours: "6:00 p. m. a 11:00 p. m." },
+      { days: "Sábado y domingo", hours: "12:00 p. m. a 11:00 p. m." },
     ]);
+  });
+
+  it("todos iguales: una sola fila", () => {
+    expect(weeklyHours(Array(7).fill("12:00-22:00")).map((r) => r.days)).toEqual(["Lunes a domingo"]);
   });
 
   it("dos días seguidos van con 'y'; sin horario configurado queda null", () => {
     const hours = ["", "", "12:00-22:00", "12:00-22:00", "11:00-23:00", "11:00-23:00", "11:00-23:00"];
-    expect(weeklyHours(hours, [1]).map((r) => r.days)).toEqual(["Lunes", "Martes y miércoles", "Jueves a sábado", "Domingo"]);
-    expect(weeklyHours(hours, [1]).at(-1)).toEqual({ days: "Domingo", hours: null, closed: false });
+    expect(weeklyHours(hours).map((r) => r.days)).toEqual(["Lunes", "Martes y miércoles", "Jueves a sábado", "Domingo"]);
+    expect(weeklyHours(hours).at(-1)).toEqual({ days: "Domingo", hours: null });
   });
 
   it("horario de festivos", () => {
-    expect(norm(holidayHours(HOURS))).toBe("12:00 p. m. a 6:00 p. m.");
+    expect(norm(holidayHours(HOURS))).toBe("12:00 p. m. a 11:00 p. m.");
     expect(holidayHours([])).toBeNull();
   });
 });

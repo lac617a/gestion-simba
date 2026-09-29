@@ -28,7 +28,6 @@ import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
 import { getReservationsOn } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
-import { getSchedule } from "@/lib/schedule-data";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { getDayView, type DayRow } from "@/lib/workdays";
@@ -44,12 +43,11 @@ export default async function TodayPage() {
   const week = weekRange(date, settings.payWeekStart);
   const due = payDue(date, settings.payWeekStart, settings.payDay);
   const holiday = nextHoliday(addDays(date, 1));
-  const [view, payroll, duePayroll, reports, holidaySchedule, reservations] = await Promise.all([
+  const [view, payroll, duePayroll, reports, reservations] = await Promise.all([
     getDayView(date),
     getPayroll(week),
     getPayroll(due.week),
     getReports(week),
-    getSchedule(holiday.date),
     getReservationsOn(date),
   ]);
   const hours = hoursFor(view.schedule, settings.openingHours);
@@ -99,7 +97,7 @@ export default async function TodayPage() {
               <DoorClosedIcon className="size-4" /> Hoy el restaurante está cerrado
             </p>
             <p className="text-sm text-muted-foreground">{scheduleLabel(view.schedule)}</p>
-            <GoTo href="/gestion/asistencia">Abrir hoy igual</GoTo>
+            <GoTo href="/gestion/asistencia">Abrir hoy en Asistencia</GoTo>
           </>
         ) : view.rows.length === 0 ? (
           <>
@@ -182,8 +180,6 @@ export default async function TodayPage() {
         <span>
           Próximo festivo: <span className="font-medium text-foreground first-letter:uppercase">{formatDayShort(holiday.date)}</span> ·{" "}
           {holiday.name}
-          {holidaySchedule.reason === "holiday-open" &&
-            ` — el restaurante abre y cierra el ${formatDayShort(addDays(holiday.date, 1))}`}
         </span>
       </p>
 

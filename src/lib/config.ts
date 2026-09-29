@@ -10,17 +10,6 @@ export const PHONE_COUNTRY_CODE = (process.env.PHONE_COUNTRY_CODE || "57").repla
 // Los valores siguientes son solo el valor inicial: se editan en Configuración
 // (tabla AppSettings) y se leen con getSettings() de "@/lib/settings".
 
-/**
- * Días de la semana en que el restaurante cierra (0 = domingo … 6 = sábado).
- * Opcional: por defecto ninguno (Simba abre todos los días). Si se marca uno y
- * ese día es festivo, abre y cierra el día siguiente. Ej. CLOSED_WEEKDAYS="1" = lunes.
- */
-export const DEFAULT_CLOSED_WEEKDAYS = (process.env.CLOSED_WEEKDAYS ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter((s) => /^[0-6]$/.test(s))
-  .map(Number);
-
 /** Día en que empieza la semana de pago: 0 = domingo … 6 = sábado. Por defecto lunes. */
 export const DEFAULT_PAY_WEEK_START = (() => {
   const n = Number(process.env.PAY_WEEK_START ?? 1);

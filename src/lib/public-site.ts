@@ -34,16 +34,15 @@ const DAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "vierne
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export type HoursRow = { days: string; hours: string | null; closed: boolean };
+export type HoursRow = { days: string; hours: string | null };
 
 /**
- * Horario de la semana agrupando días seguidos iguales:
- * "Martes a sábado · 12:00 p. m. a 10:00 p. m.", "Lunes · Cerrado".
- * Un día abierto sin horario configurado queda con hours null.
+ * Horario de la semana (lunes a domingo) agrupando días seguidos iguales:
+ * "Lunes a viernes · 6:00 p. m. a 11:00 p. m.". Un día sin horario
+ * configurado queda con hours null.
  */
-export function weeklyHours(openingHours: string[], closedWeekdays: number[]): HoursRow[] {
+export function weeklyHours(openingHours: string[]): HoursRow[] {
   const value = (d: number) => {
-    if (closedWeekdays.includes(d)) return "closed";
     const h = parseHours(openingHours[d]);
     return h ? formatHours(h) : "";
   };
@@ -59,7 +58,7 @@ export function weeklyHours(openingHours: string[], closedWeekdays: number[]): H
       span === 0
         ? capital(DAY_NAMES[from])
         : `${capital(DAY_NAMES[from])} ${span === 1 ? "y" : "a"} ${DAY_NAMES[to]}`;
-    return { days, hours: value && value !== "closed" ? value : null, closed: value === "closed" };
+    return { days, hours: value || null };
   });
 }
 

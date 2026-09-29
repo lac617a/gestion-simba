@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { initialStatus } from "@/lib/attendance";
 import { CURRENCY, today } from "@/lib/config";
 import { db } from "@/lib/db";
-import { dateToISO, isoToDate, weekdayOf, type ISODate } from "@/lib/dates";
+import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
 import { fromDecimal } from "@/lib/money";
 import type { DaySchedule } from "@/lib/schedule";
 import { getSchedule } from "@/lib/schedule-data";
@@ -59,14 +59,6 @@ function toRanges(timeOff: { type: "EXTRA_REST" | "LEAVE"; startDate: Date; endD
 }
 
 /**
- * Descansos fijos que aplican ese día. En un festivo que cae en día de cierre
- * (lunes festivo) el restaurante abre, así que el descanso fijo de ese día no aplica.
- */
-function restDaysOn(restDays: number[], iso: ISODate, schedule: DaySchedule) {
-  return schedule.reason === "holiday-open" ? restDays.filter((d) => d !== weekdayOf(iso)) : restDays;
-}
-
-/**
  * Crea el WorkDay (si no existe) y un registro de asistencia por cada empleado
  * que aún no lo tenga, con su estado inicial. Idempotente; no toca días cerrados.
  * Si el restaurante no abre ese día no crea nada y devuelve el WorkDay que ya
@@ -90,7 +82,7 @@ export async function openWorkDay(iso: ISODate, schedule?: DaySchedule) {
         data: missing.map((e) => ({
           workDayId: day.id,
           employeeId: e.id,
-          status: initialStatus(restDaysOn(e.restDays, iso, s), iso, toRanges(e.timeOff)),
+          status: initialStatus(e.restDays, iso, toRanges(e.timeOff)),
         })),
         skipDuplicates: true,
       });
@@ -149,7 +141,7 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
 
   if (iso > today()) {
     if (!schedule.open) return dayoff;
-    return { ...dayoff, mode: "future", rows: await previewRows(iso, schedule) };
+    return { ...dayoff, mode: "future", rows: await previewRows(iso) };
   }
 
   const opened = await openWorkDay(iso, schedule);
@@ -185,7 +177,7 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
 }
 
 /** Días futuros: se calcula cómo arrancará el día, sin guardar nada. */
-async function previewRows(iso: ISODate, schedule: DaySchedule): Promise<DayRow[]> {
+async function previewRows(iso: ISODate): Promise<DayRow[]> {
   const date = isoToDate(iso);
   const employees = await db.employee.findMany({
     where: employedOn(date),
@@ -197,7 +189,7 @@ async function previewRows(iso: ISODate, schedule: DaySchedule): Promise<DayRow[
     employeeId: e.id,
     name: e.name,
     position: e.position,
-    status: initialStatus(restDaysOn(e.restDays, iso, schedule), iso, toRanges(e.timeOff)),
+    status: initialStatus(e.restDays, iso, toRanges(e.timeOff)),
     note: null,
     dailyPay: null,
   }));

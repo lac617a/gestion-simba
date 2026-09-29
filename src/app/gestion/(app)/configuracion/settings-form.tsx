@@ -6,7 +6,7 @@ import { updateSettings } from "@/app/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { WEEKDAYS, WEEKDAYS_SHORT } from "@/lib/employees";
+import { WEEKDAYS } from "@/lib/employees";
 import { HOLIDAY_ROW, parseHours } from "@/lib/hours";
 import type { AppSettings } from "@/lib/settings";
 
@@ -73,34 +73,6 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
           El primero después de terminar la semana. Ese día, Hoy muestra cuánto hay que pagar hasta que quede pagado.
         </p>
       </div>
-
-      <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-medium">Días de cierre (opcional)</legend>
-        <div className="flex flex-wrap gap-2">
-          {WEEKDAYS.map((day, i) => (
-            <label key={day} className="cursor-pointer">
-              <input
-                type="checkbox"
-                name="closedWeekdays"
-                value={i}
-                defaultChecked={settings.closedWeekdays.includes(i)}
-                aria-label={`Cierra los ${day.toLowerCase()}`}
-                className="peer sr-only"
-              />
-              <span
-                title={day}
-                className="inline-flex h-9 min-w-12 items-center justify-center rounded-lg border px-3 text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50"
-              >
-                {WEEKDAYS_SHORT[i]}
-              </span>
-            </label>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Déjalos sin marcar si el restaurante abre todos los días. Si marcas uno y cae festivo, ese día se abre y se
-          cierra el siguiente. Para cerrar un día puntual usa “Marcar como día cerrado” en Asistencia.
-        </p>
-      </fieldset>
 
       <OpeningHoursFields initial={settings.openingHours} />
 

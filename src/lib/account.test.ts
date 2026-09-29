@@ -71,7 +71,6 @@ const NO_HOURS = ["", "", "", "", "", "", "", ""];
 function settingsForm(fields: {
   payWeekStart?: string;
   payDay?: string;
-  closed?: string[];
   hours?: [string, string][];
   whatsapp?: string;
 }) {
@@ -79,7 +78,6 @@ function settingsForm(fields: {
   fd.append("whatsapp", fields.whatsapp ?? "301 216 8273");
   fd.append("payWeekStart", fields.payWeekStart ?? "1");
   fd.append("payDay", fields.payDay ?? "1");
-  for (const d of fields.closed ?? []) fd.append("closedWeekdays", d);
   (fields.hours ?? []).forEach(([open, close], i) => {
     fd.append(`open${i}`, open);
     fd.append(`close${i}`, close);
@@ -88,26 +86,21 @@ function settingsForm(fields: {
 }
 
 describe("parseSettingsForm", () => {
-  it("normaliza días de cierre y valida", () => {
-    expect(parseSettingsForm(settingsForm({ closed: ["2", "1", "2"] })).data).toEqual({
+  it("ajustes válidos", () => {
+    expect(parseSettingsForm(settingsForm({})).data).toEqual({
       payWeekStart: 1,
       payDay: 1,
-      closedWeekdays: [1, 2],
       openingHours: NO_HOURS,
       whatsapp: "301 216 8273",
     });
-    const all = settingsForm({ payWeekStart: "7", closed: ["0", "1", "2", "3", "4", "5", "6"] });
-    expect(parseSettingsForm(all).success).toBe(false);
-  });
-
-  it("sin días de cierre también es válido", () => {
-    expect(parseSettingsForm(settingsForm({ payWeekStart: "0", payDay: "0" })).data).toEqual({
+    expect(parseSettingsForm(settingsForm({ payWeekStart: "0", payDay: "0" })).data).toMatchObject({
       payWeekStart: 0,
       payDay: 0,
-      closedWeekdays: [],
-      openingHours: NO_HOURS,
-      whatsapp: "301 216 8273",
     });
+  });
+
+  it("inicio de semana inválido", () => {
+    expect(parseSettingsForm(settingsForm({ payWeekStart: "7" })).success).toBe(false);
   });
 
   it("WhatsApp del restaurante", () => {

@@ -38,40 +38,24 @@ describe("festivos de Colombia", () => {
   });
 });
 
-describe("daySchedule (cierra los lunes)", () => {
-  const MON = [1];
-
-  it("lunes normal: cerrado", () => {
-    expect(daySchedule("2026-09-28", MON)).toMatchObject({ open: false, reason: "closed-weekday" });
+describe("daySchedule (abre de lunes a domingo)", () => {
+  it("abre todos los días, lunes y festivos incluidos", () => {
+    expect(daySchedule("2026-09-28")).toMatchObject({ open: true, reason: "normal", holiday: null }); // lunes
+    expect(daySchedule("2026-10-12")).toMatchObject({ open: true, reason: "normal", holiday: "Día de la Raza" }); // lunes festivo
+    expect(daySchedule("2026-10-13")).toMatchObject({ open: true, reason: "normal", holiday: null }); // martes siguiente
   });
 
-  it("lunes festivo: abre; el martes siguiente cierra", () => {
-    expect(daySchedule("2026-10-12", MON)).toMatchObject({ open: true, reason: "holiday-open", holiday: "Día de la Raza" });
-    expect(daySchedule("2026-10-13", MON)).toMatchObject({
-      open: false,
-      reason: "after-holiday",
-      previousHoliday: "Día de la Raza",
-    });
+  it("solo cierra un día marcado a mano", () => {
+    expect(daySchedule("2026-12-25", false)).toMatchObject({ open: false, reason: "override-closed", holiday: "Navidad" });
   });
 
-  it("martes normal y festivo entre semana: abre", () => {
-    expect(daySchedule("2026-09-29", MON)).toMatchObject({ open: true, reason: "normal" });
-    expect(daySchedule("2026-04-02", MON)).toMatchObject({ open: true, reason: "normal", holiday: "Jueves Santo" });
-  });
-
-  it("la excepción manual manda", () => {
-    expect(daySchedule("2026-09-28", MON, true)).toMatchObject({ open: true, reason: "override-open" });
-    expect(daySchedule("2026-12-25", MON, false)).toMatchObject({ open: false, reason: "override-closed" });
-  });
-
-  it("sin días de cierre configurados, siempre abre", () => {
-    expect(daySchedule("2026-09-28", [])).toMatchObject({ open: true, reason: "normal" });
-    expect(daySchedule("2026-10-13", [])).toMatchObject({ open: true, reason: "normal" });
+  it("las excepciones viejas de 'abrir' ya no cambian nada", () => {
+    expect(daySchedule("2026-09-28", true)).toMatchObject({ open: true, reason: "normal" });
   });
 
   it("etiquetas", () => {
-    expect(scheduleLabel(daySchedule("2026-09-28", MON))).toBe("El restaurante cierra los lunes.");
-    expect(scheduleLabel(daySchedule("2026-10-13", MON))).toContain("Día de la Raza");
-    expect(scheduleLabel(daySchedule("2026-09-29", MON))).toBe("");
+    expect(scheduleLabel(daySchedule("2026-12-25", false))).toBe("Cerrado por excepción.");
+    expect(scheduleLabel(daySchedule("2026-10-12"))).toBe("Festivo: Día de la Raza.");
+    expect(scheduleLabel(daySchedule("2026-09-29"))).toBe("");
   });
 });

@@ -121,20 +121,18 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Aviso si en el periodo hay días **sin cerrar** (sus pagos y propinas aún no cuentan).
 - Exportar a CSV.
 
-### RF-9 · Días de cierre y festivos
-- **Opcional.** Por defecto el restaurante **abre todos los días** (decisión del 2026-09-28: Simba trabaja de corrido). En Configuración → "Días de cierre (opcional)" se puede marcar uno o más días de cierre semanal.
-- Solo si hay días de cierre: cuando un día de cierre es **festivo de Colombia**, el restaurante **abre** ese día y **cierra el siguiente** (ej. lunes festivo → cierra el martes). Sin días de cierre, esta regla no aplica y no se muestra.
+### RF-9 · Apertura diaria y festivos
+- El restaurante **abre de lunes a domingo, festivos incluidos** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni la regla "lunes festivo → cierra el martes".
 - Festivos calculados automáticamente (Ley 51 de 1983: fijos, trasladados al lunes y los que dependen de la Pascua).
-- En un día de cierre no hay asistencia ni cierre que registrar, y Pagos/Reportes no lo cuentan como "día sin cerrar".
-- En un lunes festivo, el descanso fijo de lunes de los empleados no aplica (quedan Pendiente).
-- **Excepciones manuales:** abrir un día de cierre o cerrar un día normal (ej. 25 de diciembre). Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero.
-- **Hoy** indica si hoy se abre y cuál es el próximo festivo.
+- Los festivos de Colombia se siguen calculando: se muestran como información y usan el horario de "Festivos" si está lleno.
+- **Cierre puntual:** en Asistencia, "Marcar como día cerrado" (ej. 25 de diciembre) y "Abrir este día" para deshacerlo. Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero. Un día marcado como cerrado no tiene asistencia y Pagos/Reportes no lo cuentan como "día sin cerrar".
+- **Hoy** indica el horario del día y el próximo festivo.
 
 ### RF-10 · Configuración y seguridad
 - Pantalla **Configuración** (ícono de engranaje arriba):
   - **Cuenta:** cambiar correo y/o contraseña; siempre pide la contraseña actual. Contraseña nueva: mínimo 10 caracteres, con letras y números, distinta de la actual.
   - **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
-  - **Restaurante:** día de inicio de la semana de pago, día de pago, días de cierre y horario de atención (RF-13). Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
+  - **Restaurante:** WhatsApp, día de inicio de la semana de pago, día de pago y horario de atención (RF-13). Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
 - **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
 
 ### RF-11 · Pagos realizados
@@ -325,7 +323,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F3b ✅ | Pago diario por empleado en el cierre (RF-7) y pantalla de pago semanal (RF-8). |
 | F4 ✅ | Pantalla "Hoy", reportes y exportación CSV. |
 | F5 ✅ | Deploy en Vercel + BD en producción. |
-| F6 ✅ | Días de cierre (opcionales) y festivos de Colombia, con excepciones manuales (RF-9). |
+| F6 ✅ | Festivos de Colombia y cierres puntuales (RF-9). Los días de cierre semanal se quitaron el 2026-09-28. |
 | F7 ✅ | Configuración (cuenta, sesiones, ajustes del restaurante) y límite de intentos de login (RF-10). |
 | F8 ✅ | Pagos realizados (RF-11) y gráfico de ventas (RF-12). |
 | F9 ✅ | Horario de atención y recordatorio del día de pago (RF-13). |

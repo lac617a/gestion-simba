@@ -63,10 +63,6 @@ const OpeningHoursSchema = z
 export const SettingsSchema = z.object({
   payWeekStart: z.coerce.number().int().min(0).max(6, { error: "Día inválido" }),
   payDay: z.coerce.number().int().min(0).max(6, { error: "Día de pago inválido" }),
-  closedWeekdays: z
-    .array(z.coerce.number().int().min(0).max(6))
-    .max(6, { error: "El restaurante debe abrir al menos un día" })
-    .transform((d) => [...new Set(d)].sort((a, b) => a - b)),
   openingHours: OpeningHoursSchema,
   whatsapp: z
     .string()
@@ -80,7 +76,6 @@ export function parseSettingsForm(formData: FormData) {
   return SettingsSchema.safeParse({
     payWeekStart: formData.get("payWeekStart"),
     payDay: formData.get("payDay"),
-    closedWeekdays: formData.getAll("closedWeekdays"),
     whatsapp: get("whatsapp"),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),
   });

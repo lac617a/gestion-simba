@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { formatHours, hoursFor, parseHours, serializeHours } from "./hours";
 import { daySchedule } from "./schedule";
 
-// Martes a sábado 12–22, domingo 12–17, lunes vacío (cierra), festivos 12–18.
-const HOURS = ["12:00-17:00", "", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-23:30", "12:00-23:30", "12:00-18:00"];
-const MONDAY = [1];
+// Lunes a jueves 12–22, viernes y sábado 12–23:30, domingo 12–17, festivos 12–18.
+const HOURS = ["12:00-17:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-22:00", "12:00-23:30", "12:00-23:30", "12:00-18:00"];
 
 describe("horario de atención", () => {
   it("parseHours / serializeHours", () => {
@@ -17,25 +16,23 @@ describe("horario de atención", () => {
   });
 
   it("usa el horario del día de la semana", () => {
-    expect(hoursFor(daySchedule("2026-09-26", MONDAY), HOURS)).toEqual({ open: "12:00", close: "23:30" }); // sábado
-    expect(hoursFor(daySchedule("2026-09-27", MONDAY), HOURS)).toEqual({ open: "12:00", close: "17:00" }); // domingo
+    expect(hoursFor(daySchedule("2026-09-26"), HOURS)).toEqual({ open: "12:00", close: "23:30" }); // sábado
+    expect(hoursFor(daySchedule("2026-09-27"), HOURS)).toEqual({ open: "12:00", close: "17:00" }); // domingo
+    expect(hoursFor(daySchedule("2026-09-28"), HOURS)).toEqual({ open: "12:00", close: "22:00" }); // lunes
   });
 
-  it("día cerrado → sin horario", () => {
-    expect(hoursFor(daySchedule("2026-09-28", MONDAY), HOURS)).toBeNull(); // lunes
-    expect(hoursFor(daySchedule("2026-10-13", MONDAY), HOURS)).toBeNull(); // martes tras lunes festivo
-    expect(hoursFor(daySchedule("2026-09-30", MONDAY, false), HOURS)).toBeNull(); // excepción: cerrado
+  it("día marcado como cerrado → sin horario", () => {
+    expect(hoursFor(daySchedule("2026-12-25", false), HOURS)).toBeNull();
   });
 
   it("festivo: usa la fila de festivos; sin ella, la del día", () => {
-    expect(hoursFor(daySchedule("2026-10-12", MONDAY), HOURS)).toEqual({ open: "12:00", close: "18:00" }); // lunes festivo
+    expect(hoursFor(daySchedule("2026-10-12"), HOURS)).toEqual({ open: "12:00", close: "18:00" }); // lunes festivo
     const noHoliday = HOURS.slice(0, 7);
-    expect(hoursFor(daySchedule("2026-12-08", MONDAY), noHoliday)).toEqual({ open: "12:00", close: "22:00" }); // martes festivo
-    expect(hoursFor(daySchedule("2026-10-12", MONDAY), noHoliday)).toBeNull(); // lunes festivo sin horario de lunes
+    expect(hoursFor(daySchedule("2026-12-08"), noHoliday)).toEqual({ open: "12:00", close: "22:00" }); // martes festivo
   });
 
   it("sin horario configurado", () => {
-    expect(hoursFor(daySchedule("2026-09-26", MONDAY), [])).toBeNull();
+    expect(hoursFor(daySchedule("2026-09-26"), [])).toBeNull();
   });
 
   it("formato de 12 horas", () => {

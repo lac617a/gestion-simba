@@ -58,7 +58,7 @@ export default async function HomePage() {
   const todayHours = hoursFor(schedule, settings.openingHours);
   const wa = whatsappNumber(settings.whatsapp, PHONE_COUNTRY_CODE);
   const orderHref = wa ? whatsappHref(wa, orderMessage(SITE.name)) : null;
-  const week = weeklyHours(settings.openingHours, settings.closedWeekdays);
+  const week = weeklyHours(settings.openingHours);
   const holiday = holidayHours(settings.openingHours);
   const hasHours = week.some((r) => r.hours);
 
@@ -70,7 +70,7 @@ export default async function HomePage() {
 
   return (
     <div className={cn(alfaSlab.variable, bree.variable, "bg-simba-forest text-simba-cream")}>
-      <JsonLd whatsapp={wa} openingHours={settings.openingHours} closedWeekdays={settings.closedWeekdays} />
+      <JsonLd whatsapp={wa} openingHours={settings.openingHours} />
 
       {/* ---------- Barra superior ---------- */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-simba-green/95 backdrop-blur">
@@ -229,9 +229,7 @@ export default async function HomePage() {
                   {week.map((r) => (
                     <div key={r.days} className="flex justify-between gap-4 py-2.5">
                       <dt className="font-medium">{r.days}</dt>
-                      <dd className={cn("text-right", r.closed && "text-simba-forest/60")}>
-                        {r.closed ? "Cerrado" : (r.hours ?? "Abierto")}
-                      </dd>
+                      <dd className="text-right">{r.hours ?? "Abierto"}</dd>
                     </div>
                   ))}
                   {holiday && (
@@ -241,11 +239,6 @@ export default async function HomePage() {
                     </div>
                   )}
                 </dl>
-                {settings.closedWeekdays.length > 0 && (
-                  <p className="mt-2 text-sm text-simba-forest/70">
-                    Si el día de descanso es festivo, abrimos ese día y descansamos el siguiente.
-                  </p>
-                )}
               </div>
             )}
           </div>
@@ -305,19 +298,11 @@ export default async function HomePage() {
 }
 
 /** Datos estructurados para Google (restaurante, dirección, horario, reservas). */
-function JsonLd({
-  whatsapp,
-  openingHours,
-  closedWeekdays,
-}: {
-  whatsapp: string | null;
-  openingHours: string[];
-  closedWeekdays: number[];
-}) {
+function JsonLd({ whatsapp, openingHours }: { whatsapp: string | null; openingHours: string[] }) {
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const hours = DAYS.flatMap((day, i) => {
     const [opens, closes] = (openingHours[i] ?? "").split("-");
-    return !closedWeekdays.includes(i) && opens && closes
+    return opens && closes
       ? [{ "@type": "OpeningHoursSpecification", dayOfWeek: day, opens, closes }]
       : [];
   });

@@ -43,14 +43,14 @@ async function loadDays(where: Prisma.ReservationWhereInput, newestFirst: boolea
   const overrideOf = new Map(overrides.map((o) => [dateToISO(o.date), o.open]));
 
   return dates.map((date): ReservationDay => {
-    const schedule = daySchedule(date, settings.closedWeekdays, overrideOf.get(date) ?? null);
+    const schedule = daySchedule(date, overrideOf.get(date) ?? null);
     const hours = hoursFor(schedule, settings.openingHours);
     const reservations = rows
       .filter((r) => dateToISO(r.date) === date)
       .map((r) => ({
         ...r,
         date,
-        // El día cerrado se avisa una vez, en el encabezado del día (hours es null).
+        // Un día marcado como cerrado se avisa una vez, en el encabezado del día (hours es null).
         warning: r.status === "CANCELLED" ? null : outsideHoursWarning(hours, r.time),
       }));
     return { date, schedule, hours, totals: dayTotals(reservations), reservations };

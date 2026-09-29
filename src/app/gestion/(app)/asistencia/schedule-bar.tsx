@@ -1,9 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
-import { CalendarHeartIcon, ClockIcon, DoorClosedIcon, DoorOpenIcon, TriangleAlertIcon } from "lucide-react";
+import { CalendarHeartIcon, ClockIcon, DoorClosedIcon, DoorOpenIcon } from "lucide-react";
 import { toast } from "sonner";
-import { setDayOverride } from "@/app/actions/schedule";
+import { setDayClosed } from "@/app/actions/schedule";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,51 +27,34 @@ type Props = {
   hours?: string | null;
 };
 
-/** Estado del día según la regla de cierre / festivos, con las excepciones manuales. */
+/** Horario y festivo del día; permite cerrar un día puntual (o volver a abrirlo). */
 export function ScheduleBar({ date, mode, schedule, hours }: Props) {
   const [pending, startTransition] = useTransition();
   const label = scheduleLabel(schedule);
   const hasAttendance = mode === "open";
 
-  function apply(open: boolean | null, success: string) {
+  function apply(closed: boolean, success: string) {
     startTransition(async () => {
-      const res = await setDayOverride(date, open);
+      const res = await setDayClosed(date, closed);
       if (res.ok) toast.success(success);
       else toast.error(res.error);
     });
   }
 
-  // Restaurante cerrado y nada registrado.
-  if (mode === "dayoff") {
+  // Día marcado como cerrado a mano.
+  if (!schedule.open) {
     return (
       <section className="grid gap-3 rounded-lg border bg-muted/40 p-4">
         <div className="flex items-center gap-2 font-medium">
           <DoorClosedIcon className="size-5" /> Restaurante cerrado
         </div>
-        <p className="text-sm text-muted-foreground">{label} No hay asistencia ni cierre que registrar.</p>
-        {schedule.reason === "override-closed" ? (
-          <Button variant="outline" className="justify-self-start" disabled={pending} onClick={() => apply(null, "Excepción quitada")}>
-            Quitar excepción
-          </Button>
-        ) : (
-          <Button variant="outline" className="justify-self-start" disabled={pending} onClick={() => apply(true, "Día abierto")}>
-            <DoorOpenIcon /> Abrir este día igual
-          </Button>
-        )}
+        <p className="text-sm text-muted-foreground">
+          Este día se marcó como cerrado. No hay asistencia ni cierre que registrar.
+        </p>
+        <Button variant="outline" className="justify-self-start" disabled={pending} onClick={() => apply(false, "Día abierto")}>
+          <DoorOpenIcon /> Abrir este día
+        </Button>
       </section>
-    );
-  }
-
-  // Hay algo registrado en un día que normalmente no abre (antes de la regla, o sin excepción).
-  if (!schedule.open) {
-    return (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-        <TriangleAlertIcon className="size-4 shrink-0" />
-        <span className="flex-1">Normalmente el restaurante no abre este día. {label}</span>
-        {mode === "open" && (
-          <CloseDayButton pending={pending} hasAttendance onConfirm={() => apply(false, "Día marcado como cerrado")} />
-        )}
-      </div>
     );
   }
 
@@ -92,24 +75,15 @@ export function ScheduleBar({ date, mode, schedule, hours }: Props) {
           {label}
         </span>
       )}
-      <span className="ml-auto flex gap-2">
-        {schedule.reason === "override-open" && mode !== "closed" ? (
+      {canClose && (
+        <span className="ml-auto flex gap-2">
           <CloseDayButton
             pending={pending}
             hasAttendance={hasAttendance}
-            label="Quitar excepción"
-            onConfirm={() => apply(null, "Excepción quitada")}
+            onConfirm={() => apply(true, "Día marcado como cerrado")}
           />
-        ) : (
-          canClose && (
-            <CloseDayButton
-              pending={pending}
-              hasAttendance={hasAttendance}
-              onConfirm={() => apply(false, "Día marcado como cerrado")}
-            />
-          )
-        )}
-      </span>
+        </span>
+      )}
     </div>
   );
 }
@@ -118,17 +92,15 @@ function CloseDayButton({
   pending,
   hasAttendance,
   onConfirm,
-  label = "Marcar como día cerrado",
 }: {
   pending: boolean;
   hasAttendance: boolean;
   onConfirm: () => void;
-  label?: string;
 }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger render={<Button variant="ghost" size="sm" disabled={pending} />}>
-        <DoorClosedIcon /> {label}
+        <DoorClosedIcon /> Marcar como día cerrado
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
