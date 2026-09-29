@@ -110,7 +110,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
 - **Cierre del turno de la mañana** (al terminar la mañana): se anotan sus propinas y se reparten en partes iguales entre quienes hicieron la mañana (Mañana o Ambos). Desde ahí queda fijo quién hizo la mañana (nadie entra ni sale de ese turno) hasta que se reabra el turno.
 - **Cierre del día** (en la noche): venta total del día, propinas de la tarde (repartidas entre Tarde y Ambos) y el pago de cada empleado. Si no se cerró la mañana, sus propinas se anotan aquí mismo.
-- **Pago por turno:** se sugiere la tarifa del puesto **por cada turno** (Ambos = doble); se puede ajustar.
+- **Pago por turno:** la tarifa del puesto **por cada turno** (Ambos = doble), automático.
 - Pagos y Reportes suman ambos turnos (pago y propinas del día por empleado).
 
 ### RF-5 · Reportes
@@ -129,8 +129,9 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 ### RF-7 · Pago diario
 - Aplica a **todos** los empleados.
 - **Tarifa fija por puesto** (desde 2026-09-28). En Configuración → **Puestos y pago diario** se agregan, renombran, quitan y cambian de pago los puestos. Iniciales: Cocinero $80.000, Mesero $60.000, Cajero $80.000, Jefe de mesa $70.000, Bartender $80.000.
-- En el cierre del día, el **pago del día** de cada empleado que **Trabajó** se llena con el de su puesto; se puede ajustar ese día si hace falta (ej. media jornada). Un empleado sin puesto usa el último pago que se le hizo.
-- Cambiar la tarifa de un puesto no modifica los días ya cerrados (ahí queda lo que se pagó). Un puesto que tiene empleados no se puede quitar.
+- El **pago del día** de cada empleado que **Trabajó** es **automático** (desde 2026-09-28 no se escribe en el cierre): la tarifa de su puesto (en doble turno, por cada turno). El cierre lo muestra junto con la propina y el total.
+- Un empleado sin puesto no deja cerrar el día hasta asignárselo.
+- Cambiar la tarifa de un puesto no modifica los días ya cerrados. Si se reabre un día, quien no cambió conserva lo que se le pagó; solo se recalcula a quien se le cambie el estado o el turno. Un puesto que tiene empleados no se puede quitar.
 - Es obligatorio para cerrar (puede ser $0). Los demás estados (descanso, permiso, falta, vacaciones/incapacidad) **no se pagan**.
 - Queda guardado con el cierre; al reabrir el día se puede corregir.
 

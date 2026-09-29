@@ -42,8 +42,6 @@ type Props = {
     reopenMorning: () => Promise<void>;
     currency: Currency;
     saved: DayClosing | null;
-    payRates: Record<string, number>;
-    suggestedPay: Record<string, number>;
   };
 };
 
@@ -212,8 +210,7 @@ export function AttendanceList({ date, rows, editable, doubleShift, morningClose
             status: r.status,
             shift: r.shift,
             savedPay: r.dailyPay,
-            payRate: closing.payRates[r.employeeId] ?? null,
-            lastPay: closing.suggestedPay[r.employeeId] ?? null,
+            payRate: r.payRate,
           }))}
         />
       )}

@@ -20,8 +20,10 @@ export type DayRow = {
   /** Turno (solo días de doble turno y estado Trabajó) */
   shift: WorkShift | null;
   note: string | null;
-  /** Pago del día guardado (unidades mínimas); null si aún no se captura */
+  /** Pago del día guardado en un cierre (unidades mínimas); null si aún no se cierra o cambió algo */
   dailyPay: number | null;
+  /** Tarifa del puesto por día / turno (Configuración); null si no tiene puesto */
+  payRate: number | null;
 };
 
 /** Datos del cierre. En días abiertos trae lo capturado antes de una reapertura. */
@@ -48,10 +50,6 @@ export type DayView = {
   doubleShift: boolean;
   /** ISO de cuándo se cerró el turno de la mañana; null si sigue abierto */
   morningClosedAt: string | null;
-  /** Pago por turno del puesto de cada empleado (Configuración), para sugerirlo al cerrar */
-  payRates: Record<string, number>;
-  /** Último pago del día de quien no tiene puesto, para sugerirlo al cerrar */
-  suggestedPay: Record<string, number>;
 };
 
 /** Si un día abre con doble turno según Configuración (días de la semana marcados). */
@@ -128,7 +126,7 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
       shift: true,
       note: true,
       dailyPay: true,
-      employee: { select: { id: true, name: true, jobPosition: { select: { name: true } } } },
+      employee: { select: { id: true, name: true, jobPosition: { select: { name: true, dailyPay: true } } } },
     },
     orderBy: { employee: { name: "asc" } },
   });
@@ -141,33 +139,8 @@ export async function loadDayRows(client: Db, workDayId: string): Promise<DayRow
     shift: a.shift,
     note: a.note,
     dailyPay: fromDecimal(a.dailyPay, CURRENCY.decimals),
+    payRate: fromDecimal(a.employee.jobPosition?.dailyPay ?? null, CURRENCY.decimals),
   }));
-}
-
-/**
- * Para sugerir el pago del día al cerrar: la tarifa del puesto de cada empleado
- * (Configuración; en doble turno se multiplica por los turnos) y, para quien no
- * tiene puesto, el último pago que se le hizo antes de `date`.
- */
-async function payHints(employeeIds: string[], date: Date) {
-  if (!employeeIds.length) return { payRates: {}, suggestedPay: {} };
-  const d = CURRENCY.decimals;
-  const [employees, last] = await Promise.all([
-    db.employee.findMany({
-      where: { id: { in: employeeIds }, jobPosition: { isNot: null } },
-      select: { id: true, jobPosition: { select: { dailyPay: true } } },
-    }),
-    db.attendance.findMany({
-      where: { employeeId: { in: employeeIds }, dailyPay: { not: null }, workDay: { date: { lt: date } } },
-      orderBy: { workDay: { date: "desc" } },
-      distinct: ["employeeId"],
-      select: { employeeId: true, dailyPay: true },
-    }),
-  ]);
-  return {
-    payRates: Object.fromEntries(employees.map((e) => [e.id, fromDecimal(e.jobPosition!.dailyPay, d)!])),
-    suggestedPay: Object.fromEntries(last.map((a) => [a.employeeId, fromDecimal(a.dailyPay, d)!])),
-  };
 }
 
 export async function getDayView(iso: ISODate): Promise<DayView> {
@@ -180,8 +153,6 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
     closing: null,
     doubleShift: false,
     morningClosedAt: null,
-    payRates: {},
-    suggestedPay: {},
   };
 
   if (iso > today()) {
@@ -200,14 +171,12 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
     loadDayRows(db, id),
   ]);
   const mode = day.status === ("CLOSED" satisfies DayStatus) ? "closed" : "open";
-  const hints = mode === "open" ? await payHints(rows.map((r) => r.employeeId), day.date) : { payRates: {}, suggestedPay: {} };
 
   const d = CURRENCY.decimals;
   return {
     date: iso,
     mode,
     schedule,
-    ...hints,
     doubleShift: day.doubleShift,
     morningClosedAt: day.morningClosedAt?.toISOString() ?? null,
     rows,
@@ -230,7 +199,13 @@ async function previewRows(iso: ISODate): Promise<DayRow[]> {
   const date = isoToDate(iso);
   const employees = await db.employee.findMany({
     where: employedOn(date),
-    select: { id: true, name: true, jobPosition: { select: { name: true } }, restDays: true, timeOff: timeOffOn(date) },
+    select: {
+      id: true,
+      name: true,
+      jobPosition: { select: { name: true, dailyPay: true } },
+      restDays: true,
+      timeOff: timeOffOn(date),
+    },
     orderBy: { name: "asc" },
   });
   return employees.map((e) => ({
@@ -242,5 +217,6 @@ async function previewRows(iso: ISODate): Promise<DayRow[]> {
     shift: null,
     note: null,
     dailyPay: null,
+    payRate: fromDecimal(e.jobPosition?.dailyPay ?? null, CURRENCY.decimals),
   }));
 }

@@ -1,5 +1,5 @@
 import type { AttendanceStatus, WorkShift } from "@/generated/prisma/enums";
-import { formatMoney, parseMoney, type Currency } from "@/lib/money";
+import { formatMoney, type Currency } from "@/lib/money";
 
 export type ClosingRow = {
   employeeId: string;
@@ -99,29 +99,45 @@ export function splitTips(total: number, rows: ClosingRow[]): TipShareCalc[] {
   }));
 }
 
-/** Nombre del campo del formulario con el pago del día de un empleado. */
-export const payField = (employeeId: string) => `pay_${employeeId}`;
-
-export type PaysResult =
-  | { ok: true; pays: Map<string, number> }
-  | { ok: false; errors: Record<string, string> };
+/** Fila para calcular el pago del día. */
+export type PayRow = ClosingRow & {
+  /** Pago guardado en un cierre anterior (se borra si luego cambia su estado o turno) */
+  savedPay: number | null;
+  /** Tarifa del puesto (Configuración); null si no tiene puesto */
+  payRate: number | null;
+};
 
 /**
- * Lee el pago del día de cada empleado que trabajó (RF-7). Es obligatorio
- * (puede ser 0); los demás estados no se pagan.
+ * Pago del día de quien trabajó (no se escribe a mano): el guardado si ya se
+ * cerró antes y nada cambió; si no, la tarifa del puesto × turnos (doble turno:
+ * Ambos = 2). null si no tiene puesto.
  */
-export function parsePays(rows: ClosingRow[], raw: (field: string) => string, decimals: number): PaysResult {
+export function payFor(r: PayRow, doubleShift: boolean): number | null {
+  if (r.savedPay !== null) return r.savedPay;
+  if (r.payRate === null) return null;
+  return r.payRate * (doubleShift ? Math.max(1, shiftCount(r.shift)) : 1);
+}
+
+export type DayPays = { ok: true; pays: Map<string, number> } | { ok: false; error: string; missing: string[] };
+
+/** Pagos del día de todos los que trabajaron; falla si alguno no tiene puesto (no hay tarifa). */
+export function dayPays(rows: PayRow[], doubleShift: boolean): DayPays {
   const pays = new Map<string, number>();
-  const errors: Record<string, string> = {};
+  const missing: PayRow[] = [];
   for (const r of rows) {
     if (r.status !== "WORKED") continue;
-    const value = raw(payField(r.employeeId)).trim();
-    const minor = value === "" ? null : parseMoney(value, decimals);
-    if (value === "") errors[r.employeeId] = "Escribe el pago del día";
-    else if (minor === null) errors[r.employeeId] = "Monto inválido";
-    else pays.set(r.employeeId, minor);
+    const pay = payFor(r, doubleShift);
+    if (pay === null) missing.push(r);
+    else pays.set(r.employeeId, pay);
   }
-  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, pays };
+  if (missing.length) {
+    return {
+      ok: false,
+      error: `Falta el puesto de ${names(missing)}: asígnalo en Empleados para calcular su pago.`,
+      missing: missing.map((r) => r.employeeId),
+    };
+  }
+  return { ok: true, pays };
 }
 
 export type CloseCheck =

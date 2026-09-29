@@ -96,8 +96,6 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
                   reopenMorning: reopenMorningShift.bind(null, date),
                   currency: CURRENCY,
                   saved: view.closing,
-                  payRates: view.payRates,
-                  suggestedPay: view.suggestedPay,
                 }
               : undefined
           }

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { checkClose, checkMorningClose, parsePays } from "@/lib/closing";
+import { checkClose, checkMorningClose, dayPays } from "@/lib/closing";
 import { CURRENCY, today } from "@/lib/config";
 import { verifySession } from "@/lib/dal";
 import { db } from "@/lib/db";
@@ -17,12 +17,10 @@ export type CloseDayValues = {
   tipsMorning: string;
   tipsEvening: string;
   note: string;
-  /** Pago del día escrito por empleado (employeeId → texto) */
-  pays: Record<string, string>;
 };
 export type CloseDayState =
   | {
-      errors?: Partial<Record<"totalSales" | TipField, string>> & { pays?: Record<string, string> };
+      errors?: Partial<Record<"totalSales" | TipField, string>>;
       message?: string;
       values?: CloseDayValues;
     }
@@ -34,8 +32,9 @@ function tipAmount(value: string) {
 }
 
 /**
- * Cierra el día: guarda venta, propinas y el pago del día de cada empleado,
- * y calcula y guarda el reparto. Todo en una transacción, y solo si el día sigue abierto.
+ * Cierra el día: guarda venta y propinas, calcula y guarda el reparto y el pago
+ * del día de cada empleado (tarifa de su puesto × turnos; no se escribe a mano).
+ * Todo en una transacción, y solo si el día sigue abierto.
  * En días de doble turno las propinas son por turno (las de la mañana ya pueden
  * estar guardadas por el cierre del turno de la mañana).
  */
@@ -48,9 +47,6 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
     tipsMorning: raw("tipsMorning").trim(),
     tipsEvening: raw("tipsEvening").trim(),
     note: raw("note").trim().slice(0, 300),
-    pays: Object.fromEntries(
-      [...formData.keys()].filter((k) => k.startsWith("pay_")).map((k) => [k.slice(4), raw(k)])
-    ),
   };
   const fail = (s: Omit<NonNullable<CloseDayState>, "values">): CloseDayState => ({ ...s, values });
 
@@ -89,8 +85,9 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
     const rows = await loadDayRows(tx, workDayId);
     const check = checkClose(rows, double ? { morning, evening } : tipsTotal);
     if (!check.ok) return check;
-    const pays = parsePays(rows, raw, d);
-    if (!pays.ok) return { ok: false as const, error: "Revisa el pago del día de cada empleado.", payErrors: pays.errors };
+    // Se conserva lo guardado en un cierre anterior (si nada cambió); si no, tarifa del puesto × turnos.
+    const pays = dayPays(rows.map((r) => ({ ...r, savedPay: r.dailyPay })), double);
+    if (!pays.ok) return pays;
 
     const now = new Date();
     const { count } = await tx.workDay.updateMany({
@@ -135,9 +132,7 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
     return check;
   });
 
-  if (!result.ok) {
-    return fail({ message: result.error, errors: "payErrors" in result ? { pays: result.payErrors } : undefined });
-  }
+  if (!result.ok) return fail({ message: result.error });
   revalidatePath("/gestion/asistencia");
   revalidatePath("/gestion");
   return undefined;

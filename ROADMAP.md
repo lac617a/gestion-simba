@@ -64,6 +64,12 @@ npm test                                    # pruebas unitarias
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
 
+## Pago del día automático (2026-09-28) ✅
+
+- Se quitan los campos de pago del cierre: `dayPays`/`payFor` en `src/lib/closing.ts` calculan tarifa del puesto × turnos (`DayRow.payRate`), o conservan `Attendance.dailyPay` de un cierre anterior. `setAttendanceStatus`/`setAttendanceShift`/`markPendingAsWorked`/`setDoubleShift` borran `dailyPay` cuando cambian, para que se recalcule. Sin puesto → no se puede cerrar.
+
+---
+
 ## F16 · Producción y menú "Más" ✅
 
 - Tablas `ProductionDay` (fecha única, nota) y `ProductionAttendance` (empleado, `basePay` guardado al registrarlo, `extraPay`); `AppSettings.productionPay` (50.000). Migración `produccion` (solo agrega).

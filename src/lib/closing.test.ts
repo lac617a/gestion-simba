@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { checkClose, checkMorningClose, shiftCount, splitShiftTips, splitTips, type ClosingRow } from "./closing";
+import {
+  checkClose,
+  checkMorningClose,
+  dayPays,
+  payFor,
+  shiftCount,
+  splitShiftTips,
+  splitTips,
+  type ClosingRow,
+  type PayRow,
+} from "./closing";
 import { currencyOf, formatMoney, fromDecimal, parseMoney, toDecimalString } from "./money";
 
 const row = (name: string, status: ClosingRow["status"] = "WORKED"): ClosingRow => ({
@@ -153,6 +163,38 @@ describe("doble turno", () => {
     expect(checkClose([row("Ana", "WORKED", "MORNING")], { morning: 0, evening: 10_000 })).toEqual({
       ok: false,
       error: "Nadie hizo el turno de la tarde: no se pueden repartir sus propinas.",
+    });
+  });
+});
+
+describe("pago del día (tarifa del puesto, sin escribirlo)", () => {
+  const p = (name: string, over: Partial<PayRow> = {}): PayRow => ({
+    employeeId: name.toLowerCase(),
+    name,
+    status: "WORKED",
+    shift: null,
+    savedPay: null,
+    payRate: 60_000,
+    ...over,
+  });
+
+  it("tarifa del puesto; en doble turno, por cada turno", () => {
+    expect(payFor(p("Ana"), false)).toBe(60_000);
+    expect(payFor(p("Ana", { shift: "MORNING" }), true)).toBe(60_000);
+    expect(payFor(p("Ana", { shift: "BOTH" }), true)).toBe(120_000);
+  });
+
+  it("conserva lo pagado en un cierre anterior (aunque la tarifa haya cambiado)", () => {
+    expect(payFor(p("Ana", { savedPay: 55_000, payRate: 60_000 }), false)).toBe(55_000);
+  });
+
+  it("solo quienes trabajaron; sin puesto no se puede calcular", () => {
+    const ok = dayPays([p("Ana"), p("Bruno", { status: "REST", payRate: null })], false);
+    expect(ok.ok && [...ok.pays]).toEqual([["ana", 60_000]]);
+    expect(dayPays([p("Ana"), p("Carla", { payRate: null })], false)).toEqual({
+      ok: false,
+      error: "Falta el puesto de Carla: asígnalo en Empleados para calcular su pago.",
+      missing: ["carla"],
     });
   });
 });

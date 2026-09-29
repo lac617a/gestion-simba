@@ -48,9 +48,11 @@ export async function setAttendanceStatus(attendanceId: string, status: Attendan
     return MORNING_CLOSED_ERROR;
   }
 
+  // Si cambia su estado o turno, el pago del día se vuelve a calcular al cerrar (tarifa × turnos).
+  const changed = a.status !== status || a.shift !== shift;
   const { count } = await db.attendance.updateMany({
     where: { id: attendanceId, workDay: { status: "OPEN" } },
-    data: { status, shift },
+    data: { status, shift, ...(changed && { dailyPay: null }) },
   });
   if (count === 0) return CLOSED_ERROR;
   revalidatePath("/gestion/asistencia");
@@ -71,7 +73,11 @@ export async function setAttendanceShift(attendanceId: string, shift: WorkShift)
     return MORNING_CLOSED_ERROR;
   }
 
-  await db.attendance.update({ where: { id: attendanceId }, data: { shift } });
+  // El pago se vuelve a calcular al cerrar (Ambos = doble).
+  await db.attendance.update({
+    where: { id: attendanceId },
+    data: { shift, ...(shift !== a.shift && { dailyPay: null }) },
+  });
   revalidatePath("/gestion/asistencia");
   return { ok: true };
 }
@@ -96,7 +102,11 @@ export async function setDoubleShift(date: string, doubleShift: boolean): Promis
       where: { id: day.id },
       data: doubleShift ? { doubleShift } : { doubleShift, tipsMorning: null, tipsEvening: null },
     }),
-    ...(doubleShift ? [] : [db.attendance.updateMany({ where: { workDayId: day.id }, data: { shift: null } })]),
+    // Cambia cómo se paga el día: los pagos se vuelven a calcular al cerrar.
+    db.attendance.updateMany({
+      where: { workDayId: day.id },
+      data: doubleShift ? { dailyPay: null } : { shift: null, dailyPay: null },
+    }),
   ]);
   revalidatePath("/gestion/asistencia");
   revalidatePath("/gestion");
@@ -129,7 +139,7 @@ export async function markPendingAsWorked(date: string): Promise<ActionResult & 
       workDay: { date: isoToDate(date), status: "OPEN" },
     },
     // Tras cerrar la mañana, los que faltaban solo pueden ser de la tarde.
-    data: { status: "WORKED", shift: day?.doubleShift && day.morningClosedAt ? "EVENING" : null },
+    data: { status: "WORKED", shift: day?.doubleShift && day.morningClosedAt ? "EVENING" : null, dailyPay: null },
   });
   revalidatePath("/gestion/asistencia");
   return { ok: true, count };

@@ -1,28 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePays, payField, type ClosingRow } from "./closing";
 import { applyPayments, payrollCsv, summarizePayroll, type PayEntry, type PaymentRecord } from "./payroll";
-
-describe("parsePays", () => {
-  const rows: ClosingRow[] = [
-    { employeeId: "a", name: "Ana", status: "WORKED" },
-    { employeeId: "b", name: "Bruno", status: "WORKED" },
-    { employeeId: "c", name: "Carla", status: "REST" },
-  ];
-  const form = (values: Record<string, string>) => (field: string) => values[field] ?? "";
-
-  it("lee el pago de quienes trabajaron e ignora a los demás", () => {
-    const r = parsePays(rows, form({ [payField("a")]: "70.000", [payField("b")]: "0", [payField("c")]: "99" }), 0);
-    expect(r.ok && [...r.pays]).toEqual([
-      ["a", 70_000],
-      ["b", 0],
-    ]);
-  });
-
-  it("exige el pago de cada uno que trabajó y valida el monto", () => {
-    const r = parsePays(rows, form({ [payField("a")]: "abc" }), 0);
-    expect(r).toEqual({ ok: false, errors: { a: "Monto inválido", b: "Escribe el pago del día" } });
-  });
-});
 
 describe("summarizePayroll", () => {
   const e = (name: string, date: string, dailyPay: number, tip: number): PayEntry => ({
