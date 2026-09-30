@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CameraIcon, ClockIcon, MapPinIcon, MessageCircleIcon, NavigationIcon, UtensilsIcon } from "lucide-react";
 import { BRAND_LOGO } from "@/lib/brand";
-import { PHONE_COUNTRY_CODE, today } from "@/lib/config";
+import { APP_TIMEZONE, PHONE_COUNTRY_CODE, today } from "@/lib/config";
 import { formatHours, hoursFor } from "@/lib/hours";
 import {
   MAPS_DIRECTIONS_URL,
@@ -180,7 +180,13 @@ export default async function HomePage() {
             </ul>
           </div>
           {wa ? (
-            <ReserveForm whatsapp={wa} restaurant={SITE.name} today={date} />
+            <ReserveForm
+              whatsapp={wa}
+              restaurant={SITE.name}
+              today={date}
+              timeZone={APP_TIMEZONE}
+              openingHours={settings.openingHours}
+            />
           ) : (
             <p className="rounded-2xl bg-simba-cream p-6 text-simba-forest">
               Escríbenos por Instagram{" "}

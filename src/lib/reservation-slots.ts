@@ -42,12 +42,14 @@ export function quickDates(today: ISODate, count = 7): ISODate[] {
   return Array.from({ length: count }, (_, i) => addDays(today, i));
 }
 
-const weekdayShort = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", weekday: "short" });
-const dayMonthShort = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", day: "numeric", month: "short" });
+// Nombres fijos (no Intl): se muestran en componentes de cliente y Node y los
+// navegadores no abrevian igual, lo que rompería la hidratación.
+const WEEKDAYS_SHORT = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
 
 /** Botón de fecha: { top: "Hoy" | "Mañana" | "jue", bottom: "1 oct" }. */
 export function quickDateLabel(date: ISODate, today: ISODate) {
-  const d = Date.parse(`${date}T00:00:00Z`);
-  const top = date === today ? "Hoy" : date === addDays(today, 1) ? "Mañana" : weekdayShort.format(d).replace(".", "");
-  return { top, bottom: dayMonthShort.format(d).replace(" de ", " ").replace(".", "") }; // "1 de oct" → "1 oct"
+  const [, month, day] = date.split("-").map(Number);
+  const top = date === today ? "Hoy" : date === addDays(today, 1) ? "Mañana" : WEEKDAYS_SHORT[weekdayOf(date)];
+  return { top, bottom: `${day} ${MONTHS_SHORT[month - 1]}` };
 }

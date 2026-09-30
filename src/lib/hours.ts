@@ -22,12 +22,16 @@ export function hoursFor(schedule: DaySchedule, openingHours: string[]): Opening
   return parseHours(openingHours[weekdayOf(schedule.date)]);
 }
 
-const timeFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", hour: "numeric", minute: "2-digit" });
+const NBSP = String.fromCharCode(0xa0);
 
-/** "22:00" → "10:00 p. m." */
+/**
+ * "22:00" → "10:00 p. m." Se arma a mano y no con Intl: Node y cada navegador
+ * separan "p. m." con espacios distintos, y en componentes de cliente eso rompe
+ * la hidratación. Mismo texto que daba Intl en el servidor (es-CO).
+ */
 export function formatTime(hhmm: string) {
   const [h, m] = hhmm.split(":").map(Number);
-  return timeFormat.format(Date.UTC(2000, 0, 1, h, m));
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "a." : "p."}${NBSP}m.`;
 }
 
 /** "12:00 p. m. a 10:00 p. m." */

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircleIcon } from "lucide-react";
+import { localNow, type LocalNow } from "@/lib/dates";
 import { formatTime } from "@/lib/hours";
 import { reservationRequestMessage } from "@/lib/public-site";
+import { hoursOn, isPastSlot, timeSlots } from "@/lib/reservation-slots";
 import { OCCASIONS, OTHER_OCCASION, whatsappHref } from "@/lib/reservations";
 
 const FIELD =
@@ -14,24 +16,50 @@ type Props = {
   /** Número para wa.me (con indicativo) */
   whatsapp: string;
   restaurant: string;
-  /** Fecha mínima (hoy, en la zona del restaurante) */
+  /** Hoy al generar la página (se recalcula en el navegador: la página se guarda en caché) */
   today: string;
+  /** Zona horaria del restaurante */
+  timeZone: string;
+  /** Horario por día de la semana (Configuración) */
+  openingHours: string[];
 };
 
 /**
  * La reserva NO se guarda en el sistema: arma el mensaje y abre el WhatsApp del
  * restaurante; allí la confirman y el empleado la anota en /gestion/reservas.
  */
-export function ReserveForm({ whatsapp, restaurant, today }: Props) {
+export function ReserveForm({ whatsapp, restaurant, today, timeZone, openingHours }: Props) {
   const [occasion, setOccasion] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [date, setDate] = useState(today);
+  const [time, setTime] = useState("");
+  // La hora real solo se conoce en el navegador (la página viene de caché); hasta entonces se muestran todas.
+  const [now, setNow] = useState<LocalNow | null>(null);
+  useEffect(() => {
+    const tick = () => {
+      const n = localNow(timeZone);
+      setNow(n);
+      setDate((d) => (d < n.date ? n.date : d));
+    };
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, [timeZone]);
+
+  const minDate = now?.date ?? today;
+  // Horas del día elegido; hoy, solo las que no han pasado.
+  const slots = timeSlots(hoursOn(date, openingHours)).filter((t) => !now || !isPastSlot(date, t, now));
+  const chosen = slots.includes(time) ? time : "";
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const get = (k: string) => String(f.get(k) ?? "");
     const people = Number(get("people"));
-    if (get("date") < today) return setError("Elige una fecha de hoy en adelante.");
+    const current = localNow(timeZone);
+    if (get("date") < current.date) return setError("Elige una fecha de hoy en adelante.");
+    if (!get("time")) return setError("Elige la hora.");
+    if (isPastSlot(get("date"), get("time"), current)) return setError("Esa hora ya pasó. Elige una más tarde.");
     if (!Number.isInteger(people) || people < 1) return setError("¿Para cuántas personas?");
     setError(null);
 
@@ -65,13 +93,31 @@ export function ReserveForm({ whatsapp, restaurant, today }: Props) {
           <label htmlFor="r-date" className={LABEL}>
             Fecha *
           </label>
-          <input id="r-date" name="date" type="date" required min={today} defaultValue={today} className={FIELD} />
+          <input
+            id="r-date"
+            name="date"
+            type="date"
+            required
+            min={minDate}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={FIELD}
+          />
         </div>
         <div className="grid gap-1.5">
           <label htmlFor="r-time" className={LABEL}>
             Hora *
           </label>
-          <input id="r-time" name="time" type="time" required step={900} className={FIELD} />
+          <select id="r-time" name="time" required value={chosen} onChange={(e) => setTime(e.target.value)} className={FIELD}>
+            <option value="" disabled>
+              {slots.length ? "Elige la hora" : "Ya no quedan horas"}
+            </option>
+            {slots.map((t) => (
+              <option key={t} value={t}>
+                {formatTime(t)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
