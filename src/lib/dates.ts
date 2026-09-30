@@ -66,6 +66,23 @@ export function localNow(timeZone: string, now = new Date()): LocalNow {
   return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
 }
 
+/** Instante (UTC) de una fecha y hora locales de la zona. Ej. 2026-10-03 19:30 en Bogotá → 2026-10-04T00:30Z. */
+export function zonedToUtc(date: ISODate, time: string, timeZone: string): Date {
+  const [y, mo, d] = date.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  const wall = Date.UTC(y, mo - 1, d, h, mi);
+  // Diferencia entre el reloj de la zona y UTC en un instante dado.
+  const offset = (t: number) => {
+    const n = localNow(timeZone, new Date(t));
+    const [ny, nmo, nd] = n.date.split("-").map(Number);
+    const [nh, nmi] = n.time.split(":").map(Number);
+    return Date.UTC(ny, nmo - 1, nd, nh, nmi) - Math.floor(t / 60_000) * 60_000;
+  };
+  // Dos pasadas por si el cambio de horario (donde lo haya) cae en medio.
+  const first = wall - offset(wall);
+  return new Date(wall - offset(first));
+}
+
 const longFormat = new Intl.DateTimeFormat("es-CO", {
   timeZone: "UTC",
   weekday: "long",

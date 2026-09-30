@@ -149,6 +149,25 @@ La app instalada en los celulares de los empleados: si abre la página pública 
 
 ---
 
+## 9. Recordatorio por correo de las reservas (Resend)
+
+1 hora antes de cada reserva confirmada llega un correo al de **Configuración → Restaurante → Correo de recordatorios** (inicial: simbaparrilla1@gmail.com). Lo manda Resend desde el dominio `profiya.com`.
+
+1. En Resend → **API Keys → Create API Key** (permiso *Sending access*, dominio `profiya.com`). Cópiala; no la pegues en el chat.
+2. En Vercel → **Settings → Environment Variables** agrega:
+
+   | Variable | Valor |
+   |---|---|
+   | `RESEND_API_KEY` | la clave de Resend (`re_…`) |
+   | `CRON_SECRET` | una clave larga cualquiera (ej. `openssl rand -base64 32`); Vercel la usa para llamar la revisión diaria |
+   | `RESEND_FROM` | (opcional) remitente; por defecto `Simba Reservas <reservas@profiya.com>` |
+
+3. Vuelve a publicar (**Deployments → … → Redeploy**) para que tome las variables.
+4. Cada reserva programa su correo al guardarse (Resend lo manda a la hora). Una revisión diaria (**Settings → Cron Jobs**, 7:00 a. m. de Colombia) programa las que quedaron pendientes: las de más de 29 días, las que existían antes y las que fallaron. Después del primer despliegue puedes pulsar **Run** ahí mismo para programar de una vez las reservas que ya tenías.
+5. En Resend → **Emails** se ven los programados (*Scheduled*), enviados y cancelados.
+
+---
+
 ## 7. (Opcional) Pasar tus datos locales a Neon
 
 La app en Neon arranca **vacía**. Si quieres llevar lo que ya registraste en tu PC (empleados, días cerrados, pagos), dímelo y preparo un script que los copie. Se corre una vez, antes de empezar a usar la versión publicada.

@@ -95,6 +95,8 @@ export const SettingsSchema = z.object({
     .trim()
     // El indicativo real (PHONE_COUNTRY_CODE) se pone al armar el enlace; aquí solo se valida la forma.
     .refine((v) => whatsappNumber(v, "57") !== null, { error: "Número de WhatsApp inválido (ej. 301 216 8273)" }),
+  // Vacío = sin recordatorios por correo
+  reminderEmail: z.union([z.literal(""), z.email({ error: "Correo de recordatorios inválido" })]),
 });
 
 export function parseSettingsForm(formData: FormData) {
@@ -103,6 +105,7 @@ export function parseSettingsForm(formData: FormData) {
     payWeekStart: formData.get("payWeekStart"),
     payDay: formData.get("payDay"),
     whatsapp: get("whatsapp"),
+    reminderEmail: get("reminderEmail").trim().toLowerCase(),
     doubleShiftWeekdays: formData.getAll("doubleShiftWeekdays"),
     shiftHours: [0, 1].map((i) => ({ open: get(`shiftOpen${i}`), close: get(`shiftClose${i}`) })),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),

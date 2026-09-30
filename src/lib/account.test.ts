@@ -73,6 +73,7 @@ function settingsForm(fields: {
   payDay?: string;
   hours?: [string, string][];
   whatsapp?: string;
+  reminderEmail?: string;
   doubleShift?: string[];
   shifts?: [string, string][];
 }) {
@@ -83,6 +84,7 @@ function settingsForm(fields: {
     fd.append(`shiftClose${i}`, close);
   });
   fd.append("whatsapp", fields.whatsapp ?? "301 216 8273");
+  fd.append("reminderEmail", fields.reminderEmail ?? "simbaparrilla1@gmail.com");
   fd.append("payWeekStart", fields.payWeekStart ?? "1");
   fd.append("payDay", fields.payDay ?? "1");
   (fields.hours ?? []).forEach(([open, close], i) => {
@@ -99,6 +101,7 @@ describe("parseSettingsForm", () => {
       payDay: 1,
       openingHours: NO_HOURS,
       whatsapp: "301 216 8273",
+      reminderEmail: "simbaparrilla1@gmail.com",
       doubleShiftWeekdays: [0, 6],
       shiftHours: ["11:00-16:00", "17:30-23:30"],
     });
@@ -116,6 +119,14 @@ describe("parseSettingsForm", () => {
     expect(parseSettingsForm(settingsForm({ whatsapp: " +57 301 216 8273 " })).data?.whatsapp).toBe("+57 301 216 8273");
     expect(parseSettingsForm(settingsForm({ whatsapp: "4441234" })).success).toBe(false);
     expect(parseSettingsForm(settingsForm({ whatsapp: "" })).success).toBe(false);
+  });
+
+  it("correo de recordatorios: vacío lo desactiva, se normaliza, debe ser válido", () => {
+    expect(parseSettingsForm(settingsForm({ reminderEmail: "" })).data?.reminderEmail).toBe("");
+    expect(parseSettingsForm(settingsForm({ reminderEmail: " Simba@Gmail.com " })).data?.reminderEmail).toBe("simba@gmail.com");
+    expect(parseSettingsForm(settingsForm({ reminderEmail: "no-es-correo" })).error?.issues[0].message).toBe(
+      "Correo de recordatorios inválido"
+    );
   });
 
   it("doble turno: días y horario de cada turno", () => {

@@ -44,6 +44,22 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
       </div>
 
       <div className="grid gap-2">
+        <Label htmlFor="reminderEmail">Correo de recordatorios de reservas</Label>
+        <Input
+          id="reminderEmail"
+          name="reminderEmail"
+          type="email"
+          defaultValue={settings.reminderEmail}
+          placeholder="Vacío = sin recordatorios"
+          className="max-w-80"
+        />
+        <p className="text-xs text-muted-foreground">
+          Aquí llega un correo 1 hora antes de cada reserva confirmada. Si lo cambias, los recordatorios que ya estaban
+          programados siguen yendo al correo anterior; las reservas nuevas o editadas usan el nuevo.
+        </p>
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor="payWeekStart">La semana de pago empieza el</Label>
         <select
           id="payWeekStart"

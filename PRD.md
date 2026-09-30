@@ -119,6 +119,14 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Cada reserva guarda **quién la registró** ("Registrada por … el …" al editarla).
 - El rol se comprueba en el servidor en cada página, acción y descarga (no solo se oculta el menú); un cambio de rol aplica de inmediato.
 
+### RF-22 · Recordatorio de reservas por correo
+- **1 hora antes** de cada reserva **confirmada** llega un correo (Resend, remitente del dominio `profiya.com`) al **correo de recordatorios** de Configuración → Restaurante (inicial: simbaparrilla1@gmail.com; vacío = sin recordatorios).
+- El correo trae hora, fecha, a nombre de, personas, teléfono, ocasión, observación, quién la registró y un botón **Ver la reserva**.
+- Se programa en Resend al guardar la reserva. Al editarla se cancela el programado y se programa otro con los datos nuevos; al cancelarla, marcar Llegó/No vino o eliminarla, se cancela; al volver a confirmarla, se programa otra vez. Si falta menos de 1 hora, sale de inmediato; si ya empezó, no se manda.
+- Resend programa hasta 30 días adelante: una **revisión diaria** (Vercel Cron, 7:00 a. m.) programa las que faltan (más lejanas, anteriores a esta función o con fallo de Resend). Un fallo de Resend nunca impide guardar la reserva.
+- En la reserva se ve el estado: "sale el …", "enviado el …" o pendiente.
+- Si se cambia el correo en Configuración, los ya programados siguen yendo al anterior; las reservas nuevas o editadas usan el nuevo.
+
 ### RF-18 · Doble turno (uso interno de empleados)
 - En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
@@ -382,6 +390,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F16 ✅ | Producción con pago fijo + excedente en el pago semanal (RF-19) y menú "Más" (RF-20). |
 | F17 ✅ | Gastos del día en el cierre y en reportes (RF-3, RF-5). |
 | F18 ✅ | Usuarios con rol: administradores y usuarios que solo manejan reservas (RF-21). |
+| F19 ✅ | Recordatorio por correo 1 hora antes de cada reserva, con Resend (RF-22). |
 
 ## 11. Preguntas abiertas
 

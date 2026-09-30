@@ -23,6 +23,9 @@ export const DEFAULT_SHIFT_HOURS = ["11:00-16:00", "17:30-23:30"];
 /** Pago fijo por jornada de producción, en pesos (se cambia en Configuración). */
 export const DEFAULT_PRODUCTION_PAY = 50_000;
 
+/** Correo que recibe el recordatorio 1 hora antes de cada reserva (se cambia en Configuración). */
+export const DEFAULT_REMINDER_EMAIL = "simbaparrilla1@gmail.com";
+
 /** WhatsApp del restaurante para la página pública (se cambia en Configuración). */
 export const DEFAULT_WHATSAPP = "3012168273";
 

@@ -30,7 +30,9 @@ _Última actualización: 2026-09-29_
 | F16 · Producción + menú "Más" | ✅ en producción | commits «F16: producción…» y «Navegación: menú Más…» |
 | Pago del día automático (sin campos en el cierre) | ✅ en producción | `e10afe3` |
 | F17 · Gastos del día en el cierre | ✅ sin publicar (tiene migración) | `38292d1` |
-| F18 · Usuarios con rol (administrador / solo reservas) | ✅ sin publicar (tiene migración) | commit «F18: usuarios…» |
+| F18 · Usuarios con rol (administrador / solo reservas) | ✅ sin publicar (tiene migración) | `daa4c47` |
+| Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ sin publicar | `c749c7a` + `3483c1a` |
+| F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | commit «F19: recordatorio…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -66,6 +68,14 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F19 · Recordatorio de reservas por correo (2026-09-29) ✅
+
+- `Reservation.reminderEmailId` / `reminderAt` (correo programado en Resend y cuándo sale) y `AppSettings.reminderEmail` (inicial simbaparrilla1@gmail.com). Migración `recordatorios_de_reservas` (solo agrega).
+- `src/lib/resend.ts` (fetch a la API: enviar/programar con `scheduled_at` y cancelar; sin `RESEND_API_KEY` no manda nada; `RESEND_API_URL` solo para pruebas). `src/lib/reminders.ts` (puro: `planReminder`, `reminderEmail` con HTML escapado) y `zonedToUtc` en dates.ts. `src/lib/reminders-data.ts`: `syncReservationReminder` (cancela el programado si no ha salido y programa otro; nunca lanza), `cancelReservationReminder`, `syncPendingReminders`.
+- Las acciones de reservas lo llaman al crear, editar, cambiar estado y eliminar. `GET /api/cron/recordatorios` (con `CRON_SECRET`) + `vercel.json` a las 12:00 UTC (7:00 Bogotá).
+- Probado en e2e con un Resend falso (scratchpad `resend-mock.mjs`, `.env.e2e` con `RESEND_API_URL=http://localhost:4010`): programa a las 6:30 p. m. para una reserva de 7:30 p. m., editar = cancelar + programar, cancelar/eliminar = cancelar, a menos de 1 hora sale ya, la revisión diaria no repite, y si Resend no responde la reserva igual se guarda.
+- **Para publicar:** migración en Neon + `RESEND_API_KEY` y `CRON_SECRET` en Vercel (DEPLOY.md §9).
 
 ## Reservas: fecha y hora rápidas (2026-09-29) ✅
 

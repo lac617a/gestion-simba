@@ -56,6 +56,8 @@ model AppSettings {
   shiftHours          String[] @default(["11:00-16:00", "17:30-23:30"])
   /// Pago fijo por asistir a una jornada de producción (el excedente va aparte)
   productionPay       Decimal  @default(50000) @db.Decimal(14, 2)
+  /// A dónde llega el correo 1 hora antes de cada reserva (Resend); "" = sin recordatorios
+  reminderEmail       String   @default("simbaparrilla1@gmail.com")
   updatedAt           DateTime @updatedAt
 }
 
@@ -219,25 +221,28 @@ enum ReservationStatus {
 
 /// Reservas de mesa (RF-14).
 model Reservation {
-  id           String            @id @default(cuid())
-  date         DateTime          @db.Date
+  id              String            @id @default(cuid())
+  date            DateTime          @db.Date
   /// Hora local "HH:MM"
-  time         String
-  partySize    Int
+  time            String
+  partySize       Int
   /// A nombre de quién está la reserva
-  customerName String
-  phone        String?
+  customerName    String
+  phone           String?
   /// Cumpleaños, aniversario… (texto libre)
-  occasion     String?
+  occasion        String?
   /// Persona de la ocasión (ej. el cumpleañero)
-  honoree      String?
-  note         String?
-  status       ReservationStatus @default(CONFIRMED)
+  honoree         String?
+  note            String?
+  status          ReservationStatus @default(CONFIRMED)
+  /// Correo de recordatorio programado en Resend (1 hora antes) y cuándo sale (UTC)
+  reminderEmailId String?
+  reminderAt      DateTime?
   /// Quién la registró (null en las anteriores a los usuarios)
-  createdById  String?
-  createdBy    User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  createdById     String?
+  createdBy       User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([date])
 }

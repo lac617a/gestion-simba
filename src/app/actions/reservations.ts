@@ -8,6 +8,7 @@ import { nowLocal } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
+import { cancelReservationReminder, syncReservationReminder } from "@/lib/reminders-data";
 import { isPastSlot, PAST_GRACE_MINUTES } from "@/lib/reservation-slots";
 import { parseReservationForm, RESERVATION_STATUS_LABEL, type ReservationFieldErrors } from "@/lib/reservations";
 
@@ -66,7 +67,8 @@ export async function createReservation(_prev: ReservationFormState, formData: F
   const { date, ...data } = parsed.data;
   const past = pastError(date, data.time);
   if (past) return { errors: past, values: submittedValues(formData) };
-  await db.reservation.create({ data: { ...data, date: isoToDate(date), createdById: user.userId } });
+  const created = await db.reservation.create({ data: { ...data, date: isoToDate(date), createdById: user.userId } });
+  await syncReservationReminder(created.id);
   refresh();
   redirect(`/gestion/reservas?creado=1#dia-${date}`);
 }
@@ -91,6 +93,8 @@ export async function updateReservation(
   if (past) return { errors: past, values: submittedValues(formData) };
   const { count } = await db.reservation.updateMany({ where: { id }, data: { ...data, date: isoToDate(date) } });
   if (count === 0) return { message: "La reserva ya no existe", values: submittedValues(formData) };
+  // Con los datos nuevos (o cancelado si ya no aplica).
+  await syncReservationReminder(id);
 
   refresh();
   redirect(`/gestion/reservas?actualizado=1#dia-${date}`);
@@ -104,6 +108,8 @@ export async function setReservationStatus(id: string, status: ReservationStatus
   if (!STATUSES.includes(status)) return { ok: false as const, error: "Estado inválido" };
   const { count } = await db.reservation.updateMany({ where: { id }, data: { status } });
   if (count === 0) return { ok: false as const, error: "La reserva ya no existe" };
+  // Cancelada, llegó o no vino: sin recordatorio. De vuelta a confirmada: se programa otra vez.
+  await syncReservationReminder(id);
   refresh();
   return { ok: true as const };
 }
@@ -111,6 +117,7 @@ export async function setReservationStatus(id: string, status: ReservationStatus
 /** Borra la reserva (para las registradas por error; si no vinieron es mejor marcar "No vino"). */
 export async function deleteReservation(id: string) {
   await verifyReservations();
+  await cancelReservationReminder(id);
   await db.reservation.deleteMany({ where: { id } });
   refresh();
   redirect("/gestion/reservas?eliminado=1");
