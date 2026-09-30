@@ -13,6 +13,7 @@ type TipField = "tipsTotal" | "tipsMorning" | "tipsEvening";
 
 export type CloseDayValues = {
   totalSales: string;
+  expensesTotal: string;
   tipsTotal: string;
   tipsMorning: string;
   tipsEvening: string;
@@ -20,7 +21,7 @@ export type CloseDayValues = {
 };
 export type CloseDayState =
   | {
-      errors?: Partial<Record<"totalSales" | TipField, string>>;
+      errors?: Partial<Record<"totalSales" | "expensesTotal" | TipField, string>>;
       message?: string;
       values?: CloseDayValues;
     }
@@ -32,7 +33,7 @@ function tipAmount(value: string) {
 }
 
 /**
- * Cierra el día: guarda venta y propinas, calcula y guarda el reparto y el pago
+ * Cierra el día: guarda venta, gastos y propinas, calcula y guarda el reparto y el pago
  * del día de cada empleado (tarifa de su puesto × turnos; no se escribe a mano).
  * Todo en una transacción, y solo si el día sigue abierto.
  * En días de doble turno las propinas son por turno (las de la mañana ya pueden
@@ -43,6 +44,7 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
   const raw = (field: string) => String(formData.get(field) ?? "");
   const values: CloseDayValues = {
     totalSales: raw("totalSales").trim(),
+    expensesTotal: raw("expensesTotal").trim(),
     tipsTotal: raw("tipsTotal").trim(),
     tipsMorning: raw("tipsMorning").trim(),
     tipsEvening: raw("tipsEvening").trim(),
@@ -64,6 +66,9 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
   const errors: NonNullable<CloseDayState>["errors"] = {};
   if (values.totalSales === "") errors.totalSales = "Escribe la venta total del día";
   else if (totalSales === null) errors.totalSales = "Monto inválido";
+  const expensesTotal = parseMoney(values.expensesTotal, d);
+  if (values.expensesTotal === "") errors.expensesTotal = "Escribe los gastos del día (0 si no hubo)";
+  else if (expensesTotal === null) errors.expensesTotal = "Monto inválido";
 
   // Doble turno: la mañana viene del cierre del turno (si se hizo) o del formulario.
   const tips: Partial<Record<TipField, number | null>> = double
@@ -96,6 +101,7 @@ export async function closeDay(date: string, _prev: CloseDayState, formData: For
         status: "CLOSED",
         closedAt: now,
         totalSales: toDecimalString(totalSales!, d),
+        expensesTotal: toDecimalString(expensesTotal!, d),
         tipsTotal: toDecimalString(tipsTotal, d),
         ...(double && {
           tipsMorning: toDecimalString(morning, d),

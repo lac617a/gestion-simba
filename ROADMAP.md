@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-09-26_
+_Última actualización: 2026-09-29_
 
 ## Estado
 
@@ -24,10 +24,12 @@ _Última actualización: 2026-09-26_
 | F11 · WhatsApp de confirmación + reporte de reservas | ✅ en producción | `5dc60b9` |
 | F12 · Administración en `/gestion` + página pública | ✅ en producción | `951ab6c` + commit «F12: página pública…» |
 | F13 · Reseñas en la página pública | ✅ en producción | commit «F13: reseñas…» |
-| F14 · Puestos con pago diario fijo (configurables) | ✅ sin publicar (tiene migración) | `eeed426` |
-| Se quitan los festivos | ✅ sin publicar | `f0f553c` |
-| F15 · Doble turno (propinas por turno) | ✅ sin publicar (tiene migración) | `1f78a19` |
-| F16 · Producción + menú "Más" | ✅ sin publicar (tiene migración) | commits «F16: producción…» y «Navegación: menú Más…» |
+| F14 · Puestos con pago diario fijo (configurables) | ✅ en producción | `eeed426` |
+| Se quitan los festivos | ✅ en producción | `f0f553c` |
+| F15 · Doble turno (propinas por turno) | ✅ en producción | `1f78a19` |
+| F16 · Producción + menú "Más" | ✅ en producción | commits «F16: producción…» y «Navegación: menú Más…» |
+| Pago del día automático (sin campos en el cierre) | ✅ sin publicar | `e10afe3` |
+| F17 · Gastos del día en el cierre | ✅ sin publicar (tiene migración) | commit «F17: gastos del día…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -63,6 +65,14 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F17 · Gastos del día (2026-09-29) ✅
+
+- `WorkDay.expensesTotal` (`Decimal(14,2)?`). Migración `gastos_del_dia` (solo agrega una columna; aplicarla en Neon antes del push).
+- Cierre: campo obligatorio "Gastos del día" ($0 permitido) y línea en vivo *Venta − gastos*; `closeDay` lo valida y guarda. En días de doble turno se anota en el cierre de la noche.
+- Resumen del día cerrado, tarjeta de Hoy y Reportes muestran gastos y *venta − gastos*. `summarizeSales` suma solo los gastos anotados; `net` usa solo los días con gastos (`missingExpenses` cuenta los que no tienen). CSV de ventas con columnas Gastos y Venta - gastos.
+- Días cerrados antes de esto: "Sin anotar: reabre el día para agregarlos".
+- Fuera por ahora: gastos por concepto/categoría.
 
 ## Pago del día automático (2026-09-28) ✅
 

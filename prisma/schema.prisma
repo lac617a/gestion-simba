@@ -108,6 +108,8 @@ model WorkDay {
   date            DateTime     @unique @db.Date
   totalSales      Decimal?     @db.Decimal(14, 2)
   tipsTotal       Decimal?     @db.Decimal(14, 2)
+  /// Gastos totales del restaurante en el día (se anotan al cerrar; null en días cerrados antes de existir)
+  expensesTotal   Decimal?     @db.Decimal(14, 2)
   note            String?
   status          DayStatus    @default(OPEN)
   closedAt        DateTime?

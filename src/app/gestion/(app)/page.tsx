@@ -57,6 +57,7 @@ export default async function TodayPage() {
   const resting = by("REST", "EXTRA_REST", "LEAVE");
   const absent = by("ABSENT");
   const closed = view.mode === "closed";
+  const expenses = view.closing?.expensesTotal ?? null;
 
   return (
     <div className="grid gap-6">
@@ -110,6 +111,11 @@ export default async function TodayPage() {
             </div>
             <dl className="grid grid-cols-2 gap-2">
               <Stat label="Venta" value={money(view.closing?.totalSales ?? 0)} />
+              <Stat label="Gastos" value={expenses === null ? "—" : money(expenses)} />
+              <Stat
+                label="Venta − gastos"
+                value={expenses === null ? "—" : money((view.closing?.totalSales ?? 0) - expenses)}
+              />
               <Stat label="Propinas" value={money(view.closing?.tipsTotal ?? 0)} />
             </dl>
             <GoTo href="/gestion/asistencia">Ver el cierre</GoTo>

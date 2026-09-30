@@ -33,6 +33,7 @@ type Props = {
 export function ClosedSummary({ closing, rows, doubleShift, currency, closedAtLabel, reopenAction }: Props) {
   const [pending, startTransition] = useTransition();
   const money = (v: number | null) => formatMoney(v ?? 0, currency);
+  const expenses = closing.expensesTotal;
   const tipOf = new Map(closing.shares.map((s) => [s.employeeId, s.amount]));
   const payouts = rows
     .filter((r) => r.status === "WORKED")
@@ -52,15 +53,22 @@ export function ClosedSummary({ closing, rows, doubleShift, currency, closedAtLa
         {closedAtLabel && <span className="text-sm text-muted-foreground">· {closedAtLabel}</span>}
       </div>
 
-      <dl className={doubleShift ? "grid grid-cols-2 gap-3 sm:grid-cols-4" : "grid grid-cols-2 gap-3"}>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Venta total" value={money(closing.totalSales)} />
-        <Stat label="Propinas" value={money(closing.tipsTotal)} />
-        {doubleShift && (
-          <>
-            <Stat label="Propinas mañana" value={money(closing.tipsMorning)} />
-            <Stat label="Propinas tarde" value={money(closing.tipsEvening)} />
-          </>
-        )}
+        <Stat
+          label="Gastos"
+          value={expenses === null ? "—" : money(expenses)}
+          hint={expenses === null ? "Sin anotar: reabre el día para agregarlos" : undefined}
+        />
+        <Stat
+          label="Venta − gastos"
+          value={expenses === null ? "—" : money((closing.totalSales ?? 0) - expenses)}
+        />
+        <Stat
+          label="Propinas"
+          value={money(closing.tipsTotal)}
+          hint={doubleShift ? `Mañana ${money(closing.tipsMorning)} · Tarde ${money(closing.tipsEvening)}` : undefined}
+        />
       </dl>
 
       {payouts.length > 0 && (
@@ -106,7 +114,7 @@ export function ClosedSummary({ closing, rows, doubleShift, currency, closedAtLa
           <AlertDialogHeader>
             <AlertDialogTitle>¿Reabrir el día?</AlertDialogTitle>
             <AlertDialogDescription>
-              Podrás corregir la asistencia, la venta y las propinas. El reparto se volverá a calcular al cerrar.
+              Podrás corregir la asistencia, la venta, los gastos y las propinas. El reparto se volverá a calcular al cerrar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -128,11 +136,12 @@ export function ClosedSummary({ closing, rows, doubleShift, currency, closedAtLa
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-lg bg-muted/60 p-3">
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+      {hint && <dd className="text-xs text-muted-foreground">{hint}</dd>}
     </div>
   );
 }

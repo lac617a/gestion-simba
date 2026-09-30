@@ -9,12 +9,27 @@ const byName = (a: { name: string }, b: { name: string }) =>
 
 // ---------- Ventas ----------
 
-/** Un día cerrado, montos en unidades mínimas. */
-export type SalesDay = { date: ISODate; totalSales: number; tipsTotal: number; workers: number };
+/**
+ * Un día cerrado, montos en unidades mínimas. `expensesTotal` es null en días
+ * cerrados antes de que se anotaran los gastos.
+ */
+export type SalesDay = {
+  date: ISODate;
+  totalSales: number;
+  expensesTotal: number | null;
+  tipsTotal: number;
+  workers: number;
+};
 
 export type SalesSummary = {
   days: SalesDay[];
   totalSales: number;
+  /** Suma de los gastos anotados */
+  expensesTotal: number;
+  /** Venta − gastos, solo de los días con gastos anotados (si no, parecería ganancia) */
+  net: number;
+  /** Días cerrados sin gastos anotados (no entran en `net`) */
+  missingExpenses: number;
   tipsTotal: number;
   /** Promedio de venta por día cerrado (redondeado) */
   avgSales: number;
@@ -24,11 +39,16 @@ export type SalesSummary = {
 export function summarizeSales(days: SalesDay[]): SalesSummary {
   const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
   const totalSales = sorted.reduce((s, d) => s + d.totalSales, 0);
+  const withExpenses = sorted.filter((d) => d.expensesTotal !== null);
+  const expensesTotal = withExpenses.reduce((s, d) => s + d.expensesTotal!, 0);
   const tipsTotal = sorted.reduce((s, d) => s + d.tipsTotal, 0);
   const best = sorted.reduce<SalesDay | null>((b, d) => (!b || d.totalSales > b.totalSales ? d : b), null);
   return {
     days: sorted,
     totalSales,
+    expensesTotal,
+    net: withExpenses.reduce((s, d) => s + d.totalSales, 0) - expensesTotal,
+    missingExpenses: sorted.length - withExpenses.length,
     tipsTotal,
     avgSales: sorted.length ? Math.round(totalSales / sorted.length) : 0,
     best,
@@ -112,13 +132,22 @@ const periodLine = (p: Period) => ["Periodo", `${p.from} a ${p.to}`];
 
 export function salesCsv(s: SalesSummary, p: Period, decimals: number) {
   const m = (v: number) => moneyCell(v, decimals);
+  // Días sin gastos anotados: celdas vacías.
+  const opt = (v: number | null) => (v === null ? "" : m(v));
   return toCsv([
     periodLine(p),
     [],
-    ["Fecha", "Venta", "Propinas", "Trabajaron"],
-    ...s.days.map((d) => [d.date, m(d.totalSales), m(d.tipsTotal), d.workers]),
-    ["TOTAL", m(s.totalSales), m(s.tipsTotal), ""],
-    ["Promedio por día", m(s.avgSales), "", ""],
+    ["Fecha", "Venta", "Gastos", "Venta - gastos", "Propinas", "Trabajaron"],
+    ...s.days.map((d) => [
+      d.date,
+      m(d.totalSales),
+      opt(d.expensesTotal),
+      opt(d.expensesTotal === null ? null : d.totalSales - d.expensesTotal),
+      m(d.tipsTotal),
+      d.workers,
+    ]),
+    ["TOTAL", m(s.totalSales), m(s.expensesTotal), m(s.net), m(s.tipsTotal), ""],
+    ["Promedio por día", m(s.avgSales), "", "", "", ""],
   ]);
 }
 

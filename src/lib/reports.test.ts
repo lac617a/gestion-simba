@@ -14,30 +14,69 @@ const period = { from: "2026-09-21", to: "2026-09-27" };
 describe("summarizeSales", () => {
   it("totales, promedio por día cerrado y mejor día", () => {
     const s = summarizeSales([
-      { date: "2026-09-23", totalSales: 1_000_000, tipsTotal: 80_000, workers: 3 },
-      { date: "2026-09-21", totalSales: 900_000, tipsTotal: 90_000, workers: 2 },
-      { date: "2026-09-22", totalSales: 1_500_001, tipsTotal: 120_000, workers: 3 },
+      { date: "2026-09-23", totalSales: 1_000_000, expensesTotal: 300_000, tipsTotal: 80_000, workers: 3 },
+      { date: "2026-09-21", totalSales: 900_000, expensesTotal: 0, tipsTotal: 90_000, workers: 2 },
+      { date: "2026-09-22", totalSales: 1_500_001, expensesTotal: 450_000, tipsTotal: 120_000, workers: 3 },
     ]);
     expect(s.days.map((d) => d.date)).toEqual(["2026-09-21", "2026-09-22", "2026-09-23"]);
     expect(s.totalSales).toBe(3_400_001);
+    expect(s.expensesTotal).toBe(750_000);
+    expect(s.net).toBe(2_650_001);
+    expect(s.missingExpenses).toBe(0);
     expect(s.tipsTotal).toBe(290_000);
     expect(s.avgSales).toBe(1_133_334);
     expect(s.best?.date).toBe("2026-09-22");
   });
 
+  it("días cerrados antes de anotar gastos: quedan fuera de venta − gastos y se cuentan aparte", () => {
+    const s = summarizeSales([
+      { date: "2026-09-21", totalSales: 900_000, expensesTotal: null, tipsTotal: 0, workers: 2 },
+      { date: "2026-09-22", totalSales: 1_000_000, expensesTotal: 200_000, tipsTotal: 0, workers: 2 },
+    ]);
+    expect(s.expensesTotal).toBe(200_000);
+    expect(s.totalSales).toBe(1_900_000);
+    expect(s.net).toBe(800_000);
+    expect(s.missingExpenses).toBe(1);
+  });
+
   it("sin días", () => {
-    expect(summarizeSales([])).toEqual({ days: [], totalSales: 0, tipsTotal: 0, avgSales: 0, best: null });
+    expect(summarizeSales([])).toEqual({
+      days: [],
+      totalSales: 0,
+      expensesTotal: 0,
+      net: 0,
+      missingExpenses: 0,
+      tipsTotal: 0,
+      avgSales: 0,
+      best: null,
+    });
   });
 
   it("CSV", () => {
-    const csv = salesCsv(summarizeSales([{ date: "2026-09-21", totalSales: 900_000, tipsTotal: 90_000, workers: 2 }]), period, 0);
-    expect(csv).toContain("2026-09-21;900000;90000;2");
-    expect(csv).toContain("Promedio por día;900000;;");
+    const csv = salesCsv(
+      summarizeSales([
+        { date: "2026-09-21", totalSales: 900_000, expensesTotal: 250_000, tipsTotal: 90_000, workers: 2 },
+        { date: "2026-09-22", totalSales: 500_000, expensesTotal: null, tipsTotal: 10_000, workers: 1 },
+      ]),
+      period,
+      0
+    );
+    expect(csv).toContain("Fecha;Venta;Gastos;Venta - gastos;Propinas;Trabajaron");
+    expect(csv).toContain("2026-09-21;900000;250000;650000;90000;2");
+    expect(csv).toContain("2026-09-22;500000;;;10000;1");
+    expect(csv).toContain("TOTAL;1400000;250000;650000;100000;");
+    expect(csv).toContain("Promedio por día;700000;;;;");
   });
 });
 
 describe("salesSeries", () => {
-  const day = (date: string, totalSales: number) => ({ date, totalSales, tipsTotal: totalSales / 10, workers: 3 });
+  const day = (date: string, totalSales: number) => ({
+    date,
+    totalSales,
+    expensesTotal: 0,
+    tipsTotal: totalSales / 10,
+    workers: 3,
+  });
 
   it("una barra por día, con huecos para días sin cierre", () => {
     const s = salesSeries([day("2026-09-21", 100), day("2026-09-23", 300)], "2026-09-21", "2026-09-24");

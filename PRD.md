@@ -16,7 +16,7 @@ Hoy el control de quién trabajó, cuánto se vendió y cómo se reparten las pr
 
 1. Mantiene la lista de empleados.
 2. Marca cada día quién trabajó, quién descansó o faltó.
-3. Al cerrar el día, anota la venta total y el monto de propinas.
+3. Al cerrar el día, anota la venta total, los gastos del día y el monto de propinas.
 4. El sistema reparte las propinas en partes iguales **solo entre quienes trabajaron ese día**.
 
 ## 2. Usuario
@@ -32,7 +32,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 ### Dentro del MVP
 - CRUD de empleados (N empleados, sin límite).
 - Asistencia diaria con descanso fijo semanal pre-marcado y días libres extra.
-- Cierre del día con venta total.
+- Cierre del día con venta total y gastos del día.
 - Registro de propinas diarias y reparto automático.
 - Reportes por rango de fechas y exportación CSV.
 - Pago diario por empleado y resumen de pago semanal (pago de los días trabajados + propinas).
@@ -42,7 +42,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Múltiples sucursales.
 - Varios usuarios o roles.
 - Acceso de empleados para consultar sus datos.
-- Desglose de ventas por método de pago, registro de gastos.
+- Desglose de ventas por método de pago; detalle de gastos por concepto (solo se anota el total del día).
 - Reparto de propinas por puesto u horas.
 
 ## 4. Requisitos funcionales
@@ -77,11 +77,12 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Nota opcional por empleado/día (ej. "salió temprano").
 
 ### RF-3 · Cierre del día
-- Capturar **venta total del día** y una **nota** opcional.
+- Capturar **venta total del día**, **gastos totales del día** del restaurante (compras, insumos, servicios…; obligatorio, $0 si no hubo) y una **nota** opcional. Se ve en vivo *Venta − gastos*.
 - Capturar el **monto total de propinas** (RF-4).
 - Al confirmar, el día pasa a **Cerrado**: se guarda el reparto de propinas y ya no se puede editar asistencia, ventas ni propinas.
 - **Reabrir día:** acción explícita con confirmación; permite editar y al volver a cerrar se recalcula el reparto.
 - Validaciones: no hay empleados en *Pendiente*; montos ≥ 0.
+- Los días cerrados antes de existir los gastos quedan *sin gastos anotados*; para agregarlos se reabre el día (al volver a cerrar se piden).
 
 ### RF-4 · Propinas
 - Un solo monto de propinas por día.
@@ -109,13 +110,13 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
 - **Cierre del turno de la mañana** (al terminar la mañana): se anotan sus propinas y se reparten en partes iguales entre quienes hicieron la mañana (Mañana o Ambos). Desde ahí queda fijo quién hizo la mañana (nadie entra ni sale de ese turno) hasta que se reabra el turno.
-- **Cierre del día** (en la noche): venta total del día, propinas de la tarde (repartidas entre Tarde y Ambos) y el pago de cada empleado. Si no se cerró la mañana, sus propinas se anotan aquí mismo.
+- **Cierre del día** (en la noche): venta y gastos totales del día, propinas de la tarde (repartidas entre Tarde y Ambos) y el pago de cada empleado. Si no se cerró la mañana, sus propinas se anotan aquí mismo.
 - **Pago por turno:** la tarifa del puesto **por cada turno** (Ambos = doble), automático.
 - Pagos y Reportes suman ambos turnos (pago y propinas del día por empleado).
 
 ### RF-5 · Reportes
 Filtro por rango de fechas (semana, quincena, mes o personalizado):
-- **Ventas:** total del periodo, promedio diario, venta por día.
+- **Ventas y gastos:** venta total, gastos, *venta − gastos*, propinas, promedio diario, mejor día y tabla por día (venta, gastos, venta − gastos, propinas). *Venta − gastos* solo cuenta los días con gastos anotados (si no, parecería ganancia) y se avisa cuántos días no los tienen. No descuenta el pago de empleados (eso está en Pagos).
 - **Propinas por empleado:** total recibido y días que recibió.
 - **Asistencia por empleado:** días trabajados, descansos, descansos extra, faltas, vacaciones.
 - Exportar cada reporte a **CSV**.
@@ -253,6 +254,7 @@ model WorkDay {
   id          String       @id @default(cuid())
   date        DateTime     @unique @db.Date
   totalSales  Decimal?     @db.Decimal(10, 2)
+  expensesTotal Decimal?   @db.Decimal(10, 2) // gastos del día; null en días cerrados antes de anotarlos
   tipsTotal   Decimal?     @db.Decimal(10, 2)
   note        String?
   status      DayStatus    @default(OPEN)
@@ -316,10 +318,10 @@ model TipShare {
 1. **Login**
 2. **Hoy** (inicio / dashboard)
 3. **Asistencia** — selector de fecha, lista de empleados con su estado.
-4. **Cierre del día** — venta total, propinas, pago del día por empleado, vista previa del reparto, cerrar/reabrir.
+4. **Cierre del día** — venta total, gastos, propinas, pago del día por empleado, vista previa del reparto, cerrar/reabrir.
 5. **Empleados** — lista, alta, edición, baja/reactivación, días libres asignados.
 6. **Pagos** — resumen semanal (o rango libre) por empleado: días trabajados, pagos diarios, propinas y total a pagar.
-7. **Reportes** — ventas, propinas por empleado, asistencia; exportar CSV.
+7. **Reportes** — ventas y gastos, propinas por empleado, asistencia; exportar CSV.
 8. **Configuración** — correo y contraseña, cerrar otras sesiones, inicio de la semana de pago, días de cierre (zona horaria, moneda y hora de corte se muestran; se cambian en Vercel).
 
 ## 9. Requisitos no funcionales

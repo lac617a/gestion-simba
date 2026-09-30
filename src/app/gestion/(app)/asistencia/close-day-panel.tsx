@@ -20,6 +20,7 @@ import {
   type PayRow,
 } from "@/lib/closing";
 import { formatMoney, parseMoney, type Currency } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import type { DayClosing } from "@/lib/workdays";
 
 /** Fila del cierre: el pago del día se calcula (tarifa del puesto × turnos), no se escribe. */
@@ -40,6 +41,7 @@ type Props = {
 /** Montos iniciales del formulario, en unidades mínimas (null = vacío). */
 type Initial = {
   totalSales: number | null;
+  expensesTotal: number | null;
   tipsTotal: number | null;
   tipsMorning: number | null;
   tipsEvening: number | null;
@@ -55,6 +57,7 @@ export function CloseDayPanel({ action, currency, rows, saved, doubleShift, morn
   const initial: Initial = sent
     ? {
         totalSales: parse(sent.totalSales),
+        expensesTotal: parse(sent.expensesTotal),
         tipsTotal: parse(sent.tipsTotal),
         tipsMorning: parse(sent.tipsMorning),
         tipsEvening: parse(sent.tipsEvening),
@@ -62,6 +65,7 @@ export function CloseDayPanel({ action, currency, rows, saved, doubleShift, morn
       }
     : {
         totalSales: saved?.totalSales ?? null,
+        expensesTotal: saved?.expensesTotal ?? null,
         tipsTotal: saved?.tipsTotal ?? null,
         tipsMorning: saved?.tipsMorning ?? null,
         tipsEvening: saved?.tipsEvening ?? null,
@@ -74,8 +78,8 @@ export function CloseDayPanel({ action, currency, rows, saved, doubleShift, morn
         <h2 className="font-medium">{doubleShift ? "Cierre del día (turno de la tarde)" : "Cierre del día"}</h2>
         <p className="text-sm text-muted-foreground">
           {doubleShift
-            ? "Al final de la noche: venta total del día y propinas de la tarde. Las propinas de cada turno se reparten entre quienes lo hicieron; el pago es la tarifa del puesto por cada turno."
-            : "Anota la venta y las propinas del día. Las propinas se reparten en partes iguales entre quienes trabajaron; el pago es la tarifa del puesto."}
+            ? "Al final de la noche: venta y gastos totales del día y propinas de la tarde. Las propinas de cada turno se reparten entre quienes lo hicieron; el pago es la tarifa del puesto por cada turno."
+            : "Anota la venta, los gastos y las propinas del día. Las propinas se reparten en partes iguales entre quienes trabajaron; el pago es la tarifa del puesto."}
         </p>
       </div>
       {/* key: remonta los campos con lo enviado cuando la acción devuelve un error */}
@@ -115,6 +119,7 @@ function CloseDayFields({
   savedMorning: number;
 }) {
   const [sales, setSales] = useState(initial.totalSales);
+  const [expenses, setExpenses] = useState(initial.expensesTotal);
   const [tips, setTips] = useState(initial.tipsTotal);
   const [morning, setMorning] = useState(initial.tipsMorning);
   const [evening, setEvening] = useState(initial.tipsEvening);
@@ -139,7 +144,7 @@ function CloseDayFields({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className={doubleShift ? "grid gap-4 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-3"}>
         <MoneyField
           id="totalSales"
           label={`Venta total del día (${currency.code})`}
@@ -147,6 +152,16 @@ function CloseDayFields({
           value={sales}
           onValueChange={setSales}
           error={state?.errors?.totalSales}
+          required
+        />
+        <MoneyField
+          id="expensesTotal"
+          label="Gastos del día"
+          currency={currency}
+          value={expenses}
+          onValueChange={setExpenses}
+          error={state?.errors?.expensesTotal}
+          hint="Compras, insumos, servicios… 0 si no hubo."
           required
         />
         {doubleShift ? (
@@ -191,6 +206,14 @@ function CloseDayFields({
           />
         )}
       </div>
+      {sales !== null && expenses !== null && (
+        <p className="-mt-1 text-sm text-muted-foreground">
+          Venta − gastos:{" "}
+          <span className={cn("font-medium tabular-nums", sales - expenses < 0 ? "text-destructive" : "text-foreground")}>
+            {formatMoney(sales - expenses, currency)}
+          </span>
+        </p>
+      )}
 
       {workers.length > 0 && (
         <fieldset className="grid gap-2">
@@ -279,11 +302,14 @@ function MoneyField({
   label,
   hideLabel,
   error,
+  hint,
   ...props
 }: {
   id: string;
   label: string;
   hideLabel?: boolean;
+  /** Ayuda corta debajo del campo */
+  hint?: string;
   currency: Currency;
   value: number | null;
   onValueChange: (minor: number | null) => void;
@@ -297,7 +323,11 @@ function MoneyField({
         {label}
       </Label>
       <MoneyInput id={id} name={id} invalid={!!error} {...props} />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : (
+        hint && <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }

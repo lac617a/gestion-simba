@@ -21,6 +21,7 @@ export async function getReports(period: Period) {
       select: {
         date: true,
         totalSales: true,
+        expensesTotal: true,
         tipsTotal: true,
         _count: { select: { attendances: { where: { status: "WORKED" } } } },
       },
@@ -44,6 +45,7 @@ export async function getReports(period: Period) {
       closedDays.map((w) => ({
         date: dateToISO(w.date),
         totalSales: fromDecimal(w.totalSales, d) ?? 0,
+        expensesTotal: fromDecimal(w.expensesTotal, d),
         tipsTotal: fromDecimal(w.tipsTotal, d) ?? 0,
         workers: w._count.attendances,
       }))

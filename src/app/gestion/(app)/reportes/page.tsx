@@ -54,15 +54,33 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
       </div>
 
       {/* ---------- Ventas ---------- */}
-      <Section id="ventas" title="Ventas" csv={csv("ventas")}>
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Section id="ventas" title="Ventas y gastos" csv={csv("ventas")}>
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Stat label="Venta total" value={money(sales.totalSales)} strong />
+          <Stat
+            label="Gastos"
+            value={money(sales.expensesTotal)}
+            hint={
+              sales.missingExpenses > 0
+                ? `${sales.missingExpenses} ${sales.missingExpenses === 1 ? "día sin gastos anotados" : "días sin gastos anotados"}`
+                : undefined
+            }
+          />
+          <Stat
+            label="Venta − gastos"
+            value={money(sales.net)}
+            hint={
+              sales.missingExpenses > 0
+                ? `Solo ${sales.days.length - sales.missingExpenses === 1 ? "el día" : `los ${sales.days.length - sales.missingExpenses} días`} con gastos`
+                : undefined
+            }
+          />
+          <Stat label="Propinas" value={money(sales.tipsTotal)} />
           <Stat
             label="Promedio por día"
             value={money(sales.avgSales)}
             hint={`${sales.days.length} ${sales.days.length === 1 ? "día cerrado" : "días cerrados"}`}
           />
-          <Stat label="Propinas" value={money(sales.tipsTotal)} />
           <Stat
             label="Mejor día"
             value={sales.best ? money(sales.best.totalSales) : "—"}
@@ -80,7 +98,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
         {sales.days.length === 0 ? (
           <Empty>No hay días cerrados en este periodo.</Empty>
         ) : (
-          <Table head={["Fecha", "Venta", "Propinas", "Trabajaron"]}>
+          <Table head={["Fecha", "Venta", "Gastos", "Venta − gastos", "Propinas", "Trabajaron"]}>
             {sales.days.map((d) => (
               <tr key={d.date}>
                 <td className="sticky left-0 bg-background px-3 py-2 whitespace-nowrap">
@@ -89,6 +107,18 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
                   </Link>
                 </td>
                 <td className="px-3 py-2 text-right">{money(d.totalSales)}</td>
+                {d.expensesTotal === null ? (
+                  <td colSpan={2} className="px-3 py-2 text-right text-muted-foreground/70">
+                    Sin gastos anotados
+                  </td>
+                ) : (
+                  <>
+                    <td className="px-3 py-2 text-right">{money(d.expensesTotal)}</td>
+                    <td className={`px-3 py-2 text-right ${d.totalSales < d.expensesTotal ? "text-destructive" : ""}`}>
+                      {money(d.totalSales - d.expensesTotal)}
+                    </td>
+                  </>
+                )}
                 <td className="px-3 py-2 text-right">{money(d.tipsTotal)}</td>
                 <td className="px-3 py-2 text-right">{d.workers}</td>
               </tr>

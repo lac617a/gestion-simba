@@ -29,6 +29,8 @@ export type DayRow = {
 /** Datos del cierre. En días abiertos trae lo capturado antes de una reapertura. */
 export type DayClosing = {
   totalSales: number | null;
+  /** Gastos del restaurante en el día (null: día cerrado antes de anotarse gastos) */
+  expensesTotal: number | null;
   tipsTotal: number | null;
   /** Propinas por turno (días de doble turno) */
   tipsMorning: number | null;
@@ -182,6 +184,7 @@ export async function getDayView(iso: ISODate): Promise<DayView> {
     rows,
     closing: {
       totalSales: fromDecimal(day.totalSales, d),
+      expensesTotal: fromDecimal(day.expensesTotal, d),
       tipsTotal: fromDecimal(day.tipsTotal, d),
       tipsMorning: fromDecimal(day.tipsMorning, d),
       tipsEvening: fromDecimal(day.tipsEvening, d),
