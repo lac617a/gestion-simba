@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { createReservation } from "@/app/actions/reservations";
-import { today } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { isISODate } from "@/lib/dates";
+import { getReservationFormContext } from "@/lib/reservations-data";
 import { ReservationForm } from "../reservation-form";
 
 export const metadata: Metadata = { title: "Nueva reserva · Gestión Simba" };
@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Nueva reserva · Gestión Simba" };
 export default async function NewReservationPage({ searchParams }: PageProps<"/gestion/reservas/nueva">) {
   await verifyReservations();
   const { fecha } = await searchParams;
+  const context = await getReservationFormContext();
 
   return (
     <div className="grid max-w-xl gap-6">
@@ -17,9 +18,10 @@ export default async function NewReservationPage({ searchParams }: PageProps<"/g
       <ReservationForm
         action={createReservation}
         submitLabel="Guardar reserva"
-        autoFocus
+        context={context}
         defaults={{
-          date: isISODate(fecha) ? fecha : today(),
+          // Sin fechas pasadas: un enlace viejo con ?fecha= arranca en hoy.
+          date: isISODate(fecha) && fecha >= context.today ? fecha : context.today,
           time: "",
           partySize: "2",
           customerName: "",

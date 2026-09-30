@@ -5,7 +5,7 @@ import { APP_TIMEZONE } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { formatDayShort } from "@/lib/dates";
 import { RESERVATION_STATUS_CLASS, RESERVATION_STATUS_LABEL, splitOccasion } from "@/lib/reservations";
-import { getReservation } from "@/lib/reservations-data";
+import { getReservation, getReservationFormContext } from "@/lib/reservations-data";
 import { displayName } from "@/lib/users";
 import { cn } from "@/lib/utils";
 import { ReservationForm } from "../reservation-form";
@@ -18,7 +18,7 @@ const createdAtFormat = new Intl.DateTimeFormat("es-CO", { timeZone: APP_TIMEZON
 export default async function EditReservationPage({ params }: PageProps<"/gestion/reservas/[id]">) {
   await verifyReservations();
   const { id } = await params;
-  const r = await getReservation(id);
+  const [r, context] = await Promise.all([getReservation(id), getReservationFormContext()]);
   if (!r) notFound();
   const occasion = splitOccasion(r.occasion);
 
@@ -36,6 +36,8 @@ export default async function EditReservationPage({ params }: PageProps<"/gestio
       <ReservationForm
         action={updateReservation.bind(null, r.id)}
         submitLabel="Guardar cambios"
+        context={context}
+        saved={{ date: r.date, time: r.time }}
         defaults={{
           date: r.date,
           time: r.time,

@@ -1,11 +1,12 @@
 import "server-only";
 import type { Prisma, Reservation } from "@/generated/prisma/client";
-import { today } from "@/lib/config";
+import { APP_TIMEZONE, nowLocal, today } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
 import { hoursFor, type OpeningHours } from "@/lib/hours";
 import type { Period } from "@/lib/periods";
 import { summarizeReservations } from "@/lib/reservation-report";
+import { quickDates } from "@/lib/reservation-slots";
 import { dayTotals, outsideHoursWarning } from "@/lib/reservations";
 import { daySchedule, type DaySchedule } from "@/lib/schedule";
 import { getSettings } from "@/lib/settings";
@@ -83,6 +84,26 @@ export async function getReservationsOn(date: ISODate) {
   const [day] = await loadDays({ date: isoToDate(date) }, false);
   return day ?? null;
 }
+
+/** Lo que el formulario de reserva necesita para ofrecer fechas y horas. */
+export async function getReservationFormContext() {
+  const t = today();
+  const days = quickDates(t);
+  const [settings, closed] = await Promise.all([
+    getSettings(),
+    db.dayOverride.findMany({ where: { open: false, date: { in: days.map(isoToDate) } }, select: { date: true } }),
+  ]);
+  return {
+    today: t,
+    now: nowLocal(),
+    timeZone: APP_TIMEZONE,
+    openingHours: settings.openingHours,
+    /** Días de los botones rápidos marcados como cerrados */
+    closedDates: closed.map((c) => dateToISO(c.date)),
+  };
+}
+
+export type ReservationFormContext = Awaited<ReturnType<typeof getReservationFormContext>>;
 
 export async function getReservation(id: string) {
   const r = await db.reservation.findUnique({

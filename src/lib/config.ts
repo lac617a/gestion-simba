@@ -1,5 +1,5 @@
 import "server-only";
-import { todayISO } from "@/lib/dates";
+import { localNow, todayISO } from "@/lib/dates";
 import { currencyOf } from "@/lib/money";
 
 export const APP_TIMEZONE = process.env.APP_TIMEZONE || "America/Bogota";
@@ -32,4 +32,9 @@ export const DEFAULT_PAY_DAY = 1;
 /** Día de trabajo actual del restaurante ("YYYY-MM-DD"). */
 export function today() {
   return todayISO(APP_TIMEZONE, DAY_CUTOFF_HOUR);
+}
+
+/** Fecha y hora del reloj en el restaurante (para no reservar horas que ya pasaron). */
+export function nowLocal() {
+  return localNow(APP_TIMEZONE);
 }

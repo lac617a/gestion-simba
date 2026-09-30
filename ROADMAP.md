@@ -67,6 +67,11 @@ npm test                                    # pruebas unitarias
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
 
+## Reservas: fecha y hora rápidas (2026-09-29) ✅
+
+- Formulario de reserva con botones: fecha (Hoy, Mañana, 5 días más, "Otra fecha" sin fechas pasadas), hora cada 30 min según el horario del día (en "hoy" solo las que no han pasado; "Otra hora" libre) y personas con − / +. Lógica en `src/lib/reservation-slots.ts`; `localNow()` en dates.ts.
+- El servidor rechaza fecha/hora pasadas (10 min de margen); al editar, una reserva vieja se puede corregir sin moverla.
+
 ## F18 · Usuarios y roles (2026-09-29) ✅
 
 - `User.name`, `User.role` (`UserRole`: `ADMIN`/`RESERVATIONS`, por defecto `ADMIN`: el usuario actual queda como administrador), `User.active`, `User.createdAt`; `Reservation.createdById` (→ User, `SetNull`). Migración `usuarios_y_roles` (solo agrega).

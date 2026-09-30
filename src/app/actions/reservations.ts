@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 import type { ReservationStatus } from "@/generated/prisma/enums";
+import { nowLocal } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { isoToDate } from "@/lib/dates";
+import { dateToISO, isoToDate } from "@/lib/dates";
+import { isPastSlot, PAST_GRACE_MINUTES } from "@/lib/reservation-slots";
 import { parseReservationForm, RESERVATION_STATUS_LABEL, type ReservationFieldErrors } from "@/lib/reservations";
 
 export type ReservationFormValues = {
@@ -41,6 +43,14 @@ function submittedValues(formData: FormData): ReservationFormValues {
   };
 }
 
+/** Error si la fecha u hora ya pasaron (no se anotan reservas hacia atrás). */
+function pastError(date: string, time: string): ReservationFieldErrors | null {
+  const now = nowLocal();
+  if (date < now.date) return { date: ["Esa fecha ya pasó"] };
+  if (isPastSlot(date, time, now, PAST_GRACE_MINUTES)) return { time: ["Esa hora ya pasó: elige una desde ahora"] };
+  return null;
+}
+
 function refresh() {
   revalidatePath("/gestion/reservas", "layout");
   revalidatePath("/gestion");
@@ -54,6 +64,8 @@ export async function createReservation(_prev: ReservationFormState, formData: F
   }
 
   const { date, ...data } = parsed.data;
+  const past = pastError(date, data.time);
+  if (past) return { errors: past, values: submittedValues(formData) };
   await db.reservation.create({ data: { ...data, date: isoToDate(date), createdById: user.userId } });
   refresh();
   redirect(`/gestion/reservas?creado=1#dia-${date}`);
@@ -71,6 +83,12 @@ export async function updateReservation(
   }
 
   const { date, ...data } = parsed.data;
+  const saved = await db.reservation.findUnique({ where: { id }, select: { date: true, time: true } });
+  if (!saved) return { message: "La reserva ya no existe", values: submittedValues(formData) };
+  // Una reserva vieja se puede corregir (nota, teléfono…) sin moverla; si se mueve, no hacia atrás.
+  const moved = dateToISO(saved.date) !== date || saved.time !== data.time;
+  const past = moved ? pastError(date, data.time) : null;
+  if (past) return { errors: past, values: submittedValues(formData) };
   const { count } = await db.reservation.updateMany({ where: { id }, data: { ...data, date: isoToDate(date) } });
   if (count === 0) return { message: "La reserva ya no existe", values: submittedValues(formData) };
 

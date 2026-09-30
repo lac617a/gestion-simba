@@ -48,6 +48,24 @@ export function todayISO(timeZone: string, cutoffHour = 0, now = new Date()): IS
   }).format(shifted);
 }
 
+/** Fecha de calendario y hora ("HH:MM") en una zona horaria. */
+export type LocalNow = { date: ISODate; time: string };
+
+/** Fecha y hora actuales en la zona del restaurante (sin la hora de corte: es el reloj). */
+export function localNow(timeZone: string, now = new Date()): LocalNow {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "00";
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
+}
+
 const longFormat = new Intl.DateTimeFormat("es-CO", {
   timeZone: "UTC",
   weekday: "long",
