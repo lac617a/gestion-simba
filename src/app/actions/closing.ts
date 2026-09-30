@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { checkClose, checkMorningClose, dayPays } from "@/lib/closing";
 import { CURRENCY, today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isISODate, isoToDate } from "@/lib/dates";
 import { fromDecimal, parseMoney, toDecimalString } from "@/lib/money";
@@ -40,7 +40,7 @@ function tipAmount(value: string) {
  * estar guardadas por el cierre del turno de la mañana).
  */
 export async function closeDay(date: string, _prev: CloseDayState, formData: FormData): Promise<CloseDayState> {
-  await verifySession();
+  await verifyAdmin();
   const raw = (field: string) => String(formData.get(field) ?? "");
   const values: CloseDayValues = {
     totalSales: raw("totalSales").trim(),
@@ -151,7 +151,7 @@ export type MorningCloseState = { error?: string; values?: { tipsMorning: string
  * fijo quién lo hizo. Las propinas se reparten entre ellos al cerrar el día.
  */
 export async function closeMorningShift(date: string, _prev: MorningCloseState, formData: FormData): Promise<MorningCloseState> {
-  await verifySession();
+  await verifyAdmin();
   const value = String(formData.get("tipsMorning") ?? "").trim();
   const fail = (error: string): MorningCloseState => ({ error, values: { tipsMorning: value } });
   if (!isISODate(date) || date > today()) return fail("No se puede cerrar un turno de un día futuro.");
@@ -182,7 +182,7 @@ export async function closeMorningShift(date: string, _prev: MorningCloseState, 
 
 /** Reabre el turno de la mañana (con el día aún abierto) para corregir quién lo hizo o sus propinas. */
 export async function reopenMorningShift(date: string) {
-  await verifySession();
+  await verifyAdmin();
   if (!isISODate(date)) return;
   await db.workDay.updateMany({
     where: { date: isoToDate(date), status: "OPEN" },
@@ -194,7 +194,7 @@ export async function reopenMorningShift(date: string) {
 
 /** Reabre un día cerrado. Se borra el reparto; se recalcula al volver a cerrar. */
 export async function reopenDay(date: string) {
-  await verifySession();
+  await verifyAdmin();
   if (!isISODate(date)) return;
   const day = await db.workDay.findUnique({ where: { date: isoToDate(date) }, select: { id: true } });
   if (!day) return;

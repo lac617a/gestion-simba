@@ -23,7 +23,10 @@ Hoy el control de quién trabajó, cuánto se vendió y cómo se reparten las pr
 
 | Rol | Descripción |
 |---|---|
-| Administrador | Dueño o gerente. Único usuario del sistema. Inicia sesión con email y contraseña. |
+| Administrador | Dueño o gerente. Acceso a todo. Puede haber varios. |
+| Reservas | Personal que maneja las reservas: solo ve la sección Reservas y su propia cuenta (RF-21). |
+
+Todos inician sesión con correo y contraseña. Los usuarios los crea un administrador.
 
 Los empleados **no** tienen acceso al sistema en el MVP.
 
@@ -40,7 +43,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 ### Fuera de alcance (por ahora)
 - Nómina formal (prestaciones, seguridad social, descuentos, recibos).
 - Múltiples sucursales.
-- Varios usuarios o roles.
+- Roles distintos de Administrador y Reservas (permisos por pantalla a la medida).
 - Acceso de empleados para consultar sus datos.
 - Desglose de ventas por método de pago; detalle de gastos por concepto (solo se anota el total del día).
 - Reparto de propinas por puesto u horas.
@@ -105,6 +108,16 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 ### RF-20 · Navegación
 - Celular: barra inferior con **Hoy · Asistencia · Reservas · Más**; "Más" abre Producción, Pagos, Reportes y Empleados (la pestaña muestra el nombre de la sección abierta).
 - Pantallas medianas: igual en la barra superior ("Más ▾"); pantallas anchas: todo a la vista.
+
+### RF-21 · Usuarios y roles
+- **Configuración → Usuarios** (`/gestion/usuarios`, solo administradores): lista, crear y editar usuarios con **nombre**, **correo**, **rol** y contraseña.
+- Roles: **Administrador** (todo) y **Reservas** (solo Reservas: ver, anotar, editar, cancelar, eliminar, marcar Llegó/No vino y confirmar por WhatsApp).
+- La contraseña inicial la escribe el administrador y se la comparte a la persona; ella la cambia en **Mi cuenta**. Al editar, el administrador puede poner una contraseña nueva (se cierra la sesión de esa persona en todos lados).
+- **Desactivar / activar** un usuario: el desactivado no puede entrar y su sesión se cierra de inmediato; no se borra (queda en el historial, ej. "Registrada por"). Al entrar con la contraseña correcta se le dice que está desactivado.
+- Un administrador no puede cambiar su propio rol ni desactivarse (así siempre queda al menos uno). Sobre sí mismo solo cambia el nombre ahí; su correo y contraseña, en Configuración → Cuenta.
+- Un usuario de Reservas ve solo **Reservas** en el menú y **Mi cuenta** (correo, contraseña, cerrar otras sesiones); cualquier otra dirección de la administración lo lleva a Reservas. Al entrar va directo a Reservas.
+- Cada reserva guarda **quién la registró** ("Registrada por … el …" al editarla).
+- El rol se comprueba en el servidor en cada página, acción y descarga (no solo se oculta el menú); un cambio de rol aplica de inmediato.
 
 ### RF-18 · Doble turno (uso interno de empleados)
 - En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
@@ -230,10 +243,19 @@ enum DayStatus {
   CLOSED
 }
 
+enum UserRole {
+  ADMIN
+  RESERVATIONS
+}
+
 model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  passwordHash String
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String?
+  role           UserRole @default(ADMIN)
+  active         Boolean  @default(true)
+  sessionVersion Int      @default(0)
 }
 
 model Employee {
@@ -307,7 +329,7 @@ model TipShare {
 | UI | **Tailwind CSS + shadcn/ui** | Componentes accesibles y responsive listos, fácil de usar en celular. |
 | ORM | **Prisma 7** (driver adapter `pg`) | Tipado de extremo a extremo, migraciones sencillas. |
 | Base de datos | **PostgreSQL** (Neon o Supabase) | Plan gratuito suficiente, soporta `Decimal` y arreglos (`restDays`). |
-| Autenticación | **Sesión propia con jose** (cookie JWT firmada) + bcrypt | Patrón recomendado por Next 16; para un solo admin es más simple que Auth.js. |
+| Autenticación | **Sesión propia con jose** (cookie JWT firmada) + bcrypt | Patrón recomendado por Next 16; más simple que Auth.js para pocos usuarios. El rol se lee de la BD en cada petición (`verifyAdmin` / `verifyReservations` en `src/lib/dal.ts`). |
 | Validación | **Zod** | Mismos esquemas en formularios y en servidor. |
 | Fechas | **date-fns + date-fns-tz** | Manejo del día local del restaurante. |
 | Pruebas | **Vitest** | Pruebas unitarias del reparto de propinas y reglas de asistencia. |
@@ -322,7 +344,8 @@ model TipShare {
 5. **Empleados** — lista, alta, edición, baja/reactivación, días libres asignados.
 6. **Pagos** — resumen semanal (o rango libre) por empleado: días trabajados, pagos diarios, propinas y total a pagar.
 7. **Reportes** — ventas y gastos, propinas por empleado, asistencia; exportar CSV.
-8. **Configuración** — correo y contraseña, cerrar otras sesiones, inicio de la semana de pago, días de cierre (zona horaria, moneda y hora de corte se muestran; se cambian en Vercel).
+8. **Configuración** — usuarios, correo y contraseña, cerrar otras sesiones, inicio de la semana de pago, días de cierre (zona horaria, moneda y hora de corte se muestran; se cambian en Vercel).
+9. **Usuarios** — lista, alta y edición (rol, contraseña nueva), desactivar/activar. Los de Reservas ven solo Reservas y **Mi cuenta**.
 
 ## 9. Requisitos no funcionales
 
@@ -355,6 +378,8 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F14 ✅ | Puestos con pago diario fijo, configurables (RF-7). |
 | F15 ✅ | Doble turno con propinas por turno (RF-18). |
 | F16 ✅ | Producción con pago fijo + excedente en el pago semanal (RF-19) y menú "Más" (RF-20). |
+| F17 ✅ | Gastos del día en el cierre y en reportes (RF-3, RF-5). |
+| F18 ✅ | Usuarios con rol: administradores y usuarios que solo manejan reservas (RF-21). |
 
 ## 11. Preguntas abiertas
 

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatRestDays } from "@/lib/employees";
 import { cn } from "@/lib/utils";
 import { FlashToast } from "@/components/flash-toast";
@@ -22,7 +22,7 @@ const FILTERS = {
 type Filter = keyof typeof FILTERS;
 
 export default async function EmployeesPage({ searchParams }: PageProps<"/gestion/empleados">) {
-  await verifySession();
+  await verifyAdmin();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const filter: Filter =

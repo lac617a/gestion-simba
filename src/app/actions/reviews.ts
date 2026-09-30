@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isoToDate } from "@/lib/dates";
 import { parseRatingSummaryForm, parseReviewForm, type ReviewFieldErrors } from "@/lib/reviews";
@@ -29,7 +29,7 @@ function refresh() {
 }
 
 export async function createReview(_prev: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseReviewForm(formData);
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
 
@@ -44,7 +44,7 @@ export async function createReview(_prev: ReviewFormState, formData: FormData): 
 }
 
 export async function updateReview(id: string, _prev: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseReviewForm(formData);
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
 
@@ -56,14 +56,14 @@ export async function updateReview(id: string, _prev: ReviewFormState, formData:
 }
 
 export async function setReviewVisible(id: string, visible: boolean) {
-  await verifySession();
+  await verifyAdmin();
   await db.review.updateMany({ where: { id }, data: { visible } });
   refresh();
 }
 
 /** Sube (-1) o baja (+1) una reseña intercambiando su lugar con la vecina. */
 export async function moveReview(id: string, dir: -1 | 1) {
-  await verifySession();
+  await verifyAdmin();
   const all = await db.review.findMany({ orderBy: [{ position: "asc" }, { createdAt: "asc" }], select: { id: true } });
   const i = all.findIndex((r) => r.id === id);
   const j = i + dir;
@@ -75,7 +75,7 @@ export async function moveReview(id: string, dir: -1 | 1) {
 }
 
 export async function deleteReview(id: string) {
-  await verifySession();
+  await verifyAdmin();
   await db.review.deleteMany({ where: { id } });
   refresh();
   redirect("/gestion/resenas?eliminado=1");
@@ -85,7 +85,7 @@ export type RatingSummaryState = { error?: string; success?: string } | undefine
 
 /** Calificación y total de opiniones de Google (se copian de la ficha). */
 export async function updateRatingSummary(_prev: RatingSummaryState, formData: FormData): Promise<RatingSummaryState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseRatingSummaryForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   await db.appSettings.upsert({

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { updateEmployee } from "@/app/actions/employees";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/db";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { getPositionOptions } from "@/lib/job-positions-data";
 import { EmployeeForm } from "../employee-form";
 import { ActiveToggle } from "./active-toggle";
@@ -12,7 +12,7 @@ import { TimeOffSection } from "./time-off-section";
 export const metadata: Metadata = { title: "Editar empleado · Gestión Simba" };
 
 export default async function EditEmployeePage({ params }: PageProps<"/gestion/empleados/[id]">) {
-  await verifySession();
+  await verifyAdmin();
   const { id } = await params;
   const [employee, positions] = await Promise.all([db.employee.findUnique({ where: { id } }), getPositionOptions()]);
   if (!employee) notFound();

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/app/actions/attendance";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isISODate, isoToDate } from "@/lib/dates";
 
@@ -15,7 +15,7 @@ import { isISODate, isoToDate } from "@/lib/dates";
  * cerrados con venta: hay que reabrirlos primero).
  */
 export async function setDayClosed(date: string, closed: boolean): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!isISODate(date)) return { ok: false, error: "Fecha inválida" };
   const d = isoToDate(date);
 

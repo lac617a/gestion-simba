@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { CURRENCY } from "@/lib/config";
 import { csvResponse } from "@/lib/csv";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { periodFromParams } from "@/lib/period-params";
 import { attendanceCsv, salesCsv, tipsCsv } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
@@ -9,7 +9,7 @@ import { reservationsCsv } from "@/lib/reservation-report";
 import { getReservationReport } from "@/lib/reservations-data";
 
 export async function GET(req: NextRequest) {
-  await verifySession();
+  await verifyAdmin();
   const params = req.nextUrl.searchParams;
   const period = await periodFromParams(params.get("desde"), params.get("hasta"));
   const tipo = params.get("tipo");

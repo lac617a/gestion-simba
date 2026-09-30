@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { createReview } from "@/app/actions/reviews";
 import { today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { ReviewForm } from "../review-form";
 
 export const metadata: Metadata = { title: "Nueva reseña · Gestión Simba" };
 
 export default async function NewReviewPage() {
-  await verifySession();
+  await verifyAdmin();
   return (
     <div className="grid max-w-2xl gap-6">
       <h1 className="text-2xl font-semibold">Nueva reseña</h1>

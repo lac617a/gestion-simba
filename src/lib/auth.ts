@@ -1,5 +1,6 @@
 import "server-only";
 import bcrypt from "bcryptjs";
+import type { UserRole } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { EMAIL_RULE, IP_RULE, lockedMinutes, registerFailure, type ThrottleRule } from "@/lib/throttle";
 
@@ -7,7 +8,7 @@ import { EMAIL_RULE, IP_RULE, lockedMinutes, registerFailure, type ThrottleRule 
 const DUMMY_HASH = bcrypt.hashSync("usuario-inexistente", 10);
 
 export type LoginResult =
-  | { ok: true; userId: string; sessionVersion: number }
+  | { ok: true; userId: string; sessionVersion: number; role: UserRole }
   | { ok: false; error: string };
 
 /**
@@ -32,7 +33,9 @@ export async function attemptLogin(email: string, password: string, ip: string, 
 
   if (user && valid) {
     await db.loginThrottle.deleteMany({ where: { key: { in: checks.map((c) => c.key) } } });
-    return { ok: true, userId: user.id, sessionVersion: user.sessionVersion };
+    // Solo se dice que está desactivado a quien sabe la contraseña.
+    if (!user.active) return { ok: false, error: "Tu usuario está desactivado. Habla con el administrador." };
+    return { ok: true, userId: user.id, sessionVersion: user.sessionVersion, role: user.role };
   }
 
   for (const { key, rule } of checks) {

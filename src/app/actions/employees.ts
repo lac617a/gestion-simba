@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 import { db } from "@/lib/db";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { parseEmployeeForm, type EmployeeFieldErrors } from "@/lib/employees";
 
 export type EmployeeFormValues = {
@@ -39,7 +39,7 @@ export async function createEmployee(
   _prev: EmployeeFormState,
   formData: FormData
 ): Promise<EmployeeFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseEmployeeForm(formData);
   if (!parsed.success) {
     return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
@@ -58,7 +58,7 @@ export async function updateEmployee(
   _prev: EmployeeFormState,
   formData: FormData
 ): Promise<EmployeeFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseEmployeeForm(formData);
   if (!parsed.success) {
     return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
@@ -76,7 +76,7 @@ export async function updateEmployee(
 
 /** Baja lógica / reactivación. Nunca se borra el registro para conservar el historial. */
 export async function setEmployeeActive(id: string, active: boolean) {
-  await verifySession();
+  await verifyAdmin();
   await db.employee.updateMany({ where: { id }, data: { active } });
   revalidatePath("/gestion/empleados");
   revalidatePath(`/gestion/empleados/${id}`);

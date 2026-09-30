@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { updateProductionDay } from "@/app/actions/production";
 import { CURRENCY } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatLongDate } from "@/lib/dates";
 import { getProductionCandidates, getProductionDay } from "@/lib/production-data";
 import { getSettings } from "@/lib/settings";
@@ -12,7 +12,7 @@ import { DeleteProductionButton } from "./delete-production";
 export const metadata: Metadata = { title: "Editar jornada de producción · Gestión Simba" };
 
 export default async function EditProductionPage({ params }: PageProps<"/gestion/produccion/[id]">) {
-  await verifySession();
+  await verifyAdmin();
   const { id } = await params;
   const day = await getProductionDay(id);
   if (!day) notFound();

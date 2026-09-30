@@ -98,7 +98,7 @@ function Rows({
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        Al cerrar el día, el pago de cada empleado se llena con el de su puesto (se puede ajustar ese día si hace falta).
+        Al cerrar el día, a cada empleado se le paga el de su puesto (por cada turno en días de doble turno).
         Cambiar un pago no modifica los días ya cerrados. Un puesto que tiene empleados no se puede quitar.
       </p>
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CURRENCY, DEFAULT_PAY_WEEK_START } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { formatLongDate, isoToDate } from "@/lib/dates";
 import { parseMoney, toDecimalString } from "@/lib/money";
@@ -47,7 +47,7 @@ async function dateTaken(date: string, exceptId?: string) {
 }
 
 export async function createProductionDay(_prev: ProductionFormState, formData: FormData): Promise<ProductionFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseProductionForm(formData, d);
   if (!parsed.success) return { error: parsed.error, extraErrors: parsed.extraErrors, values: submittedValues(formData) };
   const { date, note, attendees } = parsed.data;
@@ -72,7 +72,7 @@ export async function updateProductionDay(
   _prev: ProductionFormState,
   formData: FormData
 ): Promise<ProductionFormState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseProductionForm(formData, d);
   if (!parsed.success) return { error: parsed.error, extraErrors: parsed.extraErrors, values: submittedValues(formData) };
   const { date, note, attendees } = parsed.data;
@@ -112,7 +112,7 @@ export async function updateProductionDay(
 }
 
 export async function deleteProductionDay(id: string) {
-  await verifySession();
+  await verifyAdmin();
   await db.productionDay.deleteMany({ where: { id } }); // borra también sus asistentes
   refresh();
   redirect("/gestion/produccion?eliminado=1");
@@ -122,7 +122,7 @@ export type ProductionPayState = { error?: string; success?: string } | undefine
 
 /** Pago fijo por jornada de producción (Configuración). Solo afecta las jornadas que se registren después. */
 export async function saveProductionPay(_prev: ProductionPayState, formData: FormData): Promise<ProductionPayState> {
-  await verifySession();
+  await verifyAdmin();
   const amount = parseMoney(String(formData.get("productionPay") ?? ""), d);
   if (amount === null || amount <= 0) return { error: "Escribe el pago de producción." };
   await db.appSettings.upsert({

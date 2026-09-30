@@ -85,7 +85,10 @@ export async function getReservationsOn(date: ISODate) {
 }
 
 export async function getReservation(id: string) {
-  const r = await db.reservation.findUnique({ where: { id } });
+  const r = await db.reservation.findUnique({
+    where: { id },
+    include: { createdBy: { select: { name: true, email: true } } },
+  });
   return r && { ...r, date: dateToISO(r.date) };
 }
 

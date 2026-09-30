@@ -4,7 +4,7 @@ import { ChefHatIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { FlashToast } from "@/components/flash-toast";
 import { Button } from "@/components/ui/button";
 import { CURRENCY } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatLongDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { productionTotal } from "@/lib/production";
@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Producción · Gestión Simba" };
 
 /** Jornadas de producción / preparación: cuándo fueron y quién asistió (historial). */
 export default async function ProductionPage({ searchParams }: PageProps<"/gestion/produccion">) {
-  await verifySession();
+  await verifyAdmin();
   const params = await searchParams;
   const [days, settings] = await Promise.all([getProductionDays(), getSettings()]);
   const money = (v: number) => formatMoney(v, CURRENCY);

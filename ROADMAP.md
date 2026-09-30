@@ -28,8 +28,9 @@ _Última actualización: 2026-09-29_
 | Se quitan los festivos | ✅ en producción | `f0f553c` |
 | F15 · Doble turno (propinas por turno) | ✅ en producción | `1f78a19` |
 | F16 · Producción + menú "Más" | ✅ en producción | commits «F16: producción…» y «Navegación: menú Más…» |
-| Pago del día automático (sin campos en el cierre) | ✅ sin publicar | `e10afe3` |
-| F17 · Gastos del día en el cierre | ✅ sin publicar (tiene migración) | commit «F17: gastos del día…» |
+| Pago del día automático (sin campos en el cierre) | ✅ en producción | `e10afe3` |
+| F17 · Gastos del día en el cierre | ✅ sin publicar (tiene migración) | `38292d1` |
+| F18 · Usuarios con rol (administrador / solo reservas) | ✅ sin publicar (tiene migración) | commit «F18: usuarios…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -65,6 +66,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F18 · Usuarios y roles (2026-09-29) ✅
+
+- `User.name`, `User.role` (`UserRole`: `ADMIN`/`RESERVATIONS`, por defecto `ADMIN`: el usuario actual queda como administrador), `User.active`, `User.createdAt`; `Reservation.createdById` (→ User, `SetNull`). Migración `usuarios_y_roles` (solo agrega).
+- Acceso en `src/lib/dal.ts`: `verifyUser()` (cualquier usuario activo; lee rol, activo y versión de sesión de la BD), `verifyAdmin()` (lo que antes era `verifySession`, en todas las páginas, acciones y CSV de administración) y `verifyReservations()` (pantallas y acciones de reservas). Un no-admin que abre otra ruta va a `homeFor(role)`.
+- Pantallas `/gestion/usuarios` (lista), `/nuevo`, `/[id]` (editar, contraseña nueva, desactivar/activar). Acciones en `src/app/actions/users.ts`, reglas en `src/lib/users.ts` (roles, `userFormSchema`, `homeFor`, `displayName`), consultas en `src/lib/users-data.ts`. Reglas de contraseña compartidas: `passwordIssue()` en `src/lib/account.ts`.
+- Login: rechaza desactivados (solo con la contraseña correcta) y manda a cada rol a su inicio. Layout: menú y "Mi cuenta" según el rol; sin barra inferior para Reservas. Configuración muestra solo Cuenta y Sesiones a los de Reservas.
+- Probado en e2e: el usuario de reservas se creó por script (sin escribir contraseñas en formularios); las 13 rutas de administración lo mandan a Reservas; al desactivarlo su sesión deja de valer.
+- Ideas fuera por ahora: obligar a cambiar la contraseña inicial al primer ingreso; más roles.
 
 ## F17 · Gastos del día (2026-09-29) ✅
 

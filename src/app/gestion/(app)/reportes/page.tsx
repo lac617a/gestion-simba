@@ -5,7 +5,7 @@ import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { STATUS_LABEL } from "@/lib/attendance";
 import { SalesChart } from "@/components/sales-chart";
 import { CURRENCY, today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatDayShort, formatShortDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
@@ -24,7 +24,7 @@ const SECTIONS = [
 ] as const;
 
 export default async function ReportsPage({ searchParams }: PageProps<"/gestion/reportes">) {
-  await verifySession();
+  await verifyAdmin();
   const { desde, hasta } = await searchParams;
   const period = await periodFromParams(desde, hasta);
   const [{ sales, tips, attendance, unclosedDays }, reservations] = await Promise.all([

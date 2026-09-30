@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLinkIcon, StarIcon } from "lucide-react";
+import { ExternalLinkIcon, StarIcon, UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_TIMEZONE, CURRENCY, DAY_CUTOFF_HOUR } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { getJobPositions } from "@/lib/job-positions-data";
 import { getSettings } from "@/lib/settings";
+import { displayName, ROLE_LABEL, ROLES } from "@/lib/users";
 import { AccountForm } from "./account-form";
 import { JobPositionsForm } from "./job-positions-form";
 import { ProductionPayForm } from "./production-pay-form";
@@ -15,12 +16,40 @@ import { SettingsForm } from "./settings-form";
 
 export const metadata: Metadata = { title: "Configuración · Gestión Simba" };
 
+/** Administradores: todo. Usuarios de reservas: solo su cuenta ("Mi cuenta"). */
 export default async function SettingsPage() {
-  const session = await verifySession();
-  const [user, settings, positions] = await Promise.all([
-    db.user.findUniqueOrThrow({ where: { id: session.userId }, select: { email: true } }),
+  const user = await verifyUser();
+  const account = (
+    <>
+      <Section
+        title="Cuenta"
+        description={`Entras como ${displayName(user)} (${ROLE_LABEL[user.role]}). Para cambiar el correo o la contraseña siempre se pide la contraseña actual.`}
+      >
+        <AccountForm currentEmail={user.email} />
+      </Section>
+
+      <Section
+        title="Sesiones"
+        description="Si entraste desde un celular o computadora ajenos, o perdiste un dispositivo, cierra la sesión en todos los demás. Este seguirá conectado."
+      >
+        <LogoutEverywhereButton />
+      </Section>
+    </>
+  );
+
+  if (user.role !== "ADMIN") {
+    return (
+      <div className="grid max-w-xl gap-6">
+        <h1 className="text-2xl font-semibold">Mi cuenta</h1>
+        {account}
+      </div>
+    );
+  }
+
+  const [settings, positions, users] = await Promise.all([
     getSettings(),
     getJobPositions(),
+    db.user.groupBy({ by: ["role"], where: { active: true }, _count: true }),
   ]);
 
   return (
@@ -35,16 +64,28 @@ export default async function SettingsPage() {
         <ProductionPayForm amount={settings.productionPay} currency={CURRENCY} />
       </Section>
 
-      <Section title="Cuenta" description="Correo y contraseña para entrar. Siempre se pide la contraseña actual.">
-        <AccountForm currentEmail={user.email} />
+      <Section
+        title="Usuarios"
+        description="Quiénes entran a la administración: administradores (todo) o usuarios que solo manejan las reservas."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" render={<Link href="/gestion/usuarios" />} nativeButton={false}>
+            <UsersIcon /> Administrar usuarios
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {users
+              .sort((a, b) => ROLES.indexOf(a.role) - ROLES.indexOf(b.role))
+              .map((g) =>
+                g.role === "ADMIN"
+                  ? `${g._count} ${g._count === 1 ? "administrador" : "administradores"}`
+                  : `${g._count} de reservas`
+              )
+              .join(" · ")}
+          </span>
+        </div>
       </Section>
 
-      <Section
-        title="Sesiones"
-        description="Si entraste desde un celular o computadora ajenos, o perdiste un dispositivo, cierra la sesión en todos los demás. Este seguirá conectado."
-      >
-        <LogoutEverywhereButton />
-      </Section>
+      {account}
 
       <Section title="Página pública" description="Lo que ven los clientes en la página del restaurante.">
         <div className="flex flex-wrap gap-2">

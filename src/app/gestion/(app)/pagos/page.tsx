@@ -4,7 +4,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { PeriodNav } from "@/components/period-nav";
 import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { APP_TIMEZONE, CURRENCY } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatDateRange, formatDayShort } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
@@ -15,7 +15,7 @@ import { EmployeePayActions, MarkAllPaidButton } from "./pay-actions";
 export const metadata: Metadata = { title: "Pagos · Gestión Simba" };
 
 export default async function PayrollPage({ searchParams }: PageProps<"/gestion/pagos">) {
-  await verifySession();
+  await verifyAdmin();
   const { desde, hasta } = await searchParams;
   const period = await periodFromParams(desde, hasta);
   const { summary, unclosedDays } = await getPayroll(period);

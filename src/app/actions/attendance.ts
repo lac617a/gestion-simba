@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { AttendanceStatus, WorkShift } from "@/generated/prisma/enums";
 import { SELECTABLE_STATUSES } from "@/lib/attendance";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isISODate, isoToDate } from "@/lib/dates";
 
@@ -31,7 +31,7 @@ async function loadAttendance(attendanceId: string) {
 }
 
 export async function setAttendanceStatus(attendanceId: string, status: AttendanceStatus): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!(SELECTABLE_STATUSES as readonly string[]).includes(status)) {
     return { ok: false, error: "Estado inválido" };
   }
@@ -63,7 +63,7 @@ const SHIFTS: WorkShift[] = ["MORNING", "EVENING", "BOTH"];
 
 /** Turno de quien trabajó en un día de doble turno: Mañana, Tarde o Ambos. */
 export async function setAttendanceShift(attendanceId: string, shift: WorkShift): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!SHIFTS.includes(shift)) return { ok: false, error: "Turno inválido" };
   const a = await loadAttendance(attendanceId);
   if (!a || a.workDay.status !== "OPEN") return CLOSED_ERROR;
@@ -88,7 +88,7 @@ export async function setAttendanceShift(attendanceId: string, shift: WorkShift)
  * Al quitarlo se borran los turnos y las propinas por turno de ese día.
  */
 export async function setDoubleShift(date: string, doubleShift: boolean): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!isISODate(date)) return { ok: false, error: "Fecha inválida" };
   const day = await db.workDay.findUnique({
     where: { date: isoToDate(date) },
@@ -114,7 +114,7 @@ export async function setDoubleShift(date: string, doubleShift: boolean): Promis
 }
 
 export async function setAttendanceNote(attendanceId: string, note: string): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   const clean = note.trim().slice(0, 200);
   const { count } = await db.attendance.updateMany({
     where: { id: attendanceId, workDay: { status: "OPEN" } },
@@ -126,7 +126,7 @@ export async function setAttendanceNote(attendanceId: string, note: string): Pro
 }
 
 export async function markPendingAsWorked(date: string): Promise<ActionResult & { count?: number }> {
-  await verifySession();
+  await verifyAdmin();
   if (!isISODate(date)) return { ok: false, error: "Fecha inválida" };
   const day = await db.workDay.findUnique({
     where: { date: isoToDate(date) },

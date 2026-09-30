@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { createReservation } from "@/app/actions/reservations";
 import { today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyReservations } from "@/lib/dal";
 import { isISODate } from "@/lib/dates";
 import { ReservationForm } from "../reservation-form";
 
 export const metadata: Metadata = { title: "Nueva reserva · Gestión Simba" };
 
 export default async function NewReservationPage({ searchParams }: PageProps<"/gestion/reservas/nueva">) {
-  await verifySession();
+  await verifyReservations();
   const { fecha } = await searchParams;
 
   return (

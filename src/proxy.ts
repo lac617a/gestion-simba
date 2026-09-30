@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { decrypt, SESSION_COOKIE } from "@/lib/session";
 
 // Comprobación optimista (solo cookie) de la administración (/gestion). La
-// verificación real está en verifySession(). La página pública no pasa por aquí.
+// verificación real (sesión vigente y rol) está en src/lib/dal.ts. La página pública no pasa por aquí.
 export async function proxy(req: NextRequest) {
   const session = await decrypt(req.cookies.get(SESSION_COOKIE)?.value);
   const isLogin = req.nextUrl.pathname === "/gestion/login";

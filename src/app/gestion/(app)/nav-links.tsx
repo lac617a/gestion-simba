@@ -15,6 +15,7 @@ import {
   WalletIcon,
   type LucideIcon,
 } from "lucide-react";
+import type { UserRole } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 
 type NavLink = { href: string; label: string; icon: LucideIcon };
@@ -33,6 +34,9 @@ const SECONDARY: NavLink[] = [
   { href: "/gestion/reportes", label: "Reportes", icon: ChartColumnIcon },
   { href: "/gestion/empleados", label: "Empleados", icon: UsersIcon },
 ];
+
+/** Usuarios de reservas: solo su sección. */
+const RESERVATIONS_ONLY: NavLink[] = [PRIMARY[2]];
 
 function useIsActive() {
   const pathname = usePathname();
@@ -79,8 +83,27 @@ function MoreMenu({
 }
 
 /** Navegación superior (pantallas medianas en adelante). */
-export function NavLinks() {
+export function NavLinks({ role }: { role: UserRole }) {
   const isActive = useIsActive();
+  if (role !== "ADMIN") {
+    return (
+      <nav className="flex items-center gap-1 text-sm">
+        {RESERVATIONS_ONLY.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={isActive(link.href) ? "page" : undefined}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-muted-foreground hover:text-foreground",
+              isActive(link.href) && "bg-muted text-foreground"
+            )}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    );
+  }
   const activeSecondary = SECONDARY.find((l) => isActive(l.href));
   const secondaryActive = !!activeSecondary;
   const linkClass = (active: boolean) =>
@@ -120,9 +143,10 @@ export function NavLinks() {
   );
 }
 
-/** Barra inferior con íconos (celular): Hoy, Asistencia, Reservas y "Más". */
-export function BottomNav() {
+/** Barra inferior con íconos (celular): Hoy, Asistencia, Reservas y "Más". Solo administradores. */
+export function BottomNav({ role }: { role: UserRole }) {
   const isActive = useIsActive();
+  if (role !== "ADMIN") return null;
   const secondaryActive = SECONDARY.some((l) => isActive(l.href));
   const item = (active: boolean) =>
     cn("flex min-w-0 flex-col items-center gap-0.5 py-2 text-[11px] text-muted-foreground", active && "text-foreground");

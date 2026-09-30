@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { CURRENCY } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { parseJobPositionsForm } from "@/lib/job-positions";
 import { toDecimalString } from "@/lib/money";
@@ -15,7 +15,7 @@ export type JobPositionsState = { error?: string; success?: string } | undefined
  * Cambiar un pago no toca los días ya cerrados: ahí quedó guardado lo que se pagó.
  */
 export async function saveJobPositions(_prev: JobPositionsState, formData: FormData): Promise<JobPositionsState> {
-  await verifySession();
+  await verifyAdmin();
   const parsed = parseJobPositionsForm(formData, CURRENCY.decimals);
   if (!parsed.success) return { error: parsed.error };
   const positions = parsed.data;

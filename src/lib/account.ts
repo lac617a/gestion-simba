@@ -3,6 +3,13 @@ import { whatsappNumber } from "@/lib/reservations";
 
 export const MIN_PASSWORD = 10;
 
+/** Reglas de una contraseña nueva; null si cumple. */
+export function passwordIssue(password: string): string | null {
+  if (password.length < MIN_PASSWORD) return `Mínimo ${MIN_PASSWORD} caracteres`;
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) return "Debe tener letras y números";
+  return null;
+}
+
 /** Cambio de correo y/o contraseña. Siempre pide la contraseña actual. */
 export const AccountSchema = z
   .object({
@@ -14,10 +21,9 @@ export const AccountSchema = z
   })
   .superRefine((v, ctx) => {
     if (v.newPassword === "") return; // no cambia la contraseña
-    if (v.newPassword.length < MIN_PASSWORD) {
-      ctx.addIssue({ code: "custom", path: ["newPassword"], message: `Mínimo ${MIN_PASSWORD} caracteres` });
-    } else if (!/[a-zA-Z]/.test(v.newPassword) || !/\d/.test(v.newPassword)) {
-      ctx.addIssue({ code: "custom", path: ["newPassword"], message: "Debe tener letras y números" });
+    const issue = passwordIssue(v.newPassword);
+    if (issue) {
+      ctx.addIssue({ code: "custom", path: ["newPassword"], message: issue });
     } else if (v.newPassword === v.currentPassword) {
       ctx.addIssue({ code: "custom", path: ["newPassword"], message: "Debe ser distinta de la actual" });
     }

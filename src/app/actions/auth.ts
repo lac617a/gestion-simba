@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 import { attemptLogin } from "@/lib/auth";
 import { createSession, deleteSession } from "@/lib/session";
+import { homeFor } from "@/lib/users";
 
 const LoginSchema = z.object({
   // trim antes de validar: el teclado del celular suele dejar un espacio al final
@@ -34,7 +35,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (!result.ok) return { error: result.error, email };
 
   await createSession(result.userId, result.sessionVersion);
-  redirect("/gestion");
+  redirect(homeFor(result.role));
 }
 
 export async function logout() {

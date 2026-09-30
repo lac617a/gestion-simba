@@ -5,7 +5,7 @@ import { FlashToast } from "@/components/flash-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyReservations } from "@/lib/dal";
 import { addDays, formatLongDate } from "@/lib/dates";
 import { formatHours } from "@/lib/hours";
 import { getPastReservations, getUpcomingReservations, type ReservationDay } from "@/lib/reservations-data";
@@ -19,7 +19,7 @@ const VIEWS = { proximas: "Próximas", anteriores: "Anteriores" } as const;
 type View = keyof typeof VIEWS;
 
 export default async function ReservationsPage({ searchParams }: PageProps<"/gestion/reservas">) {
-  await verifySession();
+  await verifyReservations();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const view: View = params.ver === "anteriores" ? "anteriores" : "proximas";

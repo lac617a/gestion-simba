@@ -7,13 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Qué puede hacer un usuario de la administración.
+enum UserRole {
+  /// Todo
+  ADMIN
+  /// Solo reservas (y su propia cuenta)
+  RESERVATIONS
+}
+
 model User {
-  id             String @id @default(cuid())
-  email          String @unique
+  id             String        @id @default(cuid())
+  email          String        @unique
   passwordHash   String
-  /// Se incrementa al cambiar la contraseña o cerrar sesión en todos lados:
+  /// Nombre para mostrar (ej. "Registrada por"). El admin inicial no tiene: se muestra el correo.
+  name           String?
+  role           UserRole      @default(ADMIN)
+  /// Desactivado: no puede entrar. No se borra, para conservar el historial.
+  active         Boolean       @default(true)
+  /// Se incrementa al cambiar la contraseña, desactivar o cerrar sesión en todos lados:
   /// invalida las cookies de sesión emitidas antes.
-  sessionVersion Int    @default(0)
+  sessionVersion Int           @default(0)
+  createdAt      DateTime      @default(now())
+  reservations   Reservation[]
 }
 
 /// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
@@ -218,6 +233,9 @@ model Reservation {
   honoree      String?
   note         String?
   status       ReservationStatus @default(CONFIRMED)
+  /// Quién la registró (null en las anteriores a los usuarios)
+  createdById  String?
+  createdBy    User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 

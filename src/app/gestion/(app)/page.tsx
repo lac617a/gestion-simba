@@ -16,7 +16,7 @@ import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { CURRENCY, today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/lib/dates";
 import { WEEKDAYS } from "@/lib/employees";
 import { formatHours, hoursFor } from "@/lib/hours";
@@ -36,7 +36,7 @@ export const metadata: Metadata = { title: "Hoy · Gestión Simba" };
 
 /** Pantalla de inicio (PRD RF-6): cómo va el día y la semana. */
 export default async function TodayPage() {
-  await verifySession();
+  await verifyAdmin();
   const date = today();
   const settings = await getSettings();
   const week = weekRange(date, settings.payWeekStart);

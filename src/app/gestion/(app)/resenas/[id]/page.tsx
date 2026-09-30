@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { updateReview } from "@/app/actions/reviews";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { getReview } from "@/lib/reviews-data";
 import { ReviewForm } from "../review-form";
 import { DeleteReviewButton } from "./delete-review";
@@ -9,7 +9,7 @@ import { DeleteReviewButton } from "./delete-review";
 export const metadata: Metadata = { title: "Editar reseña · Gestión Simba" };
 
 export default async function EditReviewPage({ params }: PageProps<"/gestion/resenas/[id]">) {
-  await verifySession();
+  await verifyAdmin();
   const { id } = await params;
   const r = await getReview(id);
   if (!r) notFound();

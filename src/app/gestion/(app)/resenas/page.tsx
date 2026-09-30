@@ -6,7 +6,7 @@ import { Stars } from "@/components/stars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { GOOGLE_REVIEWS_URL, relativeDate } from "@/lib/reviews";
 import { getReviews } from "@/lib/reviews-data";
 import { getSettings } from "@/lib/settings";
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Reseñas · Gestión Simba" };
 
 /** Reseñas que se muestran en la página pública (se copian a mano de Google). */
 export default async function ReviewsPage({ searchParams }: PageProps<"/gestion/resenas">) {
-  await verifySession();
+  await verifyAdmin();
   const params = await searchParams;
   const [reviews, settings] = await Promise.all([getReviews({ onlyVisible: false }), getSettings()]);
   const t = today();

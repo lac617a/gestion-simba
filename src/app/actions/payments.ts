@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/app/actions/attendance";
 import { CURRENCY } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { dateToISO, isISODate, isoToDate } from "@/lib/dates";
 import { formatMoney, toDecimalString } from "@/lib/money";
@@ -20,7 +20,7 @@ function validPeriod(from: string, to: string) {
  * en el servidor; si no coincide con el que vio el usuario (algo cambió), no paga.
  */
 export async function markPaid(employeeId: string, from: string, to: string, expected: number): Promise<PayResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!validPeriod(from, to)) return { ok: false, error: "Periodo inválido" };
 
   const { summary } = await getPayroll({ from, to });
@@ -50,7 +50,7 @@ export async function markPaid(employeeId: string, from: string, to: string, exp
 
 /** Marca como pagados a todos los que aún no tienen pago en el periodo. */
 export async function markAllPaid(from: string, to: string, expectedPending: number): Promise<PayResult> {
-  await verifySession();
+  await verifyAdmin();
   if (!validPeriod(from, to)) return { ok: false, error: "Periodo inválido" };
 
   const { summary } = await getPayroll({ from, to });
@@ -79,7 +79,7 @@ export async function markAllPaid(from: string, to: string, expectedPending: num
  * que se pagó la diferencia, dejando el pago con el monto actual.
  */
 export async function settlePaymentDifference(id: string, expectedCurrent: number): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   const p = await db.payment.findUnique({ where: { id } });
   if (!p) return { ok: false, error: "Ese pago ya no existe." };
 
@@ -101,7 +101,7 @@ export async function settlePaymentDifference(id: string, expectedCurrent: numbe
 
 /** Deshace un pago registrado por error. */
 export async function deletePayment(id: string): Promise<ActionResult> {
-  await verifySession();
+  await verifyAdmin();
   const { count } = await db.payment.deleteMany({ where: { id } });
   if (count === 0) return { ok: false, error: "Ese pago ya no existe." };
   revalidatePath("/gestion/pagos");

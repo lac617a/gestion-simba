@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CalendarClockIcon } from "lucide-react";
 import { closeDay, closeMorningShift, reopenDay, reopenMorningShift } from "@/app/actions/closing";
 import { APP_TIMEZONE, CURRENCY, today } from "@/lib/config";
-import { verifySession } from "@/lib/dal";
+import { verifyAdmin } from "@/lib/dal";
 import { formatLongDate, isISODate } from "@/lib/dates";
 import { formatHours, hoursFor, parseHours } from "@/lib/hours";
 import { getSettings } from "@/lib/settings";
@@ -23,7 +23,7 @@ const closedAtFormat = new Intl.DateTimeFormat("es-CO", {
 });
 
 export default async function AttendancePage({ searchParams }: PageProps<"/gestion/asistencia">) {
-  await verifySession();
+  await verifyAdmin();
   const { fecha } = await searchParams;
   const todayIso = today();
   const date = isISODate(fecha) ? fecha : todayIso;
