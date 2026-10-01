@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-09-29_
+_Última actualización: 2026-10-01_
 
 ## Estado
 
@@ -29,10 +29,11 @@ _Última actualización: 2026-09-29_
 | F15 · Doble turno (propinas por turno) | ✅ en producción | `1f78a19` |
 | F16 · Producción + menú "Más" | ✅ en producción | commits «F16: producción…» y «Navegación: menú Más…» |
 | Pago del día automático (sin campos en el cierre) | ✅ en producción | `e10afe3` |
-| F17 · Gastos del día en el cierre | ✅ sin publicar (tiene migración) | `38292d1` |
-| F18 · Usuarios con rol (administrador / solo reservas) | ✅ sin publicar (tiene migración) | `daa4c47` |
-| Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ sin publicar | `c749c7a` + `3483c1a` |
-| F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | commit «F19: recordatorio…» |
+| F17 · Gastos del día en el cierre | ✅ en producción | `38292d1` |
+| F18 · Usuarios con rol (administrador / solo reservas) | ✅ en producción | `daa4c47` |
+| Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ en producción | `c749c7a` + `3483c1a` |
+| F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | `695221a` |
+| F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | commit «F20: reservas en Google Calendar…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -68,6 +69,13 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F20 · Reservas en Google Calendar (2026-10-01) ✅
+
+- Sin API de Google: cada reserva se manda como invitación (`invite.ics`, `text/calendar; method=REQUEST|CANCEL`) por Resend a `AppSettings.calendarEmail` (inicial simbaparrilla1@gmail.com). El usuario dejó "Agregar invitaciones a mi calendario: De todos" en Google Calendar.
+- `Reservation.calendarTo` / `calendarSequence` / `calendarHash`. Migración `invitaciones_de_calendario` (solo agrega).
+- `src/lib/calendar-invite.ts` (puro: `buildIcs` con escape y corte a 75 bytes, `reservationEvent` de 2 h con UID `reserva-<id>@simba.profiya.com`, `eventHash`, `inviteEmail`); `src/lib/calendar-data.ts` (`syncReservationCalendar`: nueva/actualizada/quitada según estado y huella, nunca lanza; `removeReservationCalendar` antes de borrar; `syncPendingCalendar` en el cron). Correos de reserva comparten `reservationRows`/`reservationEmailBody` de reminders.ts; `fromParts()` y adjuntos en resend.ts.
+- Probado en e2e con el Resend falso: versiones 1→2 (editar)→3 CANCEL (cancelar)→4 (volver a confirmar)→5 CANCEL (eliminar); sin cambios o Llegó = sin correo; la revisión diaria no repite. Invitación real de prueba enviada a simbaparrilla1@gmail.com (falta que el usuario confirme que apareció; luego mandar su CANCEL con `scratchpad/test-invite.ts CANCEL 2`).
 
 ## F19 · Recordatorio de reservas por correo (2026-09-29) ✅
 

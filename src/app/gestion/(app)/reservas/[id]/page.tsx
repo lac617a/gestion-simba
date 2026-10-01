@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MailIcon } from "lucide-react";
+import { CalendarCheckIcon, MailIcon } from "lucide-react";
 import { updateReservation } from "@/app/actions/reservations";
 import { APP_TIMEZONE } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
@@ -60,6 +60,11 @@ export default async function EditReservationPage({ params }: PageProps<"/gestio
         {reminder && (
           <p className="-mt-2 flex w-full items-center gap-1.5 text-sm text-muted-foreground">
             <MailIcon className="size-3.5 shrink-0" /> {reminder}
+          </p>
+        )}
+        {r.calendarTo && (
+          <p className="-mt-2 flex w-full items-center gap-1.5 text-sm text-muted-foreground">
+            <CalendarCheckIcon className="size-3.5 shrink-0" /> En el Google Calendar de {r.calendarTo}
           </p>
         )}
       </div>

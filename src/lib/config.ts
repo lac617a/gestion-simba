@@ -26,6 +26,9 @@ export const DEFAULT_PRODUCTION_PAY = 50_000;
 /** Correo que recibe el recordatorio 1 hora antes de cada reserva (se cambia en Configuración). */
 export const DEFAULT_REMINDER_EMAIL = "simbaparrilla1@gmail.com";
 
+/** Correo cuyo Google Calendar recibe cada reserva como invitación (se cambia en Configuración). */
+export const DEFAULT_CALENDAR_EMAIL = "simbaparrilla1@gmail.com";
+
 /** WhatsApp del restaurante para la página pública (se cambia en Configuración). */
 export const DEFAULT_WHATSAPP = "3012168273";
 

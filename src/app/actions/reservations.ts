@@ -8,6 +8,7 @@ import { nowLocal } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
+import { removeReservationCalendar, syncReservationCalendar } from "@/lib/calendar-data";
 import { cancelReservationReminder, syncReservationReminder } from "@/lib/reminders-data";
 import { isPastSlot, PAST_GRACE_MINUTES } from "@/lib/reservation-slots";
 import { parseReservationForm, RESERVATION_STATUS_LABEL, type ReservationFieldErrors } from "@/lib/reservations";
@@ -69,6 +70,7 @@ export async function createReservation(_prev: ReservationFormState, formData: F
   if (past) return { errors: past, values: submittedValues(formData) };
   const created = await db.reservation.create({ data: { ...data, date: isoToDate(date), createdById: user.userId } });
   await syncReservationReminder(created.id);
+  await syncReservationCalendar(created.id);
   refresh();
   redirect(`/gestion/reservas?creado=1#dia-${date}`);
 }
@@ -95,6 +97,7 @@ export async function updateReservation(
   if (count === 0) return { message: "La reserva ya no existe", values: submittedValues(formData) };
   // Con los datos nuevos (o cancelado si ya no aplica).
   await syncReservationReminder(id);
+  await syncReservationCalendar(id);
 
   refresh();
   redirect(`/gestion/reservas?actualizado=1#dia-${date}`);
@@ -110,6 +113,8 @@ export async function setReservationStatus(id: string, status: ReservationStatus
   if (count === 0) return { ok: false as const, error: "La reserva ya no existe" };
   // Cancelada, llegó o no vino: sin recordatorio. De vuelta a confirmada: se programa otra vez.
   await syncReservationReminder(id);
+  // Cancelada: se quita del calendario; de vuelta a confirmada: vuelve.
+  await syncReservationCalendar(id);
   refresh();
   return { ok: true as const };
 }
@@ -118,6 +123,7 @@ export async function setReservationStatus(id: string, status: ReservationStatus
 export async function deleteReservation(id: string) {
   await verifyReservations();
   await cancelReservationReminder(id);
+  await removeReservationCalendar(id);
   await db.reservation.deleteMany({ where: { id } });
   refresh();
   redirect("/gestion/reservas?eliminado=1");

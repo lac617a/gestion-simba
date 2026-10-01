@@ -49,41 +49,51 @@ export type ReminderData = {
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** Asunto y cuerpo (texto y HTML) del recordatorio. */
-export function reminderEmail(r: ReminderData, restaurant: string, siteUrl: string) {
-  const people = `${r.partySize} ${r.partySize === 1 ? "persona" : "personas"}`;
-  const when = `${formatDayMonth(r.date)}, ${formatTime(r.time)}`;
-  const link = `${siteUrl}/gestion/reservas/${r.id}`;
-  const rows: [string, string][] = [
-    ["Cuándo", when],
+export const peopleLabel =(n: number) => `${n} ${n === 1 ? "persona" : "personas"}`;
+
+/** Datos de la reserva como filas "etiqueta: valor" (las vacías no salen). */
+export function reservationRows(r: ReminderData): [string, string][] {
+  const rows: [string, string | null][] = [
+    ["Cuándo", `${formatDayMonth(r.date)}, ${formatTime(r.time)}`],
     ["A nombre de", r.customerName],
     ["Personas", String(r.partySize)],
-    ...(r.phone ? [["Teléfono", r.phone] as [string, string]] : []),
-    ...(r.occasion ? [["Ocasión", occasionLabel(r.occasion, r.honoree)!] as [string, string]] : []),
-    ...(r.note ? [["Observación", r.note] as [string, string]] : []),
-    ...(r.createdBy ? [["Registrada por", r.createdBy] as [string, string]] : []),
+    ["Teléfono", r.phone],
+    ["Ocasión", occasionLabel(r.occasion, r.honoree)],
+    ["Observación", r.note],
+    ["Registrada por", r.createdBy],
   ];
+  return rows.filter((row): row is [string, string] => !!row[1]);
+}
 
-  const subject = `Reserva a las ${formatTime(r.time)}: ${r.customerName} (${people})`;
-  const text = [
-    `Recordatorio de reserva en ${restaurant}`,
-    "",
-    ...rows.map(([k, v]) => `${k}: ${v}`),
-    "",
-    `Ver la reserva: ${link}`,
-  ].join("\n");
+export const reservationLink = (siteUrl: string, id: string) => `${siteUrl}/gestion/reservas/${id}`;
+
+/** Correo de una reserva: encabezado, título, tabla de datos y botón a la reserva (texto y HTML). */
+export function reservationEmailBody(opts: { kicker: string; heading: string; rows: [string, string][]; link: string }) {
+  const text = [opts.kicker, "", ...opts.rows.map(([k, v]) => `${k}: ${v}`), "", `Ver la reserva: ${opts.link}`].join("\n");
   const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1c2b20;max-width:480px">
-  <p style="margin:0 0 4px;font-size:13px;color:#6b7280">Recordatorio de reserva · ${escapeHtml(restaurant)}</p>
-  <h1 style="margin:0 0 16px;font-size:22px">${escapeHtml(formatTime(r.time))} · ${escapeHtml(r.customerName)}</h1>
+  <p style="margin:0 0 4px;font-size:13px;color:#6b7280">${escapeHtml(opts.kicker)}</p>
+  <h1 style="margin:0 0 16px;font-size:22px">${escapeHtml(opts.heading)}</h1>
   <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:15px;width:100%">
-    ${rows
+    ${opts.rows
       .map(
         ([k, v]) =>
           `<tr><td style="padding:6px 12px 6px 0;color:#6b7280;vertical-align:top;white-space:nowrap">${escapeHtml(k)}</td><td style="padding:6px 0">${escapeHtml(v)}</td></tr>`
       )
       .join("\n    ")}
   </table>
-  <p style="margin:20px 0 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#1c2b20;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">Ver la reserva</a></p>
+  <p style="margin:20px 0 0"><a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#1c2b20;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px">Ver la reserva</a></p>
 </div>`;
-  return { subject, text, html };
+  return { text, html };
+}
+
+/** Asunto y cuerpo (texto y HTML) del recordatorio. */
+export function reminderEmail(r: ReminderData, restaurant: string, siteUrl: string) {
+  const subject = `Reserva a las ${formatTime(r.time)}: ${r.customerName} (${peopleLabel(r.partySize)})`;
+  const body = reservationEmailBody({
+    kicker: `Recordatorio de reserva en ${restaurant}`,
+    heading: `${formatTime(r.time)} · ${r.customerName}`,
+    rows: reservationRows(r),
+    link: reservationLink(siteUrl, r.id),
+  });
+  return { subject, ...body };
 }

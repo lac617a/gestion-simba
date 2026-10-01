@@ -74,6 +74,7 @@ function settingsForm(fields: {
   hours?: [string, string][];
   whatsapp?: string;
   reminderEmail?: string;
+  calendarEmail?: string;
   doubleShift?: string[];
   shifts?: [string, string][];
 }) {
@@ -85,6 +86,7 @@ function settingsForm(fields: {
   });
   fd.append("whatsapp", fields.whatsapp ?? "301 216 8273");
   fd.append("reminderEmail", fields.reminderEmail ?? "simbaparrilla1@gmail.com");
+  fd.append("calendarEmail", fields.calendarEmail ?? "simbaparrilla1@gmail.com");
   fd.append("payWeekStart", fields.payWeekStart ?? "1");
   fd.append("payDay", fields.payDay ?? "1");
   (fields.hours ?? []).forEach(([open, close], i) => {
@@ -102,6 +104,7 @@ describe("parseSettingsForm", () => {
       openingHours: NO_HOURS,
       whatsapp: "301 216 8273",
       reminderEmail: "simbaparrilla1@gmail.com",
+      calendarEmail: "simbaparrilla1@gmail.com",
       doubleShiftWeekdays: [0, 6],
       shiftHours: ["11:00-16:00", "17:30-23:30"],
     });
@@ -127,6 +130,11 @@ describe("parseSettingsForm", () => {
     expect(parseSettingsForm(settingsForm({ reminderEmail: "no-es-correo" })).error?.issues[0].message).toBe(
       "Correo de recordatorios inválido"
     );
+  });
+
+  it("correo del calendario: vacío lo desactiva y debe ser válido", () => {
+    expect(parseSettingsForm(settingsForm({ calendarEmail: "" })).data?.calendarEmail).toBe("");
+    expect(parseSettingsForm(settingsForm({ calendarEmail: "x@" })).error?.issues[0].message).toBe("Correo del calendario inválido");
   });
 
   it("doble turno: días y horario de cada turno", () => {

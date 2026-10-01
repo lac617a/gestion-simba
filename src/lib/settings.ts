@@ -5,6 +5,7 @@ import {
   DEFAULT_DOUBLE_SHIFT_WEEKDAYS,
   DEFAULT_PAY_DAY,
   DEFAULT_PAY_WEEK_START,
+  DEFAULT_CALENDAR_EMAIL,
   DEFAULT_PRODUCTION_PAY,
   DEFAULT_REMINDER_EMAIL,
   DEFAULT_SHIFT_HOURS,
@@ -31,6 +32,8 @@ export type AppSettings = {
   productionPay: number;
   /** Correo del recordatorio 1 hora antes de cada reserva; "" = sin recordatorios */
   reminderEmail: string;
+  /** Correo al que se mandan las reservas como invitación de calendario; "" = sin calendario */
+  calendarEmail: string;
 };
 
 /** Ajustes del restaurante (Configuración). Sin fila guardada, los del .env. Una consulta por petición. */
@@ -48,6 +51,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         shiftHours: row.shiftHours,
         productionPay: fromDecimal(row.productionPay, CURRENCY.decimals)!,
         reminderEmail: row.reminderEmail,
+        calendarEmail: row.calendarEmail,
       }
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
@@ -60,5 +64,6 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         shiftHours: DEFAULT_SHIFT_HOURS,
         productionPay: DEFAULT_PRODUCTION_PAY * 10 ** CURRENCY.decimals,
         reminderEmail: DEFAULT_REMINDER_EMAIL,
+        calendarEmail: DEFAULT_CALENDAR_EMAIL,
       };
 });

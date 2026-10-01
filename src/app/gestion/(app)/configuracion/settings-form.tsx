@@ -60,6 +60,23 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
       </div>
 
       <div className="grid gap-2">
+        <Label htmlFor="calendarEmail">Google Calendar de reservas</Label>
+        <Input
+          id="calendarEmail"
+          name="calendarEmail"
+          type="email"
+          defaultValue={settings.calendarEmail}
+          placeholder="Vacío = sin calendario"
+          className="max-w-80"
+        />
+        <p className="text-xs text-muted-foreground">
+          Cada reserva llega a este correo como invitación y Google Calendar la agrega sola (en su configuración,
+          “Agregar invitaciones a mi calendario” debe estar en “De todos”). Al editarla se actualiza; al cancelarla o
+          eliminarla, se quita.
+        </p>
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor="payWeekStart">La semana de pago empieza el</Label>
         <select
           id="payWeekStart"

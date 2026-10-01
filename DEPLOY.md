@@ -166,6 +166,8 @@ La app instalada en los celulares de los empleados: si abre la página pública 
 4. Cada reserva programa su correo al guardarse (Resend lo manda a la hora). Una revisión diaria (**Settings → Cron Jobs**, 7:00 a. m. de Colombia) programa las que quedaron pendientes: las de más de 29 días, las que existían antes y las que fallaron. Después del primer despliegue puedes pulsar **Run** ahí mismo para programar de una vez las reservas que ya tenías.
 5. En Resend → **Emails** se ven los programados (*Scheduled*), enviados y cancelados.
 
+**Google Calendar:** con la misma clave de Resend, cada reserva llega como invitación al correo de **Configuración → Restaurante → Google Calendar de reservas** (inicial: simbaparrilla1@gmail.com). En Google Calendar de esa cuenta: **Configuración → Eventos de Gmail / Agregar invitaciones a mi calendario → "De todos"**. Para avisos en el celular, en ese calendario pon una notificación predeterminada (ej. 1 hora antes).
+
 ---
 
 ## 7. (Opcional) Pasar tus datos locales a Neon

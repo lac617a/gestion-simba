@@ -97,6 +97,7 @@ export const SettingsSchema = z.object({
     .refine((v) => whatsappNumber(v, "57") !== null, { error: "Número de WhatsApp inválido (ej. 301 216 8273)" }),
   // Vacío = sin recordatorios por correo
   reminderEmail: z.union([z.literal(""), z.email({ error: "Correo de recordatorios inválido" })]),
+  calendarEmail: z.union([z.literal(""), z.email({ error: "Correo del calendario inválido" })]),
 });
 
 export function parseSettingsForm(formData: FormData) {
@@ -106,6 +107,7 @@ export function parseSettingsForm(formData: FormData) {
     payDay: formData.get("payDay"),
     whatsapp: get("whatsapp"),
     reminderEmail: get("reminderEmail").trim().toLowerCase(),
+    calendarEmail: get("calendarEmail").trim().toLowerCase(),
     doubleShiftWeekdays: formData.getAll("doubleShiftWeekdays"),
     shiftHours: [0, 1].map((i) => ({ open: get(`shiftOpen${i}`), close: get(`shiftClose${i}`) })),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),

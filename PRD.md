@@ -127,6 +127,14 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - En la reserva se ve el estado: "sale el …", "enviado el …" o pendiente.
 - Si se cambia el correo en Configuración, los ya programados siguen yendo al anterior; las reservas nuevas o editadas usan el nuevo.
 
+### RF-23 · Reservas en Google Calendar
+- Cada reserva llega como **invitación de calendario** (correo con `invite.ics`, por Resend) al **Google Calendar de reservas** de Configuración → Restaurante (inicial: simbaparrilla1@gmail.com; vacío = desactivado). Con "Agregar invitaciones a mi calendario: De todos" en Google Calendar, el evento se agrega solo.
+- Evento de 2 horas: "Reserva: Nombre (N personas)", con teléfono, ocasión, observación, quién la registró y el enlace a la reserva; lugar: el restaurante. No marca el calendario como ocupado.
+- Cada reserva es **un solo evento** (UID fijo): al editar algo que se ve (fecha, hora, datos) llega una actualización con versión mayor; al **cancelarla o eliminarla** se quita; al volver a confirmarla vuelve. Marcar Llegó/No vino no manda nada.
+- La revisión diaria (RF-22) también manda al calendario las reservas de hoy en adelante que no estén (anteriores a esta función o con fallo). Las pasadas no se llenan.
+- Si se cambia el correo del calendario, al editar una reserva se quita del anterior y se pone en el nuevo.
+- En la reserva se ve "En el Google Calendar de …".
+
 ### RF-18 · Doble turno (uso interno de empleados)
 - En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
@@ -391,6 +399,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F17 ✅ | Gastos del día en el cierre y en reportes (RF-3, RF-5). |
 | F18 ✅ | Usuarios con rol: administradores y usuarios que solo manejan reservas (RF-21). |
 | F19 ✅ | Recordatorio por correo 1 hora antes de cada reserva, con Resend (RF-22). |
+| F20 ✅ | Reservas en Google Calendar por invitaciones de correo (RF-23). |
 
 ## 11. Preguntas abiertas
 
