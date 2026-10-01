@@ -74,6 +74,10 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 | Vacaciones / Incapacidad | ❌ No | Ausencia justificada. |
 
 - Cambiar el estado de cada empleado con un toque (acción rápida "Marcar todos los pendientes como Trabajó").
+- **Vista rápida** (por defecto; se puede cambiar a **Lista**, y cada navegador recuerda la elegida): todos los empleados como **chips agrupados por puesto**, con color por estado (los conteos de arriba sirven de leyenda), buscador por nombre (sin importar tildes) y filtro **Por marcar** (pendientes y, en doble turno, los que no tienen turno).
+  - Un toque a un pendiente lo marca **Trabajó**; la flecha ▾ abre los demás estados y "Volver a pendiente". En días de doble turno el toque abre el menú con **Trabajó · Mañana / Tarde / Ambos** (se marca estado y turno de una vez), respetando el cierre de la mañana.
+  - Cada cambio muestra un aviso con **Deshacer**.
+- **Barra fija abajo** mientras se recorre la lista: cuántos trabajan, cuántos faltan por marcar (y Mañana/Tarde en doble turno) y botón **Ir al cierre**.
 - **Asignar días libres por adelantado:** elegir empleado + rango de fechas + tipo (Descanso extra o Vacaciones/Incapacidad). Se aplica al abrir esos días.
 - Un empleado que trabaja en su día de descanso fijo simplemente se cambia a **Trabajó**.
 - Navegar a días anteriores para consultar o corregir (si el día no está cerrado).
@@ -151,7 +155,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Exportar cada reporte a **CSV**.
 
 ### RF-6 · Inicio ("Hoy")
-- Quién trabaja hoy y quién descansa.
+- **Quién está hoy** en una tarjeta con chips: barra de proporción y grupos Trabajan / Pendientes / Descansan (con el motivo) / Faltaron; cada grupo muestra 12 y "+N más". Tocar un pendiente lo marca **Trabajó** (con Deshacer) y hay "Marcar los N pendientes como Trabajó"; en días de doble turno los pendientes llevan a Asistencia (hay que elegir el turno).
 - Número de empleados pendientes de marcar.
 - Estado del día (Abierto / Cerrado), venta y propinas si ya se cerró.
 - Accesos directos a Asistencia y Cierre.
@@ -410,6 +414,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F19 ✅ | Recordatorio por correo 1 hora antes de cada reserva, con Resend (RF-22). |
 | F20 ✅ | Reservas en Google Calendar por invitaciones de correo (RF-23). |
 | F21 ✅ | Reservas: pestañas Próximas / Historial, búsqueda y filtros por estado y fechas, e historial de cambios (RF-14, RF-24). |
+| F22 ✅ | Asistencia rápida en chips por puesto, barra fija con "Ir al cierre" y "Quién está hoy" en chips (RF-2, RF-6). |
 
 ## 11. Preguntas abiertas
 

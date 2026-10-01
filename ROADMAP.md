@@ -34,7 +34,8 @@ _Última actualización: 2026-10-01_
 | Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ en producción | `c749c7a` + `3483c1a` |
 | F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | `695221a` |
 | F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | `d93eb35` |
-| F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ sin publicar (tiene migración) | commit «F21: reservas…» |
+| F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ sin publicar (tiene migración) | `09e8159` |
+| F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ sin publicar | commit «F22: asistencia rápida…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -70,6 +71,13 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F22 · Asistencia rápida y "Quién está hoy" en chips (2026-10-01) ✅
+
+- Asistencia: `quick-attendance.tsx` (chips por puesto, buscador con `searchKey` sin tildes, filtro "Por marcar", menú de Base UI por chip con estados y turnos; respeta el cierre de la mañana). `AttendanceList` elige Rápida/Lista con `useSyncExternalStore` sobre `localStorage` (`asistencia-vista`), avisos con Deshacer y barra `sticky` abajo con "Ir al cierre" (#cierre). Conteos con los colores de `STATUS_CHIP_CLASS`.
+- Acciones: `setAttendanceStatus(id, status, withShift?)` marca estado y turno de una vez; `resetAttendance` vuelve a Pendiente (Deshacer). Las de asistencia ahora también revalidan `/gestion`.
+- Hoy: `today-people.tsx` reemplaza las columnas Trabajan/Pendientes/Descansan: chips por estado, barra de proporción, "+N más", tocar un pendiente = Trabajó.
+- Sin migración. En la BD de pruebas se crearon 26 empleados más (31 en total) para probar con el tamaño real.
 
 ## F21 · Reservas: historial, búsqueda, filtros e historial de cambios (2026-10-01) ✅
 

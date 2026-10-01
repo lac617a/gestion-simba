@@ -24,6 +24,19 @@ export const STATUS_ACTIVE_CLASS: Record<AttendanceStatus, string> = {
   LEAVE: "border-violet-600 bg-violet-600 text-white",
 };
 
+/** Chips de la vista rápida y de Hoy (más suaves que los botones seleccionados). */
+export const STATUS_CHIP_CLASS: Record<AttendanceStatus, string> = {
+  PENDING: "border-amber-400 bg-amber-50 text-amber-900",
+  WORKED: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  REST: "border-slate-200 bg-slate-100 text-slate-700",
+  EXTRA_REST: "border-sky-200 bg-sky-50 text-sky-900",
+  ABSENT: "border-red-200 bg-red-50 text-red-900",
+  LEAVE: "border-violet-200 bg-violet-50 text-violet-900",
+};
+
+/** Sin tildes y en minúsculas, para buscar nombres ("angelica" encuentra "Angélica"). */
+export const searchKey = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
 export const TIME_OFF_LABEL: Record<TimeOffType, string> = {
   EXTRA_REST: "Descanso extra / permiso",
   LEAVE: "Vacaciones / incapacidad",

@@ -11,10 +11,8 @@ import {
   SunIcon,
   WalletIcon,
 } from "lucide-react";
-import type { AttendanceStatus } from "@/generated/prisma/enums";
 import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
-import { STATUS_ACTIVE_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { CURRENCY, today } from "@/lib/config";
 import { verifyAdmin } from "@/lib/dal";
 import { formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/lib/dates";
@@ -29,8 +27,9 @@ import { getReservationsOn } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
-import { getDayView, type DayRow } from "@/lib/workdays";
+import { getDayView } from "@/lib/workdays";
 import { ReservationList } from "./reservas/reservation-list";
+import { TodayPeople } from "./today-people";
 
 export const metadata: Metadata = { title: "Hoy · Gestión Simba" };
 
@@ -51,11 +50,7 @@ export default async function TodayPage() {
   const hours = hoursFor(view.schedule, settings.openingHours);
   const money = (v: number | null) => formatMoney(v ?? 0, CURRENCY);
 
-  const by = (...statuses: AttendanceStatus[]) => view.rows.filter((r) => statuses.includes(r.status));
-  const pending = by("PENDING");
-  const working = by("WORKED");
-  const resting = by("REST", "EXTRA_REST", "LEAVE");
-  const absent = by("ABSENT");
+  const pending = view.rows.filter((r) => r.status === "PENDING");
   const closed = view.mode === "closed";
   const expenses = view.closing?.expensesTotal ?? null;
 
@@ -177,12 +172,7 @@ export default async function TodayPage() {
 
       {/* Quién está hoy */}
       {view.rows.length > 0 && (
-        <section className="grid gap-4 sm:grid-cols-2">
-          <PeopleGroup title="Trabajan" rows={working} empty="Nadie marcado como “Trabajó” todavía." />
-          <PeopleGroup title="Pendientes" rows={pending} empty="Ninguno." />
-          <PeopleGroup title="Descansan" rows={resting} empty="Nadie descansa hoy." showStatus />
-          {absent.length > 0 && <PeopleGroup title="Faltaron" rows={absent} />}
-        </section>
+        <TodayPeople date={date} rows={view.rows} editable={view.mode === "open"} doubleShift={view.doubleShift} />
       )}
 
       {/* La semana */}
@@ -264,43 +254,6 @@ function PayDueCard({
         Ir a pagar <ArrowRightIcon />
       </Button>
     </section>
-  );
-}
-
-function PeopleGroup({
-  title,
-  rows,
-  empty,
-  showStatus,
-}: {
-  title: string;
-  rows: DayRow[];
-  empty?: string;
-  showStatus?: boolean;
-}) {
-  return (
-    <div className="grid content-start gap-2 rounded-lg border p-3">
-      <h3 className="flex items-center justify-between text-sm font-medium">
-        {title}
-        <span className="rounded-full bg-muted px-2 text-xs tabular-nums">{rows.length}</span>
-      </h3>
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="grid gap-1 text-sm">
-          {rows.map((r) => (
-            <li key={r.employeeId} className="flex items-center justify-between gap-2">
-              <span className="truncate">{r.name}</span>
-              {showStatus && (
-                <span className={cn("shrink-0 rounded-md border px-1.5 text-xs", STATUS_ACTIVE_CLASS[r.status])}>
-                  {STATUS_LABEL[r.status]}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }
 

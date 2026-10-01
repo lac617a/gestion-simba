@@ -30,19 +30,28 @@ async function loadAttendance(attendanceId: string) {
   });
 }
 
-export async function setAttendanceStatus(attendanceId: string, status: AttendanceStatus): Promise<ActionResult> {
+/**
+ * Marca el estado de un empleado en el día. En días de doble turno, `withShift`
+ * marca Trabajó y su turno de una vez (vista rápida); si no viene, el turno se
+ * conserva si sigue en Trabajó y, tras cerrar la mañana, quien empieza a
+ * trabajar solo puede ser de la tarde.
+ */
+export async function setAttendanceStatus(
+  attendanceId: string,
+  status: AttendanceStatus,
+  withShift?: WorkShift
+): Promise<ActionResult> {
   await verifyAdmin();
   if (!(SELECTABLE_STATUSES as readonly string[]).includes(status)) {
     return { ok: false, error: "Estado inválido" };
   }
+  if (withShift && (status !== "WORKED" || !SHIFTS.includes(withShift))) return { ok: false, error: "Turno inválido" };
   const a = await loadAttendance(attendanceId);
   if (!a || a.workDay.status !== "OPEN") return CLOSED_ERROR;
 
-  // Doble turno: el turno se conserva si sigue en Trabajó; tras cerrar la mañana,
-  // quien empieza a trabajar solo puede ser de la tarde.
   let shift: WorkShift | null = null;
   if (a.workDay.doubleShift && status === "WORKED") {
-    shift = a.status === "WORKED" ? a.shift : a.workDay.morningClosedAt ? "EVENING" : null;
+    shift = withShift ?? (a.status === "WORKED" ? a.shift : a.workDay.morningClosedAt ? "EVENING" : null);
   }
   if (a.workDay.morningClosedAt && inMorning(a.status, a.shift) !== inMorning(status, shift)) {
     return MORNING_CLOSED_ERROR;
@@ -56,6 +65,23 @@ export async function setAttendanceStatus(attendanceId: string, status: Attendan
   });
   if (count === 0) return CLOSED_ERROR;
   revalidatePath("/gestion/asistencia");
+  revalidatePath("/gestion");
+  return { ok: true };
+}
+
+/** Deshace una marca: vuelve a Pendiente (ej. un toque por error en la vista rápida o en Hoy). */
+export async function resetAttendance(attendanceId: string): Promise<ActionResult> {
+  await verifyAdmin();
+  const a = await loadAttendance(attendanceId);
+  if (!a || a.workDay.status !== "OPEN") return CLOSED_ERROR;
+  if (a.workDay.morningClosedAt && inMorning(a.status, a.shift)) return MORNING_CLOSED_ERROR;
+  const { count } = await db.attendance.updateMany({
+    where: { id: attendanceId, workDay: { status: "OPEN" } },
+    data: { status: "PENDING", shift: null, dailyPay: null },
+  });
+  if (count === 0) return CLOSED_ERROR;
+  revalidatePath("/gestion/asistencia");
+  revalidatePath("/gestion");
   return { ok: true };
 }
 
@@ -142,5 +168,6 @@ export async function markPendingAsWorked(date: string): Promise<ActionResult & 
     data: { status: "WORKED", shift: day?.doubleShift && day.morningClosedAt ? "EVENING" : null, dailyPay: null },
   });
   revalidatePath("/gestion/asistencia");
+  revalidatePath("/gestion");
   return { ok: true, count };
 }
