@@ -6,10 +6,12 @@ import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
 import { hoursFor, type OpeningHours } from "@/lib/hours";
 import type { Period } from "@/lib/periods";
 import { summarizeReservations } from "@/lib/reservation-report";
+import { reservationHistory, type LogChange } from "@/lib/reservation-log";
 import { quickDates } from "@/lib/reservation-slots";
 import { dayTotals, outsideHoursWarning } from "@/lib/reservations";
 import { daySchedule, type DaySchedule } from "@/lib/schedule";
 import { getSettings } from "@/lib/settings";
+import { displayName } from "@/lib/users";
 
 export type ReservationRow = Omit<Reservation, "date" | "createdAt" | "updatedAt"> & {
   date: ISODate;
@@ -74,9 +76,37 @@ export function getUpcomingReservations(today: ISODate, q = "") {
   return loadDays({ date: { gte: isoToDate(today) }, ...search(q) }, false);
 }
 
-/** Antes de hoy, de la más reciente hacia atrás (las últimas 200). */
-export function getPastReservations(today: ISODate, q = "") {
-  return loadDays({ date: { lt: isoToDate(today) }, ...search(q) }, true, 200);
+/**
+ * Historial: reservas del periodo hasta hoy (incluido), de la más reciente hacia
+ * atrás, con el resumen del periodo (llegaron, no vinieron, canceladas…).
+ */
+export async function getReservationHistory(period: Period, today: ISODate, q = "") {
+  const to = period.to < today ? period.to : today;
+  if (to < period.from) return { days: [], summary: summarizeReservations([], today) };
+  const days = await loadDays({ date: { gte: isoToDate(period.from), lte: isoToDate(to) }, ...search(q) }, true);
+  return { days, summary: summarizeReservations(days.flatMap((d) => d.reservations), today) };
+}
+
+/** Historial de cambios de una reserva, para mostrar (incluye la creación). */
+export async function getReservationLog(id: string) {
+  const r = await db.reservation.findUnique({
+    where: { id },
+    select: {
+      createdAt: true,
+      createdBy: { select: { name: true, email: true } },
+      logs: { orderBy: { createdAt: "asc" }, include: { user: { select: { name: true, email: true } } } },
+    },
+  });
+  if (!r) return [];
+  return reservationHistory(
+    r.logs.map((l) => ({
+      action: l.action,
+      changes: l.changes as LogChange[] | null,
+      at: l.createdAt,
+      user: l.user && displayName(l.user),
+    })),
+    { at: r.createdAt, user: r.createdBy && displayName(r.createdBy) }
+  );
 }
 
 /** Reservas de un día (Hoy). */

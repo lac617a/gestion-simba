@@ -16,19 +16,20 @@ enum UserRole {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  email          String        @unique
-  passwordHash   String
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
   /// Nombre para mostrar (ej. "Registrada por"). El admin inicial no tiene: se muestra el correo.
-  name           String?
-  role           UserRole      @default(ADMIN)
+  name            String?
+  role            UserRole         @default(ADMIN)
   /// Desactivado: no puede entrar. No se borra, para conservar el historial.
-  active         Boolean       @default(true)
+  active          Boolean          @default(true)
   /// Se incrementa al cambiar la contraseña, desactivar o cerrar sesión en todos lados:
   /// invalida las cookies de sesión emitidas antes.
-  sessionVersion Int           @default(0)
-  createdAt      DateTime      @default(now())
-  reservations   Reservation[]
+  sessionVersion  Int              @default(0)
+  createdAt       DateTime         @default(now())
+  reservations    Reservation[]
+  reservationLogs ReservationLog[]
 }
 
 /// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
@@ -250,8 +251,34 @@ model Reservation {
   createdBy        User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  logs             ReservationLog[]
 
   @@index([date])
+}
+
+/// Qué se le hizo a una reserva.
+enum ReservationLogAction {
+  CREATED
+  /// Cambió algún dato (fecha, hora, personas, nombre…)
+  UPDATED
+  /// Cambió el estado (Llegó, No vino, Cancelada o de vuelta a Confirmada)
+  STATUS
+}
+
+/// Historial de cambios de cada reserva: quién hizo qué y cuándo.
+model ReservationLog {
+  id            String               @id @default(cuid())
+  reservationId String
+  reservation   Reservation          @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /// Quién lo hizo (null si ese usuario ya no existe)
+  userId        String?
+  user          User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action        ReservationLogAction
+  /// Cambios: [{ field, from, to }] con los valores tal como se guardan
+  changes       Json?
+  createdAt     DateTime             @default(now())
+
+  @@index([reservationId, createdAt])
 }
 
 /// Reseñas de clientes que se muestran en la página pública (copiadas a mano de Google).

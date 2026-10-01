@@ -202,7 +202,10 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
                   ? "1 reserva de días pasados sigue sin marcar"
                   : `${reservations.status.unmarked} reservas de días pasados siguen sin marcar`}{" "}
                 (Llegó / No vino).{" "}
-                <Link href="/gestion/reservas?ver=anteriores" className="font-medium underline underline-offset-4">
+                <Link
+                  href={`/gestion/reservas?ver=historial&estado=confirmadas&desde=${period.from}&hasta=${period.to}`}
+                  className="font-medium underline underline-offset-4"
+                >
                   Marcarlas
                 </Link>
               </p>

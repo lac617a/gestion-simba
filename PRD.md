@@ -208,13 +208,22 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 
 ### RF-14 · Reservas
 - Pantalla **Reservas** en el menú. Cada reserva tiene: **fecha y hora**, **cantidad de personas**, **a nombre de** (quien reserva), **teléfono** (opcional), **ocasión** (opcional: Cumpleaños, Aniversario, Grado, Despedida, Reunión de trabajo, Pedida de mano u "Otra" con texto libre), **persona de la ocasión** (ej. el cumpleañero; solo si hay ocasión) y **observación**.
-- Lista **Próximas** (desde hoy) y **Anteriores**, agrupadas por día con total de reservas y personas; búsqueda por nombre (quien reserva o persona de la ocasión).
+- Dos pestañas, agrupadas por día con total de reservas y personas (el encabezado del día queda fijo al bajar):
+  - **Próximas** (desde hoy), con un resumen arriba: hoy, mañana y los próximos 7 días (reservas y personas, sin canceladas).
+  - **Historial**: reservas de un periodo (semana, quincena, mes u otras fechas; por defecto el mes actual) **hasta hoy**, de la más reciente hacia atrás, con resumen: reservas, personas, llegaron (% de las marcadas), no vinieron y canceladas, y aviso de las que siguen **sin marcar** con enlace para verlas.
+- **Buscar por nombre** (quien reserva o persona de la ocasión) y **filtrar por estado** (Todas, Confirmadas / Sin marcar, Llegó, No vino, Canceladas) con el número de cada una; búsqueda, estado y periodo se combinan y se conservan en la dirección (se puede compartir o volver atrás).
+- Las confirmadas de días pasados se marcan **Sin marcar**.
 - Estados: **Confirmada** (al crearla), **Llegó**, **No vino** (se marcan desde el día de la reserva) y **Cancelada** (desde Editar; queda en el historial y no cuenta en los totales). Todos se pueden deshacer. **Eliminar** borra la reserva (para las registradas por error).
 - **Elegir fecha y hora rápido:** botones **Hoy**, **Mañana** y los 5 días siguientes (los marcados como cerrados salen desactivados) u **Otra fecha**; horas **cada 30 minutos** según el horario del día (sin horario: 11:00 a. m. a 11:00 p. m.) u **Otra hora**; personas con botones **− / +**.
 - **Nada hacia atrás:** no se anotan reservas en fechas u horas que ya pasaron (hoy solo se ofrecen las horas que faltan; el servidor lo vuelve a revisar con 10 minutos de margen). Una reserva vieja se puede corregir (nota, teléfono…) sin moverla, pero no moverla a una fecha u hora pasada.
 - Avisos que no impiden guardar: el restaurante está cerrado ese día (encabezado del día) o la hora queda fuera del horario de atención (RF-13).
 - **Hoy** muestra las reservas del día con acceso a Nueva reserva.
 - **WhatsApp:** en las reservas confirmadas de hoy en adelante con teléfono, botón que abre WhatsApp con el mensaje de confirmación escrito (nombre, fecha, hora, personas y ocasión); el empleado solo lo envía. Números de 10 dígitos llevan el indicativo `PHONE_COUNTRY_CODE` (57).
+
+### RF-24 · Historial de cambios de cada reserva
+- Al final de cada reserva: **quién** hizo **qué** y **cuándo**, del más reciente al más viejo: la creó, la editó (con cada dato que cambió: "Hora: 7:30 p. m. → 8:00 p. m."), la canceló, la volvió a confirmar, marcó Llegó / No vino o quitó la marca.
+- Guardar sin cambios no deja registro. Las reservas anteriores al historial muestran su creación con los datos que ya tenían ("Registrada por").
+- Si se elimina la reserva, se borra con su historial (eliminar es para las anotadas por error).
 
 ### RF-15 · Reporte de reservas
 - En **Reportes → Reservas**, para el periodo elegido: reservas y personas (sin canceladas), promedio de personas por reserva, % que llegaron (llegó / (llegó + no vino)), confirmadas por venir y canceladas.
@@ -400,6 +409,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F18 ✅ | Usuarios con rol: administradores y usuarios que solo manejan reservas (RF-21). |
 | F19 ✅ | Recordatorio por correo 1 hora antes de cada reserva, con Resend (RF-22). |
 | F20 ✅ | Reservas en Google Calendar por invitaciones de correo (RF-23). |
+| F21 ✅ | Reservas: pestañas Próximas / Historial, búsqueda y filtros por estado y fechas, e historial de cambios (RF-14, RF-24). |
 
 ## 11. Preguntas abiertas
 

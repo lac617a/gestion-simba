@@ -29,12 +29,14 @@ export function ReservationList({ reservations, today }: { reservations: Reserva
 
 function ReservationItem({ r, today }: { r: ReservationRow; today: string }) {
   const cancelled = r.status === "CANCELLED";
+  // Confirmada de un día que ya pasó: falta marcar si llegó o no.
+  const unmarked = r.status === "CONFIRMED" && r.date < today;
   const occasion = occasionLabel(r.occasion, r.honoree);
   // WhatsApp de confirmación: solo para reservas confirmadas de hoy en adelante.
   const wa = r.status === "CONFIRMED" && r.date >= today ? whatsappNumber(r.phone, PHONE_COUNTRY_CODE) : null;
 
   return (
-    <li className={cn("flex gap-3 px-4 py-3", cancelled && "text-muted-foreground")}>
+    <li className={cn("flex gap-3 px-4 py-3", cancelled && "bg-muted/40 text-muted-foreground")}>
       <div className="w-[4.5rem] shrink-0 pt-0.5 text-sm font-semibold tabular-nums">{formatTime(r.time)}</div>
       <div className="grid min-w-0 flex-1 gap-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -46,6 +48,9 @@ function ReservationItem({ r, today }: { r: ReservationRow; today: string }) {
             <span className={cn("rounded-md border px-1.5 text-xs", RESERVATION_STATUS_CLASS[r.status])}>
               {RESERVATION_STATUS_LABEL[r.status]}
             </span>
+          )}
+          {unmarked && (
+            <span className="rounded-md border border-amber-300 bg-amber-50 px-1.5 text-xs text-amber-800">Sin marcar</span>
           )}
         </div>
         {occasion && (

@@ -11,13 +11,15 @@ type Props = {
   basePath: string;
   period: Period;
   presets: { label: string; period: Period }[];
+  /** Otros parámetros de la URL que se conservan al cambiar de periodo (ej. pestaña, búsqueda) */
+  keep?: Record<string, string>;
 };
 
 const same = (a: Period, b: Period) => a.from === b.from && a.to === b.to;
 
 /** Selector de periodo por URL (?desde&hasta): flechas, atajos y rango libre. */
-export function PeriodNav({ basePath, period, presets }: Props) {
-  const href = (p: Period) => `${basePath}?desde=${p.from}&hasta=${p.to}`;
+export function PeriodNav({ basePath, period, presets, keep = {} }: Props) {
+  const href = (p: Period) => `${basePath}?${new URLSearchParams({ ...keep, desde: p.from, hasta: p.to })}`;
 
   return (
     <div className="grid gap-3">
@@ -68,6 +70,9 @@ export function PeriodNav({ basePath, period, presets }: Props) {
         <details className="group">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Otras fechas</summary>
           <form action={basePath} className="mt-3 flex flex-wrap items-end gap-3">
+            {Object.entries(keep).map(([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ))}
             <div className="grid gap-1.5">
               <Label htmlFor="desde">Desde</Label>
               <Input id="desde" name="desde" type="date" defaultValue={period.from} required className="w-auto" />

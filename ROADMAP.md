@@ -33,7 +33,8 @@ _Última actualización: 2026-10-01_
 | F18 · Usuarios con rol (administrador / solo reservas) | ✅ en producción | `daa4c47` |
 | Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ en producción | `c749c7a` + `3483c1a` |
 | F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | `695221a` |
-| F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | commit «F20: reservas en Google Calendar…» |
+| F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | `d93eb35` |
+| F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ sin publicar (tiene migración) | commit «F21: reservas…» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -69,6 +70,13 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F21 · Reservas: historial, búsqueda, filtros e historial de cambios (2026-10-01) ✅
+
+- Tabla `ReservationLog` (reserva, usuario, acción `CREATED`/`UPDATED`/`STATUS`, `changes` JSON `[{field, from, to}]`). Migración `historial_de_reservas` (solo agrega). Las acciones de reservas lo escriben con escritura anidada (atómica); editar sin cambios no guarda nada ni manda correos.
+- `src/lib/reservation-log.ts` (puro: `diffReservation`, `describeLog`, `reservationHistory` que agrega la creación de las reservas viejas). `getReservationLog` y `getReservationHistory(period, today, q)` (hasta hoy + `summarizeReservations`) en reservations-data.ts; se quitó `getPastReservations` (`?ver=anteriores` abre el historial).
+- `/gestion/reservas`: pestañas Próximas/Historial, búsqueda con botón para borrar, filtros de estado con conteo (`?estado=confirmadas|llego|no-vino|canceladas`; `sin-marcar` = confirmadas), resumen de hoy/mañana/7 días, `PeriodNav` (nuevo prop `keep` para conservar parámetros) y resumen del periodo. Encabezados de día fijos. Reportes → "Marcarlas" abre el historial filtrado en Sin marcar del mismo periodo.
+- Reserva: sección "Historial de cambios" (línea de tiempo).
 
 ## F20 · Reservas en Google Calendar (2026-10-01) ✅
 
