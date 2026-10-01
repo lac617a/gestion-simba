@@ -194,71 +194,97 @@ function Chip({
   const item = "flex cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm outline-none select-none data-[disabled]:opacity-40 data-[highlighted]:bg-muted";
 
   return (
-    <span className={cn(base, "overflow-hidden")}>
-      <button
-        type="button"
-        onClick={tap}
-        title={row.status === "PENDING" && !doubleShift ? "Marcar Trabajó" : "Cambiar"}
-        className="inline-flex min-w-0 items-center gap-1 py-1 pr-1.5 pl-3 outline-none focus-visible:bg-black/5"
-      >
-        {label}
-      </button>
-      <Menu.Root open={open} onOpenChange={setOpen}>
-        <Menu.Trigger
-          aria-label={`Más opciones para ${row.name}`}
-          className="grid h-full place-items-center self-stretch border-l border-current/15 px-1.5 outline-none hover:bg-black/5 focus-visible:bg-black/5"
-        >
-          <ChevronDownIcon className="size-3.5" />
-        </Menu.Trigger>
-        <Menu.Portal>
-          <Menu.Positioner sideOffset={6} align="start" className="z-50 outline-none">
-            <Menu.Popup className="min-w-52 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg outline-none">
-              <p className="px-2.5 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">{row.name}</p>
-              {doubleShift
-                ? SHIFTS.map((s) => {
-                    const current = row.status === "WORKED" && row.shift === s;
-                    return (
-                      <Menu.Item
-                        key={s}
-                        disabled={!shiftAllowed(s)}
-                        onClick={() => !current && onSet(row, "WORKED", s)}
-                        className={item}
-                      >
-                        <span className={cn("size-2 rounded-full", STATUS_DOT.WORKED)} />
-                        Trabajó · {SHIFT_LABEL[s]}
-                        {!shiftAllowed(s) && <LockIcon className="ml-auto size-3.5" />}
-                        {current && <CheckIcon className="ml-auto size-4" />}
-                      </Menu.Item>
-                    );
-                  })
-                : null}
-              {SELECTABLE_STATUSES.filter((s) => !(doubleShift && s === "WORKED")).map((s) => {
-                const current = row.status === s;
-                return (
-                  <Menu.Item
-                    key={s}
-                    disabled={lockedInMorning}
-                    onClick={() => !current && onSet(row, s)}
-                    className={item}
-                  >
-                    <span className={cn("size-2 rounded-full", STATUS_DOT[s])} />
-                    {STATUS_LABEL[s]}
-                    {current && <CheckIcon className="ml-auto size-4" />}
-                  </Menu.Item>
-                );
-              })}
-              {row.status !== "PENDING" && (
-                <>
-                  <Menu.Separator className="my-1 h-px bg-border" />
-                  <Menu.Item disabled={lockedInMorning} onClick={() => onReset(row)} className={item}>
-                    <Undo2Icon className="size-3.5 text-muted-foreground" /> Volver a pendiente
-                  </Menu.Item>
-                </>
-              )}
-            </Menu.Popup>
-          </Menu.Positioner>
-        </Menu.Portal>
-      </Menu.Root>
-    </span>
-  );
+		<span className={cn(base, "overflow-hidden")}>
+			<button
+				type="button"
+				onClick={tap}
+				title={
+					row.status === "PENDING" && !doubleShift
+						? "Marcar Trabajó"
+						: "Cambiar"
+				}
+				className="inline-flex min-w-0 items-center gap-1 py-1 pr-1.5 pl-3 outline-none focus-visible:bg-black/5"
+			>
+				{label}
+			</button>
+			<Menu.Root open={open} onOpenChange={setOpen}>
+				<Menu.Trigger
+					aria-label={`Más opciones para ${row.name}`}
+					className="grid h-[stretch] place-items-center self-stretch border-l border-current/15 px-1.5 outline-none hover:bg-black/5 focus-visible:bg-black/5"
+				>
+					<ChevronDownIcon className="size-3.5" />
+				</Menu.Trigger>
+				<Menu.Portal>
+					<Menu.Positioner
+						sideOffset={6}
+						align="start"
+						className="z-50 outline-none"
+					>
+						<Menu.Popup className="min-w-52 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg outline-none">
+							<p className="px-2.5 pt-1 pb-1.5 text-xs font-medium text-muted-foreground">
+								{row.name}
+							</p>
+							{doubleShift
+								? SHIFTS.map((s) => {
+										const current = row.status === "WORKED" && row.shift === s;
+										return (
+											<Menu.Item
+												key={s}
+												disabled={!shiftAllowed(s)}
+												onClick={() => !current && onSet(row, "WORKED", s)}
+												className={item}
+											>
+												<span
+													className={cn(
+														"size-2 rounded-full",
+														STATUS_DOT.WORKED,
+													)}
+												/>
+												Trabajó · {SHIFT_LABEL[s]}
+												{!shiftAllowed(s) && (
+													<LockIcon className="ml-auto size-3.5" />
+												)}
+												{current && <CheckIcon className="ml-auto size-4" />}
+											</Menu.Item>
+										);
+									})
+								: null}
+							{SELECTABLE_STATUSES.filter(
+								(s) => !(doubleShift && s === "WORKED"),
+							).map((s) => {
+								const current = row.status === s;
+								return (
+									<Menu.Item
+										key={s}
+										disabled={lockedInMorning}
+										onClick={() => !current && onSet(row, s)}
+										className={item}
+									>
+										<span
+											className={cn("size-2 rounded-full", STATUS_DOT[s])}
+										/>
+										{STATUS_LABEL[s]}
+										{current && <CheckIcon className="ml-auto size-4" />}
+									</Menu.Item>
+								);
+							})}
+							{row.status !== "PENDING" && (
+								<>
+									<Menu.Separator className="my-1 h-px bg-border" />
+									<Menu.Item
+										disabled={lockedInMorning}
+										onClick={() => onReset(row)}
+										className={item}
+									>
+										<Undo2Icon className="size-3.5 text-muted-foreground" />{" "}
+										Volver a pendiente
+									</Menu.Item>
+								</>
+							)}
+						</Menu.Popup>
+					</Menu.Positioner>
+				</Menu.Portal>
+			</Menu.Root>
+		</span>
+	);
 }
