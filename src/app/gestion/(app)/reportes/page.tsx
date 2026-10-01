@@ -13,6 +13,7 @@ import { ATTENDANCE_COLUMNS, salesSeries } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
 import type { Bucket } from "@/lib/reservation-report";
 import { getReservationReport } from "@/lib/reservations-data";
+import { dayHref, loadPeriod, reportCsvHref, reservationsHref } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "Reportes · Gestión Simba" };
 
@@ -25,7 +26,7 @@ const SECTIONS = [
 
 export default async function ReportsPage({ searchParams }: PageProps<"/gestion/reportes">) {
   await verifyAdmin();
-  const { desde, hasta } = await searchParams;
+  const { desde, hasta } = await loadPeriod(searchParams);
   const period = await periodFromParams(desde, hasta);
   const [{ sales, tips, attendance, unclosedDays }, reservations] = await Promise.all([
     getReports(period),
@@ -33,7 +34,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
   ]);
 
   const money = (v: number) => formatMoney(v, CURRENCY);
-  const csv = (tipo: string) => `/gestion/reportes/csv?tipo=${tipo}&desde=${period.from}&hasta=${period.to}`;
+  const csv = (tipo: "ventas" | "propinas" | "asistencia" | "reservas") =>
+    reportCsvHref("/gestion/reportes/csv", { tipo, desde: period.from, hasta: period.to });
   const columns = ATTENDANCE_COLUMNS.filter((s) => s !== "PENDING" || attendance.totals.PENDING > 0);
   const chartTo = period.to < today() ? period.to : today();
   const series = salesSeries(sales.days, period.from, chartTo < period.from ? period.from : chartTo);
@@ -42,7 +44,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
     <div className="grid gap-6">
       <div className="grid gap-5">
         <h1 className="text-2xl font-semibold">Reportes</h1>
-        <PeriodNav basePath="/gestion/reportes" period={period} presets={await periodPresets()} />
+        <PeriodNav baseHref="/gestion/reportes" period={period} presets={await periodPresets()} />
         <UnclosedWarning days={unclosedDays} what="sus ventas y propinas todavía no cuentan." />
         <nav className="flex flex-wrap gap-2 text-sm" aria-label="Secciones">
           {SECTIONS.map((s) => (
@@ -102,7 +104,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
             {sales.days.map((d) => (
               <tr key={d.date}>
                 <td className="sticky left-0 bg-background px-3 py-2 whitespace-nowrap">
-                  <Link href={`/gestion/asistencia?fecha=${d.date}`} prefetch={false} className="hover:underline">
+                  <Link href={dayHref("/gestion/asistencia", { fecha: d.date })} prefetch={false} className="hover:underline">
                     {formatDayShort(d.date)}
                   </Link>
                 </td>
@@ -203,7 +205,12 @@ export default async function ReportsPage({ searchParams }: PageProps<"/gestion/
                   : `${reservations.status.unmarked} reservas de días pasados siguen sin marcar`}{" "}
                 (Llegó / No vino).{" "}
                 <Link
-                  href={`/gestion/reservas?ver=historial&estado=confirmadas&desde=${period.from}&hasta=${period.to}`}
+                  href={reservationsHref("/gestion/reservas", {
+                    ver: "historial",
+                    estado: "confirmadas",
+                    desde: period.from,
+                    hasta: period.to,
+                  })}
                   className="font-medium underline underline-offset-4"
                 >
                   Marcarlas

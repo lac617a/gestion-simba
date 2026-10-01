@@ -12,16 +12,13 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Usuarios · Gestión Simba" };
 
 /** Quiénes pueden entrar a la administración y qué pueden hacer. */
-export default async function UsersPage({ searchParams }: PageProps<"/gestion/usuarios">) {
+export default async function UsersPage() {
   const me = await verifyAdmin();
-  const params = await searchParams;
   const users = await getUsers();
-
-  const flash = params.creado ? "Usuario creado" : params.actualizado ? "Cambios guardados" : null;
 
   return (
     <div className="grid max-w-2xl gap-6">
-      {flash && <FlashToast message={flash} />}
+      <FlashToast messages={{ creado: "Usuario creado", actualizado: "Cambios guardados" }} />
 
       <div className="flex items-center justify-between gap-4">
         <div>

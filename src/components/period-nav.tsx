@@ -1,25 +1,24 @@
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { formatDateRange } from "@/lib/dates";
 import { shiftPeriod, type Period } from "@/lib/periods";
+import { periodHref } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
+import { PeriodRangeForm } from "./period-range-form";
 
 type Props = {
-  basePath: string;
+  /** Dirección de la pantalla con sus otros parámetros (pestaña, búsqueda…); se le agrega ?desde&hasta */
+  baseHref: string;
   period: Period;
   presets: { label: string; period: Period }[];
-  /** Otros parámetros de la URL que se conservan al cambiar de periodo (ej. pestaña, búsqueda) */
-  keep?: Record<string, string>;
 };
 
 const same = (a: Period, b: Period) => a.from === b.from && a.to === b.to;
 
-/** Selector de periodo por URL (?desde&hasta): flechas, atajos y rango libre. */
-export function PeriodNav({ basePath, period, presets, keep = {} }: Props) {
-  const href = (p: Period) => `${basePath}?${new URLSearchParams({ ...keep, desde: p.from, hasta: p.to })}`;
+/** Selector de periodo por la dirección (?desde&hasta): flechas, atajos y rango libre. */
+export function PeriodNav({ baseHref, period, presets }: Props) {
+  const href = (p: Period) => periodHref(baseHref, { desde: p.from, hasta: p.to });
 
   return (
     <div className="grid gap-3">
@@ -69,22 +68,7 @@ export function PeriodNav({ basePath, period, presets, keep = {} }: Props) {
 
         <details className="group">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Otras fechas</summary>
-          <form action={basePath} className="mt-3 flex flex-wrap items-end gap-3">
-            {Object.entries(keep).map(([name, value]) => (
-              <input key={name} type="hidden" name={name} value={value} />
-            ))}
-            <div className="grid gap-1.5">
-              <Label htmlFor="desde">Desde</Label>
-              <Input id="desde" name="desde" type="date" defaultValue={period.from} required className="w-auto" />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="hasta">Hasta</Label>
-              <Input id="hasta" name="hasta" type="date" defaultValue={period.to} required className="w-auto" />
-            </div>
-            <Button type="submit" variant="outline">
-              Ver
-            </Button>
-          </form>
+          <PeriodRangeForm key={`${period.from}-${period.to}`} period={period} />
         </details>
       </div>
     </div>

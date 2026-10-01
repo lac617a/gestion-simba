@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifyAdmin } from "@/lib/dal";
+import { withAviso } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { isoToDate } from "@/lib/dates";
 import { parseRatingSummaryForm, parseReviewForm, type ReviewFieldErrors } from "@/lib/reviews";
@@ -40,7 +41,7 @@ export async function createReview(_prev: ReviewFormState, formData: FormData): 
     data: { ...data, reviewedAt: isoToDate(reviewedAt), position: (first._min.position ?? 1) - 1 },
   });
   refresh();
-  redirect("/gestion/resenas?creado=1");
+  redirect(withAviso("/gestion/resenas", { aviso: "creado" }));
 }
 
 export async function updateReview(id: string, _prev: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
@@ -52,7 +53,7 @@ export async function updateReview(id: string, _prev: ReviewFormState, formData:
   const { count } = await db.review.updateMany({ where: { id }, data: { ...data, reviewedAt: isoToDate(reviewedAt) } });
   if (count === 0) return { message: "La reseña ya no existe", values: submittedValues(formData) };
   refresh();
-  redirect("/gestion/resenas?actualizado=1");
+  redirect(withAviso("/gestion/resenas", { aviso: "actualizado" }));
 }
 
 export async function setReviewVisible(id: string, visible: boolean) {
@@ -78,7 +79,7 @@ export async function deleteReview(id: string) {
   await verifyAdmin();
   await db.review.deleteMany({ where: { id } });
   refresh();
-  redirect("/gestion/resenas?eliminado=1");
+  redirect(withAviso("/gestion/resenas", { aviso: "eliminado" }));
 }
 
 export type RatingSummaryState = { error?: string; success?: string } | undefined;

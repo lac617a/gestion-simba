@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { createReservation } from "@/app/actions/reservations";
 import { verifyReservations } from "@/lib/dal";
-import { isISODate } from "@/lib/dates";
 import { getReservationFormContext } from "@/lib/reservations-data";
+import { loadDay } from "@/lib/search-params";
 import { ReservationForm } from "../reservation-form";
 
 export const metadata: Metadata = { title: "Nueva reserva · Gestión Simba" };
 
 export default async function NewReservationPage({ searchParams }: PageProps<"/gestion/reservas/nueva">) {
   await verifyReservations();
-  const { fecha } = await searchParams;
+  const { fecha } = await loadDay(searchParams);
   const context = await getReservationFormContext();
 
   return (
@@ -21,7 +21,7 @@ export default async function NewReservationPage({ searchParams }: PageProps<"/g
         context={context}
         defaults={{
           // Sin fechas pasadas: un enlace viejo con ?fecha= arranca en hoy.
-          date: isISODate(fecha) && fecha >= context.today ? fecha : context.today,
+          date: fecha && fecha >= context.today ? fecha : context.today,
           time: "",
           partySize: "2",
           customerName: "",

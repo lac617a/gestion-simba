@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CURRENCY, DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifyAdmin } from "@/lib/dal";
+import { withAviso } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { formatLongDate, isoToDate } from "@/lib/dates";
 import { parseMoney, toDecimalString } from "@/lib/money";
@@ -64,7 +65,7 @@ export async function createProductionDay(_prev: ProductionFormState, formData: 
     },
   });
   refresh();
-  redirect("/gestion/produccion?creado=1");
+  redirect(withAviso("/gestion/produccion", { aviso: "creado" }));
 }
 
 export async function updateProductionDay(
@@ -108,14 +109,14 @@ export async function updateProductionDay(
     }),
   ]);
   refresh();
-  redirect("/gestion/produccion?actualizado=1");
+  redirect(withAviso("/gestion/produccion", { aviso: "actualizado" }));
 }
 
 export async function deleteProductionDay(id: string) {
   await verifyAdmin();
   await db.productionDay.deleteMany({ where: { id } }); // borra también sus asistentes
   refresh();
-  redirect("/gestion/produccion?eliminado=1");
+  redirect(withAviso("/gestion/produccion", { aviso: "eliminado" }));
 }
 
 export type ProductionPayState = { error?: string; success?: string } | undefined;

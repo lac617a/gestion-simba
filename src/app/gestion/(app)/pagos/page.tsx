@@ -8,6 +8,7 @@ import { verifyAdmin } from "@/lib/dal";
 import { formatDateRange, formatDayShort } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
+import { dayHref, loadPeriod, periodHref } from "@/lib/search-params";
 import { entryTotal } from "@/lib/payroll";
 import { getPayroll } from "@/lib/payroll-data";
 import { EmployeePayActions, MarkAllPaidButton } from "./pay-actions";
@@ -16,7 +17,7 @@ export const metadata: Metadata = { title: "Pagos · Gestión Simba" };
 
 export default async function PayrollPage({ searchParams }: PageProps<"/gestion/pagos">) {
   await verifyAdmin();
-  const { desde, hasta } = await searchParams;
+  const { desde, hasta } = await loadPeriod(searchParams);
   const period = await periodFromParams(desde, hasta);
   const { summary, unclosedDays } = await getPayroll(period);
   const money = (v: number) => formatMoney(v, CURRENCY);
@@ -33,10 +34,10 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Pagos</h1>
-        <CsvButton href={`/gestion/pagos/csv?desde=${period.from}&hasta=${period.to}`} />
+        <CsvButton href={periodHref("/gestion/pagos/csv", { desde: period.from, hasta: period.to })} />
       </div>
 
-      <PeriodNav basePath="/gestion/pagos" period={period} presets={await periodPresets()} />
+      <PeriodNav baseHref="/gestion/pagos" period={period} presets={await periodPresets()} />
 
       <UnclosedWarning days={unclosedDays} what="sus pagos y propinas todavía no cuentan." />
 
@@ -115,7 +116,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
                         ) : (
                           <tr key={x.date}>
                             <td className="py-1.5 whitespace-nowrap">
-                              <Link href={`/gestion/asistencia?fecha=${x.date}`} prefetch={false} className="hover:underline">
+                              <Link href={dayHref("/gestion/asistencia", { fecha: x.date })} prefetch={false} className="hover:underline">
                                 {formatDayShort(x.date)}
                               </Link>
                             </td>

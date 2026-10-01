@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 /** Todo lo de /gestion (administración): fuera de buscadores e instalable como app. */
 export const metadata: Metadata = {
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// NuqsAdapter: los componentes de cliente leen y cambian los parámetros de la
+// dirección con nuqs (ver src/lib/search-params.ts).
 export default function GestionLayout({ children }: LayoutProps<"/gestion">) {
-  return children;
+  return <NuqsAdapter>{children}</NuqsAdapter>;
 }

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
 import { Badge } from "@/components/ui/badge";
+import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import { verifyAdmin } from "@/lib/dal";
 import { formatRestDays } from "@/lib/employees";
+import { employeesHref, loadEmployees, type EmployeeFilter } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 import { FlashToast } from "@/components/flash-toast";
 
@@ -17,16 +18,15 @@ const FILTERS = {
   activos: { label: "Activos", where: { active: true } },
   inactivos: { label: "Inactivos", where: { active: false } },
   todos: { label: "Todos", where: {} },
-} satisfies Record<string, { label: string; where: Prisma.EmployeeWhereInput }>;
+} satisfies Record<EmployeeFilter, { label: string; where: Prisma.EmployeeWhereInput }>;
 
-type Filter = keyof typeof FILTERS;
+type Filter = EmployeeFilter;
 
 export default async function EmployeesPage({ searchParams }: PageProps<"/gestion/empleados">) {
   await verifyAdmin();
-  const params = await searchParams;
-  const q = typeof params.q === "string" ? params.q.trim() : "";
-  const filter: Filter =
-    typeof params.estado === "string" && params.estado in FILTERS ? (params.estado as Filter) : "activos";
+  const params = await loadEmployees(searchParams);
+  const q = params.q.trim();
+  const filter = params.estado;
 
   const employees = await db.employee.findMany({
     where: {
@@ -37,11 +37,9 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
     include: { jobPosition: { select: { name: true } } },
   });
 
-  const flash = params.creado ? "Empleado registrado" : params.actualizado ? "Cambios guardados" : null;
-
   return (
     <div className="grid gap-5">
-      {flash && <FlashToast message={flash} />}
+      <FlashToast messages={{ creado: "Empleado registrado", actualizado: "Cambios guardados" }} />
 
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Empleados</h1>
@@ -52,16 +50,12 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <form className="relative flex-1" role="search">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input type="hidden" name="estado" value={filter} />
-          <Input name="q" defaultValue={q} placeholder="Buscar por nombre" className="pl-8" aria-label="Buscar por nombre" />
-        </form>
+        <SearchInput placeholder="Buscar por nombre…" label="Buscar por nombre" className="flex-1" />
         <div className="flex gap-1 rounded-lg bg-muted p-1 text-sm" role="group" aria-label="Filtrar por estado">
           {(Object.keys(FILTERS) as Filter[]).map((key) => (
             <Link
               key={key}
-              href={{ pathname: "/gestion/empleados", query: { estado: key, ...(q && { q }) } }}
+              href={employeesHref("/gestion/empleados", { estado: key, q })}
               aria-current={filter === key ? "page" : undefined}
               className={cn(
                 "flex-1 rounded-md px-3 py-1 text-center text-muted-foreground",

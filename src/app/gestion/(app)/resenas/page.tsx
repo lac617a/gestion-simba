@@ -16,24 +16,15 @@ import { RatingSummaryForm, ReviewControls } from "./review-controls";
 export const metadata: Metadata = { title: "Reseñas · Gestión Simba" };
 
 /** Reseñas que se muestran en la página pública (se copian a mano de Google). */
-export default async function ReviewsPage({ searchParams }: PageProps<"/gestion/resenas">) {
+export default async function ReviewsPage() {
   await verifyAdmin();
-  const params = await searchParams;
   const [reviews, settings] = await Promise.all([getReviews({ onlyVisible: false }), getSettings()]);
   const t = today();
   const visible = reviews.filter((r) => r.visible).length;
 
-  const flash = params.creado
-    ? "Reseña agregada"
-    : params.actualizado
-      ? "Cambios guardados"
-      : params.eliminado
-        ? "Reseña eliminada"
-        : null;
-
   return (
     <div className="grid max-w-3xl gap-6">
-      {flash && <FlashToast message={flash} />}
+      <FlashToast messages={{ creado: "Reseña agregada", actualizado: "Cambios guardados", eliminado: "Reseña eliminada" }} />
 
       <div className="flex items-center justify-between gap-4">
         <div>

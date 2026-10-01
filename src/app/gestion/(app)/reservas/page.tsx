@@ -1,27 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClockIcon, ClockIcon, DoorClosedIcon, HistoryIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { CalendarClockIcon, ClockIcon, DoorClosedIcon, HistoryIcon, PlusIcon } from "lucide-react";
 import type { ReservationStatus } from "@/generated/prisma/enums";
 import { FlashToast } from "@/components/flash-toast";
 import { PeriodNav } from "@/components/period-nav";
 import { Stat } from "@/components/report-bits";
+import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { today } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
-import { addDays, formatLongDate, isISODate } from "@/lib/dates";
+import { addDays, formatLongDate } from "@/lib/dates";
 import { formatHours } from "@/lib/hours";
 import { periodFromParams, periodPresets } from "@/lib/period-params";
 import { monthRange, type Period } from "@/lib/periods";
 import { dayTotals } from "@/lib/reservations";
 import { getReservationHistory, getUpcomingReservations, type ReservationDay } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
+import {
+  loadReservations,
+  reservationsHref,
+  type ReservationFilter,
+  type ReservationView,
+} from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 import { ReservationList } from "./reservation-list";
 
 export const metadata: Metadata = { title: "Reservas · Gestión Simba" };
 
-type View = "proximas" | "historial";
+type View = ReservationView;
+type FilterKey = ReservationFilter;
 
 /** Filtros de estado (?estado=). En el historial, "Confirmadas" de días pasados = sin marcar. */
 const FILTERS = [
@@ -30,28 +37,19 @@ const FILTERS = [
   { key: "llego", status: "ARRIVED" },
   { key: "no-vino", status: "NO_SHOW" },
   { key: "canceladas", status: "CANCELLED" },
-] as const satisfies readonly { key: string; status: ReservationStatus | null }[];
-type FilterKey = (typeof FILTERS)[number]["key"];
+] as const satisfies readonly { key: FilterKey; status: ReservationStatus | null }[];
 
 const filterLabel = (key: FilterKey, view: View) =>
   ({ todas: "Todas", confirmadas: view === "historial" ? "Sin marcar" : "Confirmadas", llego: "Llegó", "no-vino": "No vino", canceladas: "Canceladas" })[
     key
   ];
 
-function parseFilter(value: unknown): FilterKey {
-  if (value === "sin-marcar") return "confirmadas";
-  return FILTERS.some((f) => f.key === value) ? (value as FilterKey) : "todas";
-}
-
-const str = (v: unknown) => (typeof v === "string" ? v : "");
-
 export default async function ReservationsPage({ searchParams }: PageProps<"/gestion/reservas">) {
   await verifyReservations();
-  const params = await searchParams;
-  const q = str(params.q).trim();
-  // "anteriores" era la pestaña de antes del historial (enlaces viejos).
-  const view: View = params.ver === "historial" || params.ver === "anteriores" ? "historial" : "proximas";
-  const filter = parseFilter(params.estado);
+  const params = await loadReservations(searchParams);
+  const q = params.q.trim();
+  const view = params.ver;
+  const filter = params.estado;
   const t = today();
 
   let days: ReservationDay[];
@@ -60,7 +58,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
   if (view === "proximas") {
     days = await getUpcomingReservations(t, q);
   } else {
-    period = isISODate(params.desde) && isISODate(params.hasta) ? await periodFromParams(params.desde, params.hasta) : monthRange(t);
+    period = params.desde && params.hasta ? await periodFromParams(params.desde, params.hasta) : monthRange(t);
     ({ days, summary } = await getReservationHistory(period, t, q));
   }
 
@@ -76,23 +74,12 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
     : days;
 
   // Enlaces que conservan pestaña, búsqueda, estado y periodo.
-  const base = { ver: view, ...(q && { q }), ...(filter !== "todas" && { estado: filter }), ...(period && { desde: period.from, hasta: period.to }) };
-  const href = (changes: Record<string, string | null>) => {
-    const p = new URLSearchParams(Object.entries({ ...base, ...changes }).filter(([, v]) => v) as [string, string][]);
-    return `/gestion/reservas?${p}`;
-  };
-
-  const flash = params.creado
-    ? "Reserva guardada"
-    : params.actualizado
-      ? "Cambios guardados"
-      : params.eliminado
-        ? "Reserva eliminada"
-        : null;
+  const state = { ver: view, q, estado: filter, desde: period?.from ?? null, hasta: period?.to ?? null };
+  const href = (changes: Partial<typeof state>) => reservationsHref("/gestion/reservas", { ...state, ...changes });
 
   return (
     <div className="grid gap-5">
-      {flash && <FlashToast message={flash} />}
+      <FlashToast messages={{ creado: "Reserva guardada", actualizado: "Cambios guardados", eliminado: "Reserva eliminada" }} />
 
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Reservas</h1>
@@ -112,7 +99,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
         ).map(([key, label, Icon]) => (
           <Link
             key={key}
-            href={`/gestion/reservas?${new URLSearchParams({ ver: key, ...(q && { q }) })}`}
+            href={reservationsHref("/gestion/reservas", { ver: key, q })}
             aria-current={view === key ? "page" : undefined}
             className={cn(
               "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 font-medium text-muted-foreground",
@@ -126,42 +113,14 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
 
       {view === "historial" && period && (
         <div className="grid gap-1">
-          <PeriodNav
-            basePath="/gestion/reservas"
-            period={period}
-            presets={await periodPresets()}
-            keep={Object.fromEntries(Object.entries(base).filter(([k]) => k !== "desde" && k !== "hasta"))}
-          />
+          <PeriodNav baseHref={href({ desde: null, hasta: null })} period={period} presets={await periodPresets()} />
           {period.to > t && <p className="text-xs text-muted-foreground">El historial llega hasta hoy.</p>}
         </div>
       )}
 
       {/* ---------- Buscar y filtrar ---------- */}
       <div className="grid gap-3">
-        <form className="relative" role="search" action="/gestion/reservas">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          {Object.entries(base)
-            .filter(([k]) => k !== "q")
-            .map(([k, v]) => (
-              <input key={k} type="hidden" name={k} value={v} />
-            ))}
-          <Input
-            name="q"
-            defaultValue={q}
-            placeholder="Buscar por nombre…"
-            aria-label="Buscar por nombre (quien reserva o la persona de la ocasión)"
-            className="h-10 pr-10 pl-9 text-base"
-          />
-          {q && (
-            <Link
-              href={href({ q: null })}
-              aria-label="Quitar búsqueda"
-              className="absolute top-1/2 right-2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <XIcon className="size-4" />
-            </Link>
-          )}
-        </form>
+        <SearchInput placeholder="Buscar por nombre…" label="Buscar por nombre (quien reserva o la persona de la ocasión)" />
         <nav
           className="-mx-1 flex gap-1.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Filtrar por estado"
@@ -171,7 +130,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
             return (
               <Link
                 key={f.key}
-                href={href({ estado: f.key === "todas" ? null : f.key })}
+                href={href({ estado: f.key })}
                 aria-current={active ? "true" : undefined}
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-sm whitespace-nowrap text-muted-foreground hover:text-foreground",
@@ -230,7 +189,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
         </p>
       )}
       {shown.length === 0 ? (
-        <EmptyState view={view} q={q} filtered={filter !== "todas"} clearHref={href({ q: null, estado: null })} />
+        <EmptyState view={view} q={q} filtered={filter !== "todas"} clearHref={href({ q: "", estado: "todas" })} />
       ) : (
         <div className="grid gap-6">
           {shown.map((day) => (

@@ -3,6 +3,7 @@ import { CURRENCY } from "@/lib/config";
 import { csvResponse } from "@/lib/csv";
 import { verifyAdmin } from "@/lib/dal";
 import { periodFromParams } from "@/lib/period-params";
+import { loadReportCsv } from "@/lib/search-params";
 import { attendanceCsv, salesCsv, tipsCsv } from "@/lib/reports";
 import { getReports } from "@/lib/reports-data";
 import { reservationsCsv } from "@/lib/reservation-report";
@@ -10,9 +11,8 @@ import { getReservationReport } from "@/lib/reservations-data";
 
 export async function GET(req: NextRequest) {
   await verifyAdmin();
-  const params = req.nextUrl.searchParams;
-  const period = await periodFromParams(params.get("desde"), params.get("hasta"));
-  const tipo = params.get("tipo");
+  const { tipo, desde, hasta } = await loadReportCsv(req);
+  const period = await periodFromParams(desde, hasta);
   const suffix = `${period.from}_${period.to}.csv`;
   if (tipo === "reservas") {
     return csvResponse(reservationsCsv(await getReservationReport(period), period), `reservas_${suffix}`);

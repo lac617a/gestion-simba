@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 import type { UserRole } from "@/generated/prisma/enums";
 import { verifyAdmin } from "@/lib/dal";
+import { withAviso } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { parseUserForm, UserName, type UserFieldErrors } from "@/lib/users";
 
@@ -39,7 +40,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
 
   await db.user.create({ data: { name, email, role, passwordHash: await bcrypt.hash(password, 10) } });
   refresh();
-  redirect("/gestion/usuarios?creado=1");
+  redirect(withAviso("/gestion/usuarios", { aviso: "creado" }));
 }
 
 /**
@@ -76,7 +77,7 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
     });
   }
   refresh();
-  redirect("/gestion/usuarios?actualizado=1");
+  redirect(withAviso("/gestion/usuarios", { aviso: "actualizado" }));
 }
 
 /** Desactiva (no puede entrar y se cierra su sesión) o reactiva a otro usuario. */

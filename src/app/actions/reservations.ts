@@ -7,6 +7,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { ReservationStatus } from "@/generated/prisma/enums";
 import { nowLocal } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
+import { withAviso } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 import { removeReservationCalendar, syncReservationCalendar } from "@/lib/calendar-data";
@@ -81,7 +82,7 @@ export async function createReservation(_prev: ReservationFormState, formData: F
   await syncReservationReminder(created.id);
   await syncReservationCalendar(created.id);
   refresh();
-  redirect(`/gestion/reservas?creado=1#dia-${date}`);
+  redirect(`${withAviso("/gestion/reservas", { aviso: "creado" })}#dia-${date}`);
 }
 
 export async function updateReservation(
@@ -124,7 +125,7 @@ export async function updateReservation(
   }
 
   refresh();
-  redirect(`/gestion/reservas?actualizado=1#dia-${date}`);
+  redirect(`${withAviso("/gestion/reservas", { aviso: "actualizado" })}#dia-${date}`);
 }
 
 const STATUSES = Object.keys(RESERVATION_STATUS_LABEL) as ReservationStatus[];
@@ -156,5 +157,5 @@ export async function deleteReservation(id: string) {
   await removeReservationCalendar(id);
   await db.reservation.deleteMany({ where: { id } });
   refresh();
-  redirect("/gestion/reservas?eliminado=1");
+  redirect(withAviso("/gestion/reservas", { aviso: "eliminado" }));
 }

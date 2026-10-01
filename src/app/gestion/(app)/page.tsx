@@ -25,6 +25,7 @@ import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
 import { getReservationsOn } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
+import { periodHref } from "@/lib/search-params";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { getDayView } from "@/lib/workdays";
@@ -248,7 +249,7 @@ function PayDueCard({
       )}
       <Button
         className="justify-self-start"
-        render={<Link href={`/gestion/pagos?desde=${due.week.from}&hasta=${due.week.to}`} />}
+        render={<Link href={periodHref("/gestion/pagos", { desde: due.week.from, hasta: due.week.to })} />}
         nativeButton={false}
       >
         Ir a pagar <ArrowRightIcon />

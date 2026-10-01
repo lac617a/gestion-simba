@@ -14,23 +14,14 @@ import { getSettings } from "@/lib/settings";
 export const metadata: Metadata = { title: "Producción · Gestión Simba" };
 
 /** Jornadas de producción / preparación: cuándo fueron y quién asistió (historial). */
-export default async function ProductionPage({ searchParams }: PageProps<"/gestion/produccion">) {
+export default async function ProductionPage() {
   await verifyAdmin();
-  const params = await searchParams;
   const [days, settings] = await Promise.all([getProductionDays(), getSettings()]);
   const money = (v: number) => formatMoney(v, CURRENCY);
 
-  const flash = params.creado
-    ? "Jornada registrada"
-    : params.actualizado
-      ? "Cambios guardados"
-      : params.eliminado
-        ? "Jornada eliminada"
-        : null;
-
   return (
     <div className="grid gap-5">
-      {flash && <FlashToast message={flash} />}
+      <FlashToast messages={{ creado: "Jornada registrada", actualizado: "Cambios guardados", eliminado: "Jornada eliminada" }} />
 
       <div className="flex items-center justify-between gap-4">
         <div>

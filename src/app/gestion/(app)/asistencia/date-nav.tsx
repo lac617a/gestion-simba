@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { addDays, isISODate } from "@/lib/dates";
+import { addDays } from "@/lib/dates";
+import { dayHref, dayParams } from "@/lib/search-params";
 
 // Sin prefetch: abrir la página de un día lo crea en la BD, y no debe pasar solo por mostrar el enlace.
-const href = (date: string) => `/gestion/asistencia?fecha=${date}`;
+const href = (fecha: string) => dayHref("/gestion/asistencia", { fecha });
 
 export function DateNav({ date, today }: { date: string; today: string }) {
-  const router = useRouter();
+  // Elegir otra fecha cambia ?fecha= y el servidor carga ese día (queda en el historial del navegador).
+  const [, setFecha] = useQueryState("fecha", dayParams.fecha.withOptions({ shallow: false, history: "push" }));
 
   return (
     <div className="flex items-center gap-2">
@@ -29,7 +31,8 @@ export function DateNav({ date, today }: { date: string; today: string }) {
         aria-label="Fecha"
         value={date}
         onChange={(e) => {
-          if (isISODate(e.target.value)) router.push(href(e.target.value));
+          const parsed = dayParams.fecha.parse(e.target.value);
+          if (parsed) void setFecha(parsed);
         }}
         className="h-9 w-auto"
       />

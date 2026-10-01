@@ -1,24 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { toast } from "sonner";
+import { avisoParams, type Aviso } from "@/lib/search-params";
 
-/** Muestra un aviso tras un redirect y limpia el parámetro de la URL. */
-export function FlashToast({ message }: { message: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+/**
+ * Muestra el aviso que deja una acción al redirigir (?aviso=creado|actualizado|eliminado)
+ * y lo quita de la dirección.
+ */
+export function FlashToast({ messages }: { messages: Partial<Record<Aviso, string>> }) {
+  const [aviso, setAviso] = useQueryState("aviso", avisoParams.aviso);
 
   useEffect(() => {
-    toast.success(message);
-    const params = new URLSearchParams(searchParams);
-    params.delete("creado");
-    params.delete("actualizado");
-    params.delete("eliminado");
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [message, pathname, router, searchParams]);
+    if (!aviso) return;
+    const message = messages[aviso];
+    if (message) toast.success(message, { id: `aviso-${aviso}` }); // con id no se repite si el efecto corre dos veces
+    void setAviso(null, { scroll: false });
+  }, [aviso, messages, setAviso]);
 
   return null;
 }

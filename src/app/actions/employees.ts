@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 import { db } from "@/lib/db";
 import { verifyAdmin } from "@/lib/dal";
+import { withAviso } from "@/lib/search-params";
 import { parseEmployeeForm, type EmployeeFieldErrors } from "@/lib/employees";
 
 export type EmployeeFormValues = {
@@ -50,7 +51,7 @@ export async function createEmployee(
   }
   await db.employee.create({ data: parsed.data });
   revalidatePath("/gestion/empleados");
-  redirect("/gestion/empleados?creado=1");
+  redirect(withAviso("/gestion/empleados", { aviso: "creado" }));
 }
 
 export async function updateEmployee(
@@ -71,7 +72,7 @@ export async function updateEmployee(
   if (count === 0) return { message: "El empleado ya no existe", values: submittedValues(formData) };
 
   revalidatePath("/gestion/empleados");
-  redirect("/gestion/empleados?actualizado=1");
+  redirect(withAviso("/gestion/empleados", { aviso: "actualizado" }));
 }
 
 /** Baja lógica / reactivación. Nunca se borra el registro para conservar el historial. */

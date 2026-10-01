@@ -35,7 +35,8 @@ _Última actualización: 2026-10-01_
 | F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | `695221a` |
 | F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | `d93eb35` |
 | F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ sin publicar (tiene migración) | `09e8159` |
-| F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ sin publicar | commit «F22: asistencia rápida…» |
+| F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ sin publicar | `e0556d3` |
+| T2 · Parámetros de la dirección con nuqs | ✅ sin publicar | commit «T2: parámetros de la dirección con nuqs» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -71,6 +72,14 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## T2 · Parámetros de la dirección con nuqs (2026-10-01) ✅
+
+- `nuqs` 2.10 con `NuqsAdapter` en `src/app/gestion/layout.tsx` (solo la administración).
+- **Todo en `src/lib/search-params.ts`** (importa de `nuqs/server`, sirve en servidor y cliente): parser `parseAsISODate` (días válidos), listas cerradas con alias de enlaces viejos (`ver=anteriores` → historial, `estado=sin-marcar` → confirmadas) y, por pantalla, sus parámetros + `load…` (páginas y Route Handlers) + `…Href` (enlaces; quitan los valores por defecto): día (`fecha`), periodo (`desde`/`hasta`), reservas, empleados, CSV de reportes y aviso.
+- **Avisos tras guardar**: un solo parámetro `?aviso=creado|actualizado|eliminado` (`withAviso` en las acciones); `FlashToast` recibe los textos y lo borra de la dirección con `useQueryState`.
+- **Cliente**: `SearchInput` (búsqueda mientras se escribe, `shallow: false` + debounce de 350 ms, conserva los demás parámetros) en Reservas y Empleados; `DateNav` de Asistencia y `PeriodRangeForm` ("Otras fechas") con `useQueryState(s)`. `PeriodNav` ahora recibe `baseHref`.
+- Regla: **ningún parámetro se arma ni se lee a mano**; para uno nuevo, agregarlo a `search-params.ts` con su parser y usar su loader/serializer.
 
 ## F22 · Asistencia rápida y "Quién está hoy" en chips (2026-10-01) ✅
 
@@ -288,6 +297,11 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Botón "Descargar respaldo" en Configuración (exportar todos los datos).
 - Logo en mayor resolución o vector para que el ícono de 512 px quede nítido (falta el archivo).
 - Más fotos para la página y siluetas de los personajes en archivo original (faltan los archivos).
+- **Resumen diario por correo** al cerrar el día (Resend): venta, gastos, propinas, quién trabajó y reservas atendidas, para los dueños. *(propuesta 7, 2026-10-01; pospuesta)*
+- **Aviso si el día no se cerró**: correo a las 11:45 p. m. si falta el cierre (otra tarea de Vercel Cron, una vez al día). *(propuesta 8, 2026-10-01; pospuesta)*
+- Hoy: comparativo de la venta con la semana pasada y con el mismo día ("+12 %"). *(propuesta 2)*
+- Empleados: lista compacta con buscador, filtro por puesto y chips de puesto y descanso. *(propuesta 5)*
+- Ficha del empleado: calendario del mes (trabajó, faltas, descansos) y lo ganado en el mes. *(propuesta 6)*
 
 **Decisiones del usuario (sin código)**
 - Plan de Vercel: Hobby es para uso no comercial; con la página pública del restaurante, pasar a Pro.
@@ -296,7 +310,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - Identidad de git del proyecto: los commits salen como `lac617a <botlacrita617@gmail.com>` (config global); decidir si se cambia solo para este repo.
 
 **Técnico**
-- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (157).
+- Pruebas automáticas de pantallas (Playwright) contra `dev:e2e`; hoy solo hay pruebas de lógica (196).
 
 ## Notas técnicas conocidas
 

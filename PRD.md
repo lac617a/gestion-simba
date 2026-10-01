@@ -362,6 +362,7 @@ model TipShare {
 | Base de datos | **PostgreSQL** (Neon o Supabase) | Plan gratuito suficiente, soporta `Decimal` y arreglos (`restDays`). |
 | Autenticación | **Sesión propia con jose** (cookie JWT firmada) + bcrypt | Patrón recomendado por Next 16; más simple que Auth.js para pocos usuarios. El rol se lee de la BD en cada petición (`verifyAdmin` / `verifyReservations` en `src/lib/dal.ts`). |
 | Validación | **Zod** | Mismos esquemas en formularios y en servidor. |
+| Parámetros de la dirección | **nuqs** | Filtros, búsqueda, fechas y periodos en la URL con tipo y valor por defecto, definidos una vez (`src/lib/search-params.ts`) y usados igual en el servidor (loaders), en los enlaces (serializers) y en el cliente (`useQueryState`). |
 | Fechas | **date-fns + date-fns-tz** | Manejo del día local del restaurante. |
 | Pruebas | **Vitest** | Pruebas unitarias del reparto de propinas y reglas de asistencia. |
 | Deploy | **Vercel** | Despliegue gratuito y automático desde Git. |
@@ -415,6 +416,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F20 ✅ | Reservas en Google Calendar por invitaciones de correo (RF-23). |
 | F21 ✅ | Reservas: pestañas Próximas / Historial, búsqueda y filtros por estado y fechas, e historial de cambios (RF-14, RF-24). |
 | F22 ✅ | Asistencia rápida en chips por puesto, barra fija con "Ir al cierre" y "Quién está hoy" en chips (RF-2, RF-6). |
+| T2 ✅ | Parámetros de la dirección con nuqs; búsqueda mientras se escribe en Reservas y Empleados. |
 
 ## 11. Preguntas abiertas
 
