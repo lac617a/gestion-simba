@@ -7,6 +7,7 @@ import { PeriodNav } from "@/components/period-nav";
 import { Stat } from "@/components/report-bits";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
+import { ViewTabs } from "@/components/view-tabs";
 import { today } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { addDays, formatLongDate } from "@/lib/dates";
@@ -89,27 +90,14 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
         </Button>
       </div>
 
-      {/* ---------- Pestañas ---------- */}
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 text-sm sm:w-80" role="group" aria-label="Qué reservas ver">
-        {(
-          [
-            ["proximas", "Próximas", CalendarClockIcon],
-            ["historial", "Historial", HistoryIcon],
-          ] as const
-        ).map(([key, label, Icon]) => (
-          <Link
-            key={key}
-            href={reservationsHref("/gestion/reservas", { ver: key, q })}
-            aria-current={view === key ? "page" : undefined}
-            className={cn(
-              "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 font-medium text-muted-foreground",
-              view === key && "bg-background text-foreground shadow-sm"
-            )}
-          >
-            <Icon className="size-4" /> {label}
-          </Link>
-        ))}
-      </div>
+      <ViewTabs
+        label="Qué reservas ver"
+        current={view}
+        tabs={[
+          { key: "proximas", label: "Próximas", icon: CalendarClockIcon, href: reservationsHref("/gestion/reservas", { ver: "proximas", q }) },
+          { key: "historial", label: "Historial", icon: HistoryIcon, href: reservationsHref("/gestion/reservas", { ver: "historial", q }) },
+        ]}
+      />
 
       {view === "historial" && period && (
         <div className="grid gap-1">

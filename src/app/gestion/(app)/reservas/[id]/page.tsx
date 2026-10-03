@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CalendarCheckIcon, HistoryIcon, MailIcon } from "lucide-react";
 import { updateReservation } from "@/app/actions/reservations";
+import { formatMoment, HistoryTimeline } from "@/components/history-timeline";
 import { APP_TIMEZONE } from "@/lib/config";
 import { verifyReservations } from "@/lib/dal";
 import { formatDayShort, type ISODate } from "@/lib/dates";
@@ -18,8 +19,6 @@ import { CancelOrDelete } from "./cancel-or-delete";
 
 export const metadata: Metadata = { title: "Editar reserva · Gestión Simba" };
 
-const createdAtFormat = new Intl.DateTimeFormat("es-CO", { timeZone: APP_TIMEZONE, dateStyle: "medium", timeStyle: "short" });
-
 /** Estado del correo de 1 hora antes, para mostrarlo bajo el título. */
 function reminderLabel(
   r: { status: Parameters<typeof planReminder>[0]["status"]; date: ISODate; time: string; reminderEmailId: string | null; reminderAt: Date | null },
@@ -30,8 +29,8 @@ function reminderLabel(
   const now = new Date();
   if (r.reminderEmailId && r.reminderAt) {
     return r.reminderAt > now
-      ? `Recordatorio por correo a ${to}: sale el ${createdAtFormat.format(r.reminderAt)}`
-      : `Recordatorio por correo enviado el ${createdAtFormat.format(r.reminderAt)}`;
+      ? `Recordatorio por correo a ${to}: sale el ${formatMoment(r.reminderAt)}`
+      : `Recordatorio por correo enviado el ${formatMoment(r.reminderAt)}`;
   }
   const plan = planReminder(r, APP_TIMEZONE, now, true);
   if (plan.kind === "none") {
@@ -61,7 +60,7 @@ export default async function EditReservationPage({ params }: PageProps<"/gestio
           {RESERVATION_STATUS_LABEL[r.status]}
         </span>
         <p className="w-full text-sm text-muted-foreground">
-          Registrada {r.createdBy && `por ${displayName(r.createdBy)} `}el {createdAtFormat.format(r.createdAt)}
+          Registrada {r.createdBy && `por ${displayName(r.createdBy)} `}el {formatMoment(r.createdAt)}
         </p>
         {reminder && (
           <p className="-mt-2 flex w-full items-center gap-1.5 text-sm text-muted-foreground">
@@ -97,11 +96,7 @@ export default async function EditReservationPage({ params }: PageProps<"/gestio
   );
 }
 
-const DOT: Record<LogEntry["action"], string> = {
-  CREATED: "bg-emerald-500",
-  UPDATED: "bg-sky-500",
-  STATUS: "bg-amber-500",
-};
+const TONE = { CREATED: "created", UPDATED: "updated", STATUS: "status" } as const;
 
 /** Quién hizo qué y cuándo, del cambio más reciente al más viejo. */
 function History({ entries }: { entries: LogEntry[] }) {
@@ -110,30 +105,9 @@ function History({ entries }: { entries: LogEntry[] }) {
       <h2 className="flex items-center gap-2 font-medium">
         <HistoryIcon className="size-4 text-muted-foreground" /> Historial de cambios
       </h2>
-      <ol className="ml-1.5 grid gap-4 border-l pl-5">
-        {entries.map((e, i) => {
-          const { title, details } = describeLog(e);
-          return (
-            <li key={i} className="relative grid gap-0.5">
-              <span className={cn("absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full ring-4 ring-background", DOT[e.action])} />
-              <p className="text-sm font-medium">{title}</p>
-              {details.length > 0 && (
-                <ul className="grid gap-0.5 text-sm">
-                  {details.map((d) => (
-                    <li key={d} className="break-words">
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {e.user ? `${e.user} · ` : ""}
-                {createdAtFormat.format(e.at)}
-              </p>
-            </li>
-          );
-        })}
-      </ol>
+      <HistoryTimeline
+        items={entries.map((e, i) => ({ key: String(i), tone: TONE[e.action], ...describeLog(e), who: e.user, at: e.at }))}
+      />
     </section>
   );
 }

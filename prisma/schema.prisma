@@ -30,6 +30,7 @@ model User {
   createdAt       DateTime         @default(now())
   reservations    Reservation[]
   reservationLogs ReservationLog[]
+  productionLogs  ProductionLog[]
 }
 
 /// Ajustes del restaurante editables desde la app (una sola fila, id = 1).
@@ -318,6 +319,37 @@ model ProductionDay {
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
   attendees ProductionAttendance[]
+  logs      ProductionLog[]
+}
+
+enum ProductionLogAction {
+  CREATED
+  /// Cambió la fecha, la nota, quién asistió o algún excedente
+  UPDATED
+  DELETED
+}
+
+/// Historial de cambios de las jornadas de producción: quién la registró, editó o eliminó
+/// y qué cambió. Se conserva aunque se elimine la jornada (queda qué tenía y quién la borró).
+model ProductionLog {
+  id              String              @id @default(cuid())
+  /// Jornada (null cuando ya se eliminó)
+  productionDayId String?
+  productionDay   ProductionDay?      @relation(fields: [productionDayId], references: [id], onDelete: SetNull)
+  /// Quién lo hizo (null en las registradas antes del historial)
+  userId          String?
+  user            User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action          ProductionLogAction
+  /// Fecha de la jornada (la nueva si se cambió): se muestra aunque la jornada ya no exista
+  date            DateTime            @db.Date
+  /// Cómo estaba antes y cómo quedó: { date, note, attendees: [{ employeeId, name, basePay, extraPay }] }
+  /// (montos en unidades mínimas). Sin "before" al registrarla ni "after" al eliminarla.
+  before          Json?
+  after           Json?
+  createdAt       DateTime            @default(now())
+
+  @@index([productionDayId, createdAt])
+  @@index([createdAt])
 }
 
 /// Asistente a una jornada de producción. Cobra el pago fijo + un excedente; se suma al pago semanal (Pagos).

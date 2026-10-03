@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-10-01_
+_Última actualización: 2026-10-03_
 
 ## Estado
 
@@ -32,11 +32,12 @@ _Última actualización: 2026-10-01_
 | F17 · Gastos del día en el cierre | ✅ en producción | `38292d1` |
 | F18 · Usuarios con rol (administrador / solo reservas) | ✅ en producción | `daa4c47` |
 | Reservas: fecha y hora con botones, sin horas pasadas (admin y página pública) | ✅ en producción | `c749c7a` + `3483c1a` |
-| F19 · Recordatorio de reservas por correo (Resend) | ✅ sin publicar (migración + variables en Vercel) | `695221a` |
-| F20 · Reservas en Google Calendar (invitaciones) | ✅ sin publicar (tiene migración) | `d93eb35` |
-| F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ sin publicar (tiene migración) | `09e8159` |
-| F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ sin publicar | `e0556d3` |
-| T2 · Parámetros de la dirección con nuqs | ✅ sin publicar | commit «T2: parámetros de la dirección con nuqs» |
+| F19 · Recordatorio de reservas por correo (Resend) | ✅ en producción | `695221a` |
+| F20 · Reservas en Google Calendar (invitaciones) | ✅ en producción | `d93eb35` |
+| F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ en producción | `09e8159` |
+| F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ en producción | `e0556d3` + `30345e2` (flecha del chip centrada) |
+| T2 · Parámetros de la dirección con nuqs | ✅ en producción | `4f90f50` |
+| F23 · Historial de cambios de producción | ✅ sin publicar (tiene migración) | commit «F23: historial de cambios de producción» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -72,6 +73,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F23 · Historial de cambios de producción (2026-10-03) ✅
+
+- Tabla `ProductionLog` (jornada → `SetNull` al eliminarla, usuario, acción `CREATED`/`UPDATED`/`DELETED`, `date` de la jornada, `before`/`after` JSON con `{ date, note, attendees: [{ employeeId, name, basePay, extraPay }] }` en unidades mínimas). Migración `historial_de_produccion`: solo agrega, y registra las jornadas que ya existían como creadas "antes del historial" (sin usuario ni detalle).
+- `src/lib/production-log.ts` (puro: `productionSnapshot`, `diffProduction`, `describeProductionLog`, `beforeHistory`). `getProductionLog(dayId)`, `getProductionActivity(limit)` y `employeeNames` en production-data.ts.
+- Acciones: crear guarda la jornada y su registro en una sola escritura; editar compara antes/después y **sin cambios no guarda nada** (solo actualiza los excedentes que cambiaron); eliminar guarda lo que tenía y borra en la misma transacción. Un asistente que ya no existe da error en vez de fallar.
+- Pantallas: `/gestion/produccion` con pestañas Jornadas / Historial (`?ver=historial`, `productionParams` en search-params.ts) y "Historial de cambios" + "Registrada por" en cada jornada.
+- Componentes compartidos nuevos: `ViewTabs` (pestañas como enlaces; también en Reservas) y `HistoryTimeline` + `formatMoment` (línea de tiempo; también en el historial de cada reserva).
+- **Para publicar:** aplicar la migración `historial_de_produccion` en Neon antes del push.
 
 ## T2 · Parámetros de la dirección con nuqs (2026-10-01) ✅
 

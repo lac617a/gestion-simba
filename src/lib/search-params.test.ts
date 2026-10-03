@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   dayHref,
   loadDay,
+  loadProduction,
   loadReportCsv,
   loadReservations,
   periodHref,
+  productionHref,
   reservationsHref,
   withAviso,
 } from "./search-params";
@@ -45,6 +47,14 @@ describe("parámetros de la dirección", () => {
     );
     expect(dayHref("/gestion/asistencia", { fecha: "2026-10-01" })).toBe("/gestion/asistencia?fecha=2026-10-01");
     expect(withAviso("/gestion/usuarios", { aviso: "creado" })).toBe("/gestion/usuarios?aviso=creado");
+  });
+
+  it("producción: pestaña de jornadas por defecto", async () => {
+    expect(await loadProduction({})).toEqual({ ver: "jornadas" });
+    expect(await loadProduction({ ver: "otra" })).toEqual({ ver: "jornadas" });
+    expect(await loadProduction({ ver: "historial" })).toEqual({ ver: "historial" });
+    expect(productionHref("/gestion/produccion", { ver: "jornadas" })).toBe("/gestion/produccion");
+    expect(productionHref("/gestion/produccion", { ver: "historial" })).toBe("/gestion/produccion?ver=historial");
   });
 
   it("CSV: el tipo debe ser uno de los conocidos", async () => {

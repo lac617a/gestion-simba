@@ -76,6 +76,14 @@ export const employeesParams = {
 export const loadEmployees = createLoader(employeesParams);
 export const employeesHref = createSerializer(employeesParams);
 
+// ---------- Producción ----------
+
+export const PRODUCTION_VIEWS = ["jornadas", "historial"] as const;
+export type ProductionView = (typeof PRODUCTION_VIEWS)[number];
+export const productionParams = { ver: parseAsStringLiteral(PRODUCTION_VIEWS).withDefault("jornadas") };
+export const loadProduction = createLoader(productionParams);
+export const productionHref = createSerializer(productionParams);
+
 // ---------- CSV de reportes ----------
 
 export const REPORT_CSV = ["ventas", "propinas", "asistencia", "reservas"] as const;

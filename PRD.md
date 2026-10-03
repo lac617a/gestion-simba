@@ -103,11 +103,16 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - El reparto se guarda como registro (snapshot) al cerrar; cambios posteriores en empleados no lo alteran.
 
 ### RF-19 · Producción (preparación)
-- Uno o dos días a la semana (cualquier día) algunos empleados ayudan a preparar todo. Pantalla **Producción** (menú "Más"): historial de jornadas con fecha, nota, quién asistió, excedentes y total.
+- Uno o dos días a la semana (cualquier día) algunos empleados ayudan a preparar todo. Pantalla **Producción** (menú "Más"), pestaña **Jornadas**: las jornadas con fecha, nota, quién asistió, excedentes y total (pestaña **Historial**: RF-25).
 - Cada asistente cobra un **pago fijo** (Configuración → Puestos y pago diario → "Producción: pago por asistir"; inicial **$50.000**) más un **excedente** opcional por persona.
 - El pago fijo se guarda en cada asistente al registrarlo: si luego cambia en Configuración, las jornadas pasadas no cambian (al editar una jornada, los que ya estaban conservan el suyo).
 - Una jornada por fecha. Se puede editar (fecha, nota, asistentes, excedentes) y eliminar.
 - Se **suma al pago semanal** en Pagos (total del periodo, por empleado "+ producción", detalle y CSV con columna Producción); si se registra después de marcar pagada la semana, la diferencia queda por pagar.
+
+### RF-25 · Historial de cambios de producción
+- **Quién** registró, editó o eliminó cada jornada, **qué** cambió y **cuándo**, del más reciente al más viejo. Se ve en **Producción → Historial** (todas las jornadas, incluso las eliminadas; enlaza a la jornada si todavía existe) y al final de cada jornada ("Historial de cambios").
+- Registrar: quiénes asistieron (con su excedente), total y nota. Editar: cada cambio en una línea (fecha, a quién agregó o quitó, "Excedente de Ana: $10.000 → $15.000", nota) y el total antes → después si cambió. Eliminar: lo que tenía la jornada (quiénes, total y nota), para poder registrarla otra vez si fue un error.
+- Guardar sin cambios no deja registro. Las jornadas registradas antes del historial aparecen como "Registró la jornada" sin quién ni detalle ("Antes del historial").
 
 ### RF-20 · Navegación
 - Celular: barra inferior con **Hoy · Asistencia · Reservas · Más**; "Más" abre Producción, Pagos, Reportes y Empleados (la pestaña muestra el nombre de la sección abierta).
@@ -417,6 +422,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F21 ✅ | Reservas: pestañas Próximas / Historial, búsqueda y filtros por estado y fechas, e historial de cambios (RF-14, RF-24). |
 | F22 ✅ | Asistencia rápida en chips por puesto, barra fija con "Ir al cierre" y "Quién está hoy" en chips (RF-2, RF-6). |
 | T2 ✅ | Parámetros de la dirección con nuqs; búsqueda mientras se escribe en Reservas y Empleados. |
+| F23 ✅ | Historial de cambios de producción: pestaña Historial y sección en cada jornada (RF-25). |
 
 ## 11. Preguntas abiertas
 
