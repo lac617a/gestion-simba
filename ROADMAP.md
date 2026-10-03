@@ -38,7 +38,8 @@ _Última actualización: 2026-10-03_
 | F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ en producción | `e0556d3` + `30345e2` (flecha del chip centrada) |
 | T2 · Parámetros de la dirección con nuqs | ✅ en producción | `4f90f50` |
 | F23 · Historial de cambios de producción | ✅ en producción | `fb7374b` |
-| F24 · Pantallas de carga, de error y "no encontrado" | ✅ sin publicar | commit «F24: pantallas de carga y de error» |
+| F24 · Pantallas de carga, de error y "no encontrado" | ✅ sin publicar | `ce06f0d` |
+| F25 · Ficha del empleado con su historial | ✅ sin publicar | commit «F25: ficha del empleado con su historial» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -75,6 +76,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F25 · Ficha del empleado con su historial (2026-10-03) ✅
+
+- `/gestion/empleados/[id]` con pestañas **Historial** (por defecto) y **Datos** (`?ver=datos`; lo que había antes: formulario, días libres y baja). Mes en `?mes=YYYY-MM` (`parseAsMonth`, `employeeProfileParams` en search-params.ts). Título de la pestaña del navegador con el nombre (`generateMetadata` + `cache`).
+- `src/lib/employee-history.ts` (puro): `employeeCalendar` arma las semanas del mes desde el inicio de la semana de pago (`payWeekStart`): lo marcado en la asistencia, producción, días cerrados (`DayOverride`), antes del ingreso y, en los días que vienen, lo previsto con `initialStatus` (descanso fijo o días libres asignados). `monthCounts` cuenta solo lo ya marcado.
+- `src/lib/employee-history-data.ts`: `getEmployeeMonth` (asistencia, producción, días libres y cierres del mes) y el dinero con `getPayroll(period, employeeId)` — `getPayroll` ahora acepta un empleado, así la ficha cuenta igual que Pagos (ganado, pagado, por pagar, pagos que tocan el mes, días sin cerrar).
+- Pantalla (`employee-history.tsx`): mes ‹ ›, totales, calendario con ícono y color por estado (los de Asistencia), ×2 = doble turno, gorro = producción, borde punteado = previsto; cada día abre su asistencia (sin precarga). Leyenda, "Lo ganado día por día" y "Pagos" con enlace a Pagos del mes.
+- Utilidades de mes en dates.ts (`ISOMonth`, `isISOMonth`, `monthOf`, `addMonths`, `formatMonth`) y `monthPeriod` en periods.ts.
+- Sin migración.
 
 ## F24 · Pantallas de carga y de error (2026-10-03) ✅
 
@@ -321,7 +331,9 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - **Aviso si el día no se cerró**: correo a las 11:45 p. m. si falta el cierre (otra tarea de Vercel Cron, una vez al día). *(propuesta 8, 2026-10-01; pospuesta)*
 - Hoy: comparativo de la venta con la semana pasada y con el mismo día ("+12 %"). *(propuesta 2)*
 - Empleados: lista compacta con buscador, filtro por puesto y chips de puesto y descanso. *(propuesta 5)*
-- Ficha del empleado: calendario del mes (trabajó, faltas, descansos) y lo ganado en el mes. *(propuesta 6)*
+- **Adelantos / vales** que se descuentan del pago semanal (hoy Pagos solo marca pagado el total). *(propuesta del 2026-10-03; solo si los usan)*
+- **Historial de cierres**: quién cerró o reabrió el día y qué cambió en venta, propinas y gastos (como el de producción). *(propuesta del 2026-10-03)*
+- Nombres de empleados en Pagos, Reportes y Hoy con enlace a su ficha (en el mes que se está mirando).
 
 **Decisiones del usuario (sin código)**
 - Plan de Vercel: Hobby es para uso no comercial; con la página pública del restaurante, pasar a Pro.

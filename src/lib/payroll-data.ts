@@ -10,14 +10,16 @@ import { countUnclosedDays } from "@/lib/schedule-data";
 /**
  * Pagos del periodo (RF-8). Cuentan los días cerrados (ahí están el pago del
  * día y el reparto de propinas definitivos) y las jornadas de producción.
+ * Con `employeeId`, solo los de ese empleado (su ficha).
  */
-export async function getPayroll(period: Period) {
+export async function getPayroll(period: Period, employeeId?: string) {
   const range = { gte: isoToDate(period.from), lte: isoToDate(period.to) };
   const d = CURRENCY.decimals;
+  const only = employeeId ? { employeeId } : {};
 
   const [worked, tips, closedDays, payments, production] = await Promise.all([
     db.attendance.findMany({
-      where: { status: "WORKED", workDay: { status: "CLOSED", date: range } },
+      where: { ...only, status: "WORKED", workDay: { status: "CLOSED", date: range } },
       select: {
         employeeId: true,
         dailyPay: true,
@@ -27,14 +29,14 @@ export async function getPayroll(period: Period) {
       },
     }),
     db.tipShare.findMany({
-      where: { workDay: { status: "CLOSED", date: range } },
+      where: { ...only, workDay: { status: "CLOSED", date: range } },
       select: { workDayId: true, employeeId: true, amount: true },
     }),
     db.workDay.findMany({ where: { status: "CLOSED", date: range }, select: { date: true } }),
     // Pagos que tocan el periodo (aunque empiecen antes o terminen después)
-    db.payment.findMany({ where: { periodFrom: { lte: range.lte }, periodTo: { gte: range.gte } } }),
+    db.payment.findMany({ where: { ...only, periodFrom: { lte: range.lte }, periodTo: { gte: range.gte } } }),
     db.productionAttendance.findMany({
-      where: { productionDay: { date: range } },
+      where: { ...only, productionDay: { date: range } },
       select: {
         employeeId: true,
         basePay: true,

@@ -55,6 +55,9 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Editar cualquier dato del empleado.
 - Eliminar = **baja lógica** (`activo = false`). El empleado deja de aparecer en la asistencia diaria, pero su historial de asistencias y propinas se conserva. Se puede reactivar.
 - Listado con búsqueda por nombre y filtro Activos / Inactivos / Todos.
+- **Ficha del empleado** (al tocarlo en la lista), con su puesto, descanso fijo y fecha de ingreso, y dos pestañas:
+  - **Historial** (por defecto), mes por mes (‹ ›, "Este mes"): lo **ganado** (pago del día + propinas + producción), **pagado** y **por pagar** del mes (lo mismo que cuenta Pagos), días trabajados (con dobles turnos y producción), faltas, descansos/permisos y vacaciones; **calendario** del mes con lo marcado cada día (ícono y color por estado, producción, doble turno, días cerrados, sin marcar) y, en los días que vienen, lo previsto (descanso fijo y días libres asignados). Cada fila del calendario es una semana de pago y cada día abre su asistencia. Además, lo ganado día por día y los pagos registrados.
+  - **Datos**: editar, días libres asignados y dar de baja / reactivar.
 
 ### RF-2 · Asistencia diaria
 - Pantalla por fecha (hoy por defecto) con todos los empleados activos.
@@ -426,6 +429,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | T2 ✅ | Parámetros de la dirección con nuqs; búsqueda mientras se escribe en Reservas y Empleados. |
 | F23 ✅ | Historial de cambios de producción: pestaña Historial y sección en cada jornada (RF-25). |
 | F24 ✅ | Pantallas de carga (esqueletos) en cada sección, pantalla de error con Reintentar y "No encontrado" (requisitos no funcionales). |
+| F25 ✅ | Ficha del empleado: historial del mes (calendario, lo ganado, pagado / por pagar, pagos) y sus datos (RF-1). |
 
 ## 11. Preguntas abiertas
 

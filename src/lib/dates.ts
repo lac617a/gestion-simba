@@ -25,6 +25,23 @@ export function addDays(iso: ISODate, days: number): ISODate {
   return dateToISO(d);
 }
 
+/** Mes "YYYY-MM". */
+export type ISOMonth = string;
+
+export function isISOMonth(value: unknown): value is ISOMonth {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+/** Mes de una fecha. */
+export const monthOf = (iso: ISODate): ISOMonth => iso.slice(0, 7);
+
+/** Mes anterior (-1), siguiente (+1)… */
+export function addMonths(month: ISOMonth, n: number): ISOMonth {
+  const [y, m] = month.split("-").map(Number);
+  const index = y * 12 + (m - 1) + n;
+  return `${String(Math.floor(index / 12)).padStart(4, "0")}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+
 /** 0 = domingo ... 6 = sábado */
 export function weekdayOf(iso: ISODate) {
   return isoToDate(iso).getUTCDay();
@@ -108,6 +125,13 @@ const dayMonthFormat = new Intl.DateTimeFormat("es-CO", {
 /** "sábado, 3 de octubre" (sin año; para mensajes) */
 export function formatDayMonth(iso: ISODate) {
   return dayMonthFormat.format(isoToDate(iso));
+}
+
+const monthFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", month: "long", year: "numeric" });
+
+/** "octubre de 2026" */
+export function formatMonth(month: ISOMonth) {
+  return monthFormat.format(isoToDate(`${month}-01`));
 }
 
 /** "martes, 23 de septiembre de 2026" */

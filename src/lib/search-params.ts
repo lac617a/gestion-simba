@@ -8,11 +8,17 @@
  * Se importa de "nuqs/server" (sin "use client") para servir en ambos lados.
  */
 import { createLoader, createParser, createSerializer, parseAsString, parseAsStringLiteral } from "nuqs/server";
-import { isISODate, type ISODate } from "@/lib/dates";
+import { isISODate, isISOMonth, type ISODate, type ISOMonth } from "@/lib/dates";
 
 /** Día "YYYY-MM-DD"; si no es una fecha válida se ignora (null). */
 export const parseAsISODate = createParser<ISODate>({
   parse: (v) => (isISODate(v) ? v : null),
+  serialize: (v) => v,
+});
+
+/** Mes "YYYY-MM"; si no es válido se ignora (null). */
+export const parseAsMonth = createParser<ISOMonth>({
+  parse: (v) => (isISOMonth(v) ? v : null),
   serialize: (v) => v,
 });
 
@@ -75,6 +81,17 @@ export const employeesParams = {
 };
 export const loadEmployees = createLoader(employeesParams);
 export const employeesHref = createSerializer(employeesParams);
+
+// ---------- Ficha del empleado ----------
+
+export const EMPLOYEE_PROFILE_VIEWS = ["historial", "datos"] as const;
+export type EmployeeProfileView = (typeof EMPLOYEE_PROFILE_VIEWS)[number];
+export const employeeProfileParams = {
+  ver: parseAsStringLiteral(EMPLOYEE_PROFILE_VIEWS).withDefault("historial"),
+  mes: parseAsMonth,
+};
+export const loadEmployeeProfile = createLoader(employeeProfileParams);
+export const employeeProfileHref = createSerializer(employeeProfileParams);
 
 // ---------- Producción ----------
 

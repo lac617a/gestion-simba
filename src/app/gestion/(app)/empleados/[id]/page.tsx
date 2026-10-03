@@ -1,29 +1,79 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
+import { CalendarDaysIcon, UserPenIcon } from "lucide-react";
 import { updateEmployee } from "@/app/actions/employees";
 import { Badge } from "@/components/ui/badge";
+import { ViewTabs } from "@/components/view-tabs";
+import { today } from "@/lib/config";
 import { db } from "@/lib/db";
 import { verifyAdmin } from "@/lib/dal";
+import { dateToISO, formatShortDate, monthOf } from "@/lib/dates";
+import { formatRestDays } from "@/lib/employees";
 import { getPositionOptions } from "@/lib/job-positions-data";
+import { employeeProfileHref, loadEmployeeProfile, type EmployeeProfileView } from "@/lib/search-params";
 import { EmployeeForm } from "../employee-form";
 import { ActiveToggle } from "./active-toggle";
+import { EmployeeHistory } from "./employee-history";
 import { TimeOffSection } from "./time-off-section";
 
-export const metadata: Metadata = { title: "Editar empleado · Gestión Simba" };
+const getEmployee = cache((id: string) =>
+  db.employee.findUnique({ where: { id }, include: { jobPosition: { select: { name: true } } } })
+);
 
-export default async function EditEmployeePage({ params }: PageProps<"/gestion/empleados/[id]">) {
+export async function generateMetadata({ params }: PageProps<"/gestion/empleados/[id]">): Promise<Metadata> {
+  await verifyAdmin();
+  const employee = await getEmployee((await params).id);
+  return { title: `${employee?.name ?? "Empleado"} · Gestión Simba` };
+}
+
+/** Ficha del empleado: su historial del mes (asistencia, lo ganado y los pagos) y sus datos. */
+export default async function EmployeePage({ params, searchParams }: PageProps<"/gestion/empleados/[id]">) {
   await verifyAdmin();
   const { id } = await params;
-  const [employee, positions] = await Promise.all([db.employee.findUnique({ where: { id } }), getPositionOptions()]);
+  const [employee, { ver, mes }] = await Promise.all([getEmployee(id), loadEmployeeProfile(searchParams)]);
   if (!employee) notFound();
 
+  const tabHref = (view: EmployeeProfileView) => employeeProfileHref(`/gestion/empleados/${id}`, { ver: view, mes });
+  const details = [
+    employee.jobPosition?.name,
+    employee.restDays.length ? `Descansa: ${formatRestDays(employee.restDays)}` : "Sin descanso fijo",
+    employee.hireDate && `Desde el ${formatShortDate(dateToISO(employee.hireDate))}`,
+  ].filter(Boolean);
+
   return (
-    <div className="grid max-w-xl gap-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold">{employee.name}</h1>
-        {!employee.active && <Badge variant="secondary">Baja</Badge>}
+    <div className="grid max-w-2xl gap-6">
+      <div className="grid gap-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold">{employee.name}</h1>
+          {!employee.active && <Badge variant="secondary">Baja</Badge>}
+        </div>
+        <p className="text-sm text-muted-foreground">{details.join(" · ")}</p>
       </div>
 
+      <ViewTabs
+        label="Qué ver"
+        current={ver}
+        tabs={[
+          { key: "historial", label: "Historial", icon: CalendarDaysIcon, href: tabHref("historial") },
+          { key: "datos", label: "Datos", icon: UserPenIcon, href: tabHref("datos") },
+        ]}
+      />
+
+      {ver === "historial" ? (
+        <EmployeeHistory employee={employee} month={mes ?? monthOf(today())} />
+      ) : (
+        <EmployeeData employee={employee} />
+      )}
+    </div>
+  );
+}
+
+/** Datos: editar, días libres asignados y dar de baja / reactivar. */
+async function EmployeeData({ employee }: { employee: NonNullable<Awaited<ReturnType<typeof getEmployee>>> }) {
+  const positions = await getPositionOptions();
+  return (
+    <div className="grid max-w-xl gap-6">
       <EmployeeForm
         action={updateEmployee.bind(null, employee.id)}
         defaults={employee}

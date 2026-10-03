@@ -1,4 +1,4 @@
-import { addDays, daysBetween, type ISODate } from "@/lib/dates";
+import { addDays, daysBetween, type ISODate, type ISOMonth } from "@/lib/dates";
 
 /** Rango inclusivo de fechas. */
 export type Period = { from: ISODate; to: ISODate };
@@ -18,6 +18,9 @@ function lastDayOfMonth(date: ISODate): ISODate {
 export function monthRange(date: ISODate): Period {
   return { from: `${date.slice(0, 7)}-01`, to: lastDayOfMonth(date) };
 }
+
+/** Rango de un mes "YYYY-MM". */
+export const monthPeriod = (month: ISOMonth): Period => monthRange(`${month}-01`);
 
 /** Quincena que contiene `date`: del 1 al 15, o del 16 a fin de mes. */
 export function fortnightRange(date: ISODate): Period {
