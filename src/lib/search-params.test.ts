@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   dayHref,
   employeeProfileHref,
+  employeesHref,
   loadDay,
+  loadEmployees,
   loadEmployeeProfile,
   loadProduction,
   loadReportCsv,
@@ -57,6 +59,12 @@ describe("parámetros de la dirección", () => {
     expect(await loadProduction({ ver: "historial" })).toEqual({ ver: "historial" });
     expect(productionHref("/gestion/produccion", { ver: "jornadas" })).toBe("/gestion/produccion");
     expect(productionHref("/gestion/produccion", { ver: "historial" })).toBe("/gestion/produccion?ver=historial");
+  });
+
+  it("empleados: búsqueda y puesto", async () => {
+    expect(await loadEmployees({})).toEqual({ q: "", puesto: null });
+    expect(employeesHref("/gestion/empleados", { q: "", puesto: "jefe-de-mesa" })).toBe("/gestion/empleados?puesto=jefe-de-mesa");
+    expect(employeesHref("/gestion/empleados", { q: "ana", puesto: null })).toBe("/gestion/empleados?q=ana");
   });
 
   it("ficha del empleado: historial por defecto y mes válido", async () => {

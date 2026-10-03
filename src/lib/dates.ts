@@ -134,6 +134,20 @@ export function formatMonth(month: ISOMonth) {
   return monthFormat.format(isoToDate(`${month}-01`));
 }
 
+const monthNameFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", month: "long" });
+
+/** "octubre" */
+export function formatMonthName(month: ISOMonth) {
+  return monthNameFormat.format(isoToDate(`${month}-01`));
+}
+
+const dayMonthShortFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", day: "numeric", month: "short" });
+
+/** "22 de oct" (sin año ni día de la semana) */
+export function formatDayMonthShort(iso: ISODate) {
+  return dayMonthShortFormat.format(isoToDate(iso));
+}
+
 /** "martes, 23 de septiembre de 2026" */
 export function formatLongDate(iso: ISODate) {
   return longFormat.format(isoToDate(iso));

@@ -73,11 +73,10 @@ export const reservationsHref = createSerializer(reservationsParams);
 
 // ---------- Empleados ----------
 
-export const EMPLOYEE_FILTERS = ["activos", "inactivos", "todos"] as const;
-export type EmployeeFilter = (typeof EMPLOYEE_FILTERS)[number];
 export const employeesParams = {
   ...searchParam,
-  estado: parseAsStringLiteral(EMPLOYEE_FILTERS).withDefault("activos"),
+  /** Puesto como en la dirección ("jefe-de-mesa", ver positionSlug); sin él, todos */
+  puesto: parseAsString,
 };
 export const loadEmployees = createLoader(employeesParams);
 export const employeesHref = createSerializer(employeesParams);

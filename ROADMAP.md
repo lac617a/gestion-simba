@@ -38,8 +38,9 @@ _Última actualización: 2026-10-03_
 | F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ en producción | `e0556d3` + `30345e2` (flecha del chip centrada) |
 | T2 · Parámetros de la dirección con nuqs | ✅ en producción | `4f90f50` |
 | F23 · Historial de cambios de producción | ✅ en producción | `fb7374b` |
-| F24 · Pantallas de carga, de error y "no encontrado" | ✅ sin publicar | `ce06f0d` |
-| F25 · Ficha del empleado con su historial | ✅ sin publicar | commit «F25: ficha del empleado con su historial» |
+| F24 · Pantallas de carga, de error y "no encontrado" | ✅ en producción | `ce06f0d` |
+| F25 · Ficha del empleado con su historial | ✅ en producción | `82321f1` |
+| F26 · Lista de empleados por puesto, con hoy y el mes | ✅ sin publicar | commit «F26: lista de empleados por puesto» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -76,6 +77,14 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F26 · Lista de empleados por puesto (2026-10-03) ✅
+
+- Elegido de la propuesta: 1 (chips por puesto con conteos y lista agrupada), 2 (cómo está hoy), 3 (días y faltas del mes) y 6 (dados de baja plegados al final). Quedaron fuera: WhatsApp en la fila, iniciales con color del puesto y tabla en computador.
+- `src/lib/employee-list.ts` (puro, con pruebas): `todayStatus` (lo marcado hoy; si el día no se ha abierto, lo previsto con `initialStatus`; "hasta el…" del día libre asignado; día cerrado; ingreso futuro), `todayLabel`, `positionSlug` y `groupByPosition` (el mismo orden que Asistencia).
+- `src/lib/employee-list-data.ts`: `getEmployeeList()` trae a todos con su estado de hoy (asistencia del día, días libres, `DayOverride`) y los días trabajados y faltas del mes (`attendance.groupBy`). La búsqueda (con `searchKey`, sin tildes) y el puesto se filtran en la página.
+- Dirección: `?puesto=jefe-de-mesa` (slug del nombre) y `?q=`; se quitó `?estado=` (Activos / Inactivos / Todos). Un puesto que no existe se ignora.
+- `formatMonthName` y `formatDayMonthShort` ("22 de oct") en dates.ts. Esqueleto de carga con grupos.
 
 ## F25 · Ficha del empleado con su historial (2026-10-03) ✅
 
@@ -330,7 +339,7 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 - **Resumen diario por correo** al cerrar el día (Resend): venta, gastos, propinas, quién trabajó y reservas atendidas, para los dueños. *(propuesta 7, 2026-10-01; pospuesta)*
 - **Aviso si el día no se cerró**: correo a las 11:45 p. m. si falta el cierre (otra tarea de Vercel Cron, una vez al día). *(propuesta 8, 2026-10-01; pospuesta)*
 - Hoy: comparativo de la venta con la semana pasada y con el mismo día ("+12 %"). *(propuesta 2)*
-- Empleados: lista compacta con buscador, filtro por puesto y chips de puesto y descanso. *(propuesta 5)*
+- Empleados: botón de WhatsApp en cada fila (si tiene teléfono), iniciales con el color del puesto y tabla en computador. *(propuesta del 2026-10-03, no elegida todavía)*
 - **Adelantos / vales** que se descuentan del pago semanal (hoy Pagos solo marca pagado el total). *(propuesta del 2026-10-03; solo si los usan)*
 - **Historial de cierres**: quién cerró o reabrió el día y qué cambió en venta, propinas y gastos (como el de producción). *(propuesta del 2026-10-03)*
 - Nombres de empleados en Pagos, Reportes y Hoy con enlace a su ficha (en el mes que se está mirando).
