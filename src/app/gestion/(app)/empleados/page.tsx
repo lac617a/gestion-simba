@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
+import { PendingText } from "@/components/link-pending";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
                 filter === key && "bg-background text-foreground shadow-sm"
               )}
             >
-              {FILTERS[key].label}
+              <PendingText>{FILTERS[key].label}</PendingText>
             </Link>
           ))}
         </div>

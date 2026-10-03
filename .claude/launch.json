@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:e2e"],
       "port": 3001
+    },
+    {
+      "name": "start-e2e",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:e2e"],
+      "port": 3002
     }
   ]
 }

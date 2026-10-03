@@ -37,7 +37,8 @@ _Última actualización: 2026-10-03_
 | F21 · Reservas: historial, búsqueda y filtros; historial de cambios | ✅ en producción | `09e8159` |
 | F22 · Asistencia rápida en chips + "Quién está hoy" en chips | ✅ en producción | `e0556d3` + `30345e2` (flecha del chip centrada) |
 | T2 · Parámetros de la dirección con nuqs | ✅ en producción | `4f90f50` |
-| F23 · Historial de cambios de producción | ✅ sin publicar (tiene migración) | commit «F23: historial de cambios de producción» |
+| F23 · Historial de cambios de producción | ✅ en producción | `fb7374b` |
+| F24 · Pantallas de carga, de error y "no encontrado" | ✅ sin publicar | commit «F24: pantallas de carga y de error» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -50,6 +51,7 @@ npx prisma dev start gestion-simba          # BD local de desarrollo (puerto 512
 npx prisma dev start gestion-simba-test     # BD de pruebas (puerto 51221)
 npm run dev                                 # app real → http://localhost:3000
 npm run dev:e2e                             # app de pruebas → http://localhost:3001
+npm run start:e2e                           # app de pruebas en modo producción (build + start) → http://localhost:3002
 npm test                                    # pruebas unitarias
 ```
 
@@ -73,6 +75,14 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F24 · Pantallas de carga y de error (2026-10-03) ✅
+
+- `loading.tsx` en cada sección de `/gestion` con esqueletos que imitan la pantalla (Hoy, Asistencia, Reservas, Producción, Pagos, Reportes, Empleados, Configuración, Reseñas, Usuarios) y en los formularios (`[id]`, `nueva`/`nuevo`). Con `loading.tsx` Next.js precarga la parte fija de cada pantalla (solo en producción) y la navegación es inmediata; sin él esperaba al servidor sin mostrar nada.
+- Piezas en `src/components/page-skeletons.tsx` (`LoadingPage` con aviso para lectores de pantalla, `HeaderSkeleton`, `TabsSkeleton`, `PeriodSkeleton`, `StatsSkeleton`, `ListSkeleton`, `ChipsSkeleton`, `FormSkeleton`, `FormPageSkeleton`) y `ui/skeleton.tsx` (`motion-safe:animate-pulse`).
+- `(app)/error.tsx` (dentro del menú) y `gestion/error.tsx` (si falla el layout, ej. al verificar la sesión): `ErrorScreen` con **Reintentar** (`retry()` de Next 16: vuelve a pedir la pantalla) e **Ir al inicio**, y el código (`digest`) para buscarlo en los logs de Vercel. `(app)/not-found.tsx` para registros que ya no existen. Ambos usan `StatusScreen`.
+- Cambiar solo los parámetros de la dirección (búsqueda, pestañas, fecha) no muestra el esqueleto: Next conserva la pantalla mientras llega la nueva.
+- `npm run start:e2e` (`scripts/start-e2e.mjs`, puerto 3002, carpeta `.next-e2e-prod`): build de producción contra la BD de pruebas, para probar la precarga.
 
 ## F23 · Historial de cambios de producción (2026-10-03) ✅
 

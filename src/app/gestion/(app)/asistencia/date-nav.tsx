@@ -5,6 +5,7 @@ import { useQueryState } from "nuqs";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PendingIcon, PendingText } from "@/components/link-pending";
 import { addDays } from "@/lib/dates";
 import { dayHref, dayParams } from "@/lib/search-params";
 
@@ -24,7 +25,9 @@ export function DateNav({ date, today }: { date: string; today: string }) {
         render={<Link href={href(addDays(date, -1))} prefetch={false} />}
         nativeButton={false}
       >
-        <ChevronLeftIcon />
+        <PendingIcon>
+          <ChevronLeftIcon />
+        </PendingIcon>
       </Button>
       <Input
         type="date"
@@ -43,11 +46,13 @@ export function DateNav({ date, today }: { date: string; today: string }) {
         render={<Link href={href(addDays(date, 1))} prefetch={false} />}
         nativeButton={false}
       >
-        <ChevronRightIcon />
+        <PendingIcon>
+          <ChevronRightIcon />
+        </PendingIcon>
       </Button>
       {date !== today && (
         <Button variant="ghost" size="lg" render={<Link href={href(today)} prefetch={false} />} nativeButton={false}>
-          Hoy
+          <PendingText>Hoy</PendingText>
         </Button>
       )}
     </div>

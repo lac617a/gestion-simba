@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:e2e": "node scripts/dev-e2e.mjs",
+    "start:e2e": "node scripts/start-e2e.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarClockIcon, ClockIcon, DoorClosedIcon, HistoryIcon, PlusIcon } from "lucide-react";
 import type { ReservationStatus } from "@/generated/prisma/enums";
 import { FlashToast } from "@/components/flash-toast";
+import { PendingText } from "@/components/link-pending";
 import { PeriodNav } from "@/components/period-nav";
 import { Stat } from "@/components/report-bits";
 import { SearchInput } from "@/components/search-input";
@@ -126,7 +127,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/ges
                   !active && counts[f.key] === 0 && "opacity-60"
                 )}
               >
-                {filterLabel(f.key, view)}
+                <PendingText>{filterLabel(f.key, view)}</PendingText>
                 <span className={cn("tabular-nums", active ? "opacity-80" : "text-muted-foreground")}>{counts[f.key]}</span>
               </Link>
             );

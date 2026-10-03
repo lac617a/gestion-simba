@@ -391,6 +391,8 @@ model TipShare {
 - Moneda y zona horaria configurables.
 - Respaldos automáticos de la base de datos (los del proveedor: Neon/Supabase).
 - Tiempo de carga de pantallas < 2 s en conexión móvil normal.
+- **Respuesta inmediata al navegar:** al tocar una sección se ve al instante su esqueleto de carga (la forma de la pantalla) mientras llegan los datos.
+- **Errores entendibles:** si una pantalla no carga (conexión, servidor), mensaje en español con **Reintentar** e **Ir al inicio**, sin perder el menú; un registro que ya no existe muestra "No encontramos lo que buscas".
 
 ## 10. Roadmap
 
@@ -423,6 +425,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F22 ✅ | Asistencia rápida en chips por puesto, barra fija con "Ir al cierre" y "Quién está hoy" en chips (RF-2, RF-6). |
 | T2 ✅ | Parámetros de la dirección con nuqs; búsqueda mientras se escribe en Reservas y Empleados. |
 | F23 ✅ | Historial de cambios de producción: pestaña Historial y sección en cada jornada (RF-25). |
+| F24 ✅ | Pantallas de carga (esqueletos) en cada sección, pantalla de error con Reintentar y "No encontrado" (requisitos no funcionales). |
 
 ## 11. Preguntas abiertas
 

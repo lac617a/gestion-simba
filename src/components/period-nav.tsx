@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { PendingIcon, PendingText } from "@/components/link-pending";
 import { Button } from "@/components/ui/button";
 import { formatDateRange } from "@/lib/dates";
 import { shiftPeriod, type Period } from "@/lib/periods";
@@ -30,7 +31,9 @@ export function PeriodNav({ baseHref, period, presets }: Props) {
           render={<Link href={href(shiftPeriod(period, -1))} />}
           nativeButton={false}
         >
-          <ChevronLeftIcon />
+          <PendingIcon>
+            <ChevronLeftIcon />
+          </PendingIcon>
         </Button>
         <p className="min-w-0 flex-1 text-center font-medium sm:flex-none sm:px-2">
           {formatDateRange(period.from, period.to)}
@@ -42,7 +45,9 @@ export function PeriodNav({ baseHref, period, presets }: Props) {
           render={<Link href={href(shiftPeriod(period, 1))} />}
           nativeButton={false}
         >
-          <ChevronRightIcon />
+          <PendingIcon>
+            <ChevronRightIcon />
+          </PendingIcon>
         </Button>
       </div>
 
@@ -60,7 +65,7 @@ export function PeriodNav({ baseHref, period, presets }: Props) {
                   active && "bg-background text-foreground shadow-sm"
                 )}
               >
-                {p.label}
+                <PendingText>{p.label}</PendingText>
               </Link>
             );
           })}

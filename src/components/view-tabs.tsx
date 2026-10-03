@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
+import { PendingIcon } from "@/components/link-pending";
 import { cn } from "@/lib/utils";
 
 export type ViewTab<K extends string> = { key: K; label: string; icon: LucideIcon; href: string };
@@ -18,7 +19,10 @@ export function ViewTabs<K extends string>({ label, tabs, current }: { label: st
             current === t.key && "bg-background text-foreground shadow-sm"
           )}
         >
-          <t.icon className="size-4" /> {t.label}
+          <PendingIcon>
+            <t.icon className="size-4" />
+          </PendingIcon>{" "}
+          {t.label}
         </Link>
       ))}
     </div>
