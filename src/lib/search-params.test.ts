@@ -67,11 +67,13 @@ describe("parámetros de la dirección", () => {
     expect(employeesHref("/gestion/empleados", { q: "ana", puesto: null })).toBe("/gestion/empleados?q=ana");
   });
 
-  it("ficha del empleado: historial por defecto y mes válido", async () => {
-    expect(await loadEmployeeProfile({})).toEqual({ ver: "historial", mes: null });
-    expect(await loadEmployeeProfile({ ver: "datos", mes: "2026-09" })).toEqual({ ver: "datos", mes: "2026-09" });
-    expect(await loadEmployeeProfile({ mes: "2026-13" })).toEqual({ ver: "historial", mes: null });
-    expect(employeeProfileHref("/gestion/empleados/x", { ver: "historial", mes: "2026-09" })).toBe("/gestion/empleados/x?mes=2026-09");
+  it("ficha del empleado: historial por defecto y un día de la semana válido", async () => {
+    expect(await loadEmployeeProfile({})).toEqual({ ver: "historial", semana: null });
+    expect(await loadEmployeeProfile({ ver: "datos", semana: "2026-09-28" })).toEqual({ ver: "datos", semana: "2026-09-28" });
+    expect(await loadEmployeeProfile({ semana: "2026-09-31" })).toEqual({ ver: "historial", semana: null });
+    expect(employeeProfileHref("/gestion/empleados/x", { ver: "historial", semana: "2026-09-28" })).toBe(
+      "/gestion/empleados/x?semana=2026-09-28"
+    );
   });
 
   it("CSV: el tipo debe ser uno de los conocidos", async () => {

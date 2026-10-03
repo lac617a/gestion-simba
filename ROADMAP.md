@@ -40,7 +40,8 @@ _Última actualización: 2026-10-03_
 | F23 · Historial de cambios de producción | ✅ en producción | `fb7374b` |
 | F24 · Pantallas de carga, de error y "no encontrado" | ✅ en producción | `ce06f0d` |
 | F25 · Ficha del empleado con su historial | ✅ en producción | `82321f1` |
-| F26 · Lista de empleados por puesto, con hoy y el mes | ✅ sin publicar | commit «F26: lista de empleados por puesto» |
+| F26 · Lista de empleados por puesto, con hoy y el mes | ✅ en producción | `d26e3bb` |
+| F27 · Ficha del empleado por semana de pago | ✅ sin publicar | commit «F27: ficha del empleado por semana de pago» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -77,6 +78,12 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F27 · Ficha del empleado por semana de pago (2026-10-03) ✅
+
+- Pedido del usuario al ver la ficha de octubre: el mes calendario dejaba la primera fila con lunes a miércoles vacíos (eran de septiembre) y lo ganado / por pagar solo contaba del 1 al 3 de octubre, cuando el pago es por semana (lunes a domingo). El control tiene que ser por semana.
+- Historial ahora es por semana de pago (`weekRange` con `payWeekStart`; `?semana=<un día de la semana>`, se quitó `?mes=`): estado del pago (`payDateOf` con `payDay`: "Se paga el…", "Pagada el…", "Por pagar desde el…"), ganado / pagado / por pagar de la semana, conteos en una fila, **los 7 días** (estado, turno, producción, "Sin cerrar", lo previsto, con pago + propina + producción por día), pagos de la semana y **últimas 8 semanas** (días, faltas, ganado, Pagada / Falta $X / Se paga el…).
+- `employee-history.ts`: `employeeDays(period)` (antes `employeeCalendar` del mes), `dayCounts`, `moneyByDate`, `recentWeeks` y `weekSummaries` (con `summarizePayroll` + `applyPayments`, igual que Pagos). `employee-history-data.ts`: `getEmployeeWeek` y `getEmployeeWeeks`. `getPayData` sale de `getPayroll` (los datos sin agrupar). Se quitaron las utilidades de mes que ya no se usan (`isISOMonth`, `addMonths`, `formatMonth`, `parseAsMonth`).
 
 ## F26 · Lista de empleados por puesto (2026-10-03) ✅
 

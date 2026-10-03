@@ -8,11 +8,12 @@ import type { Period } from "@/lib/periods";
 import { countUnclosedDays } from "@/lib/schedule-data";
 
 /**
- * Pagos del periodo (RF-8). Cuentan los días cerrados (ahí están el pago del
- * día y el reparto de propinas definitivos) y las jornadas de producción.
+ * Lo que se paga en el periodo, sin agrupar: los días trabajados en días
+ * cerrados (ahí están el pago del día y el reparto de propinas definitivos),
+ * las jornadas de producción y los pagos registrados que lo tocan.
  * Con `employeeId`, solo los de ese empleado (su ficha).
  */
-export async function getPayroll(period: Period, employeeId?: string) {
+export async function getPayData(period: Period, employeeId?: string) {
   const range = { gte: isoToDate(period.from), lte: isoToDate(period.to) };
   const d = CURRENCY.decimals;
   const only = employeeId ? { employeeId } : {};
@@ -77,8 +78,14 @@ export async function getPayroll(period: Period, employeeId?: string) {
     note: p.note,
   }));
 
+  return { entries, records, closedDates: new Set(closedDays.map((w) => dateToISO(w.date))) };
+}
+
+/** Pagos del periodo (RF-8): por empleado, cuánto se ganó, cuánto se pagó y cuánto falta. */
+export async function getPayroll(period: Period, employeeId?: string) {
+  const { entries, records, closedDates } = await getPayData(period, employeeId);
   return {
     summary: applyPayments(summarizePayroll(entries), records, period),
-    unclosedDays: await countUnclosedDays(period, new Set(closedDays.map((w) => dateToISO(w.date)))),
+    unclosedDays: await countUnclosedDays(period, closedDates),
   };
 }

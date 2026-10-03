@@ -1,10 +1,11 @@
 import type { AttendanceStatus, WorkShift } from "@/generated/prisma/enums";
 import { initialStatus, type TimeOffRange } from "@/lib/attendance";
-import { addDays, weekdayOf, type ISODate, type ISOMonth } from "@/lib/dates";
-import { monthPeriod } from "@/lib/periods";
+import { addDays, type ISODate } from "@/lib/dates";
+import { applyPayments, entryTotal, summarizePayroll, type PayEntry, type PaymentRecord } from "@/lib/payroll";
+import { shiftPeriod, type Period } from "@/lib/periods";
 
-/** Un día del calendario del empleado (ficha → Historial). */
-export type CalendarDay = {
+/** Un día del empleado en su ficha (Historial por semana de pago). */
+export type EmployeeDay = {
   date: ISODate;
   /** Lo marcado en la asistencia; en los días que vienen, lo previsto (descanso fijo o día libre asignado); null = nada */
   status: AttendanceStatus | null;
@@ -12,6 +13,8 @@ export type CalendarDay = {
   planned: boolean;
   /** Turno, en días de doble turno */
   shift: WorkShift | null;
+  /** El día ya se cerró (su pago y propina cuentan) */
+  dayClosed: boolean;
   /** El restaurante no abrió (cierre marcado en Asistencia) */
   closedDay: boolean;
   /** Todavía no trabajaba en el restaurante */
@@ -21,25 +24,23 @@ export type CalendarDay = {
   today: boolean;
 };
 
-export type CalendarInput = {
-  month: ISOMonth;
+export type DayInput = {
   today: ISODate;
-  /** Primer día de cada fila: el de la semana de pago (0 = domingo … 6 = sábado) */
-  weekStart: number;
   hireDate: ISODate | null;
   restDays: number[];
   timeOff: TimeOffRange[];
-  attendance: Map<ISODate, { status: AttendanceStatus; shift: WorkShift | null }>;
+  attendance: Map<ISODate, { status: AttendanceStatus; shift: WorkShift | null; dayClosed: boolean }>;
   production: Set<ISODate>;
   closedDays: Set<ISODate>;
 };
 
-function calendarDay(date: ISODate, i: CalendarInput): CalendarDay {
-  const day: CalendarDay = {
+function employeeDay(date: ISODate, i: DayInput): EmployeeDay {
+  const day: EmployeeDay = {
     date,
     status: null,
     planned: false,
     shift: null,
+    dayClosed: false,
     closedDay: false,
     beforeHire: false,
     production: i.production.has(date),
@@ -47,7 +48,7 @@ function calendarDay(date: ISODate, i: CalendarInput): CalendarDay {
   };
   if (i.hireDate && date < i.hireDate) return { ...day, beforeHire: true };
   const marked = i.attendance.get(date);
-  if (marked) return { ...day, status: marked.status, shift: marked.shift };
+  if (marked) return { ...day, status: marked.status, shift: marked.shift, dayClosed: marked.dayClosed };
   if (i.closedDays.has(date)) return { ...day, closedDay: true };
   if (date > i.today) {
     const expected = initialStatus(i.restDays, date, i.timeOff);
@@ -56,20 +57,14 @@ function calendarDay(date: ISODate, i: CalendarInput): CalendarDay {
   return day;
 }
 
-/**
- * Calendario del mes por semanas (filas de 7, desde `weekStart`): cada día con
- * lo marcado en la asistencia, la producción y, en los que vienen, lo previsto.
- * Los huecos antes del 1 y después del último día son null.
- */
-export function employeeCalendar(input: CalendarInput): (CalendarDay | null)[][] {
-  const { from, to } = monthPeriod(input.month);
-  const cells: (CalendarDay | null)[] = Array((weekdayOf(from) - input.weekStart + 7) % 7).fill(null);
-  for (let date = from; date <= to; date = addDays(date, 1)) cells.push(calendarDay(date, input));
-  while (cells.length % 7) cells.push(null);
-  return Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+/** Cada día del periodo (la semana de pago): lo marcado, la producción y, en los que vienen, lo previsto. */
+export function employeeDays(period: Period, input: DayInput): EmployeeDay[] {
+  const days: EmployeeDay[] = [];
+  for (let date = period.from; date <= period.to; date = addDays(date, 1)) days.push(employeeDay(date, input));
+  return days;
 }
 
-export type MonthCounts = {
+export type DayCounts = {
   worked: number;
   /** De los días trabajados, cuántos con los dos turnos */
   doubleShifts: number;
@@ -82,9 +77,8 @@ export type MonthCounts = {
   production: number;
 };
 
-/** Lo que pasó en el mes (sin contar lo previsto de los días que vienen). */
-export function monthCounts(weeks: (CalendarDay | null)[][]): MonthCounts {
-  const days = weeks.flat().filter((d): d is CalendarDay => d !== null);
+/** Lo que pasó en esos días (sin contar lo previsto de los que vienen). */
+export function dayCounts(days: EmployeeDay[]): DayCounts {
   const marked = days.filter((d) => d.status && !d.planned);
   const count = (s: AttendanceStatus) => marked.filter((d) => d.status === s).length;
   return {
@@ -97,4 +91,63 @@ export function monthCounts(weeks: (CalendarDay | null)[][]): MonthCounts {
     unmarked: count("PENDING"),
     production: days.filter((d) => d.production).length,
   };
+}
+
+export type DayMoney = { pay: number; tip: number; production: number; total: number };
+
+/** Lo ganado cada fecha: pago del día + propina (días cerrados) + producción. */
+export function moneyByDate(entries: PayEntry[]): Map<ISODate, DayMoney> {
+  const byDate = new Map<ISODate, DayMoney>();
+  for (const e of entries) {
+    const m = byDate.get(e.date) ?? { pay: 0, tip: 0, production: 0, total: 0 };
+    byDate.set(e.date, {
+      pay: m.pay + e.dailyPay,
+      tip: m.tip + e.tip,
+      production: m.production + (e.production ?? 0),
+      total: m.total + entryTotal(e),
+    });
+  }
+  return byDate;
+}
+
+/** `week` y las `count - 1` anteriores (de la más reciente hacia atrás), sin las que terminan antes del ingreso. */
+export function recentWeeks(week: Period, count: number, hireDate: ISODate | null): Period[] {
+  const weeks: Period[] = [];
+  for (let w = week, i = 0; i < count && (!hireDate || w.to >= hireDate); w = shiftPeriod(w, -1), i++) weeks.push(w);
+  return weeks;
+}
+
+export type WeekSummary = {
+  week: Period;
+  worked: number;
+  absent: number;
+  /** Ganado (días cerrados + producción), pagado y por pagar: lo mismo que Pagos para esa semana */
+  total: number;
+  paid: number;
+  pending: number;
+  /** none = nada que pagar */
+  status: "paid" | "partial" | "pending" | "none";
+};
+
+/** Resumen de cada semana: días trabajados, faltas y cómo va el pago. */
+export function weekSummaries(
+  weeks: Period[],
+  entries: PayEntry[],
+  payments: PaymentRecord[],
+  marks: { date: ISODate; status: AttendanceStatus }[]
+): WeekSummary[] {
+  return weeks.map((week) => {
+    const inWeek = (date: ISODate) => week.from <= date && date <= week.to;
+    const pay = applyPayments(summarizePayroll(entries.filter((e) => inWeek(e.date))), payments, week).employees[0];
+    const marked = marks.filter((m) => inWeek(m.date));
+    return {
+      week,
+      worked: marked.filter((m) => m.status === "WORKED").length,
+      absent: marked.filter((m) => m.status === "ABSENT").length,
+      total: pay?.total ?? 0,
+      paid: pay?.paid ?? 0,
+      pending: pay?.pending ?? 0,
+      status: !pay || pay.total === 0 ? "none" : pay.status,
+    };
+  });
 }

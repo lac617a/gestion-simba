@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, formatMonth, isISOMonth, monthOf } from "./dates";
-import { employeeCalendar, monthCounts, type CalendarInput } from "./employee-history";
+import { formatMonthName, monthOf } from "./dates";
+import { dayCounts, employeeDays, moneyByDate, recentWeeks, weekSummaries, type DayInput } from "./employee-history";
+import type { PayEntry, PaymentRecord } from "./payroll";
 import { monthPeriod } from "./periods";
 
-const base: CalendarInput = {
-  month: "2026-10",
+// Semana de pago de lunes a domingo que cruza de septiembre a octubre de 2026
+const week = { from: "2026-09-28", to: "2026-10-04" };
+
+const base: DayInput = {
   today: "2026-10-03",
-  weekStart: 1,
   hireDate: null,
   restDays: [],
   timeOff: [],
@@ -15,75 +17,114 @@ const base: CalendarInput = {
   closedDays: new Set(),
 };
 
-describe("meses", () => {
-  it("validar, mes de una fecha, sumar meses y su rango", () => {
-    expect(isISOMonth("2026-10")).toBe(true);
-    expect(isISOMonth("2026-13")).toBe(false);
-    expect(isISOMonth("2026-1")).toBe(false);
+const work = (date: string, dailyPay: number, tip: number): PayEntry => ({ employeeId: "e", name: "Ana", date, dailyPay, tip });
+const prod = (date: string, production: number): PayEntry => ({
+  employeeId: "e",
+  name: "Ana",
+  date,
+  dailyPay: 0,
+  tip: 0,
+  production,
+  kind: "production",
+});
+
+describe("meses (lista de empleados)", () => {
+  it("mes de una fecha, su rango y su nombre", () => {
     expect(monthOf("2026-10-03")).toBe("2026-10");
-    expect(addMonths("2026-12", 1)).toBe("2027-01");
-    expect(addMonths("2026-01", -1)).toBe("2025-12");
-    expect(addMonths("2026-10", -13)).toBe("2025-09");
     expect(monthPeriod("2026-02")).toEqual({ from: "2026-02-01", to: "2026-02-28" });
-    expect(formatMonth("2026-10")).toBe("octubre de 2026");
+    expect(formatMonthName("2026-10")).toBe("octubre");
   });
 });
 
-describe("calendario del empleado", () => {
-  it("filas de 7 desde el día de inicio de la semana de pago, con huecos fuera del mes", () => {
-    // El 1 de octubre de 2026 es jueves
-    const weeks = employeeCalendar(base);
-    expect(weeks).toHaveLength(5);
-    expect(weeks[0].map((d) => d?.date ?? null)).toEqual([null, null, null, "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"]);
-    expect(weeks[4].map((d) => d?.date ?? null)).toEqual(["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31", null]);
-    // Empezando en domingo
-    expect(employeeCalendar({ ...base, weekStart: 0 })[0].filter((d) => d === null)).toHaveLength(4);
-    // Febrero de 2027 empieza en lunes y tiene 28 días: 4 filas sin huecos
-    const feb = employeeCalendar({ ...base, month: "2027-02" });
-    expect(feb).toHaveLength(4);
-    expect(feb.flat().every((d) => d !== null)).toBe(true);
+describe("semana del empleado", () => {
+  it("los 7 días de la semana de pago, aunque crucen de mes", () => {
+    const days = employeeDays(week, base);
+    expect(days.map((d) => d.date)).toEqual([
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+    ]);
   });
 
-  it("lo marcado, la producción, los cierres, antes de ingresar y lo previsto de los días que vienen", () => {
-    const weeks = employeeCalendar({
+  it("lo marcado (y si el día ya se cerró), la producción, los cierres, antes de ingresar y lo previsto", () => {
+    const days = employeeDays(week, {
       ...base,
-      hireDate: "2026-10-02",
-      restDays: [1], // lunes
-      timeOff: [{ type: "LEAVE", startDate: "2026-10-20", endDate: "2026-10-22" }],
+      hireDate: "2026-09-29",
+      restDays: [0], // domingo
       attendance: new Map([
-        ["2026-10-02", { status: "WORKED", shift: "BOTH" }],
-        ["2026-10-03", { status: "PENDING", shift: null }],
+        ["2026-09-30", { status: "WORKED", shift: "BOTH", dayClosed: true }],
+        ["2026-10-01", { status: "ABSENT", shift: null, dayClosed: true }],
+        ["2026-10-03", { status: "WORKED", shift: null, dayClosed: false }],
       ]),
-      production: new Set(["2026-10-02", "2026-10-09"]),
-      closedDays: new Set(["2026-10-06"]),
+      production: new Set(["2026-10-02"]),
+      closedDays: new Set(["2026-10-02"]),
     });
-    const day = (date: string) => weeks.flat().find((d) => d?.date === date)!;
+    const day = (date: string) => days.find((d) => d.date === date)!;
 
-    expect(day("2026-10-01")).toMatchObject({ beforeHire: true, status: null });
-    expect(day("2026-10-02")).toMatchObject({ status: "WORKED", shift: "BOTH", production: true, planned: false });
-    expect(day("2026-10-03")).toMatchObject({ status: "PENDING", today: true });
-    expect(day("2026-10-04")).toMatchObject({ status: null, planned: false });
-    expect(day("2026-10-05")).toMatchObject({ status: "REST", planned: true });
-    expect(day("2026-10-06")).toMatchObject({ closedDay: true, status: null });
-    expect(day("2026-10-09")).toMatchObject({ production: true, status: null });
-    expect(day("2026-10-21")).toMatchObject({ status: "LEAVE", planned: true });
+    expect(day("2026-09-28")).toMatchObject({ beforeHire: true, status: null });
+    expect(day("2026-09-29")).toMatchObject({ status: null, planned: false }); // pasado sin asistencia
+    expect(day("2026-09-30")).toMatchObject({ status: "WORKED", shift: "BOTH", dayClosed: true });
+    expect(day("2026-10-02")).toMatchObject({ closedDay: true, production: true });
+    expect(day("2026-10-03")).toMatchObject({ status: "WORKED", dayClosed: false, today: true });
+    expect(day("2026-10-04")).toMatchObject({ status: "REST", planned: true });
 
-    // Lo previsto no cuenta como pasado
-    expect(monthCounts(weeks)).toEqual({
-      worked: 1,
+    expect(dayCounts(days)).toEqual({
+      worked: 2,
       doubleShifts: 1,
-      absent: 0,
-      rest: 0,
+      absent: 1,
+      rest: 0, // el domingo es previsto
       extraRest: 0,
       leave: 0,
-      unmarked: 1,
-      production: 2,
+      unmarked: 0,
+      production: 1,
     });
   });
 
-  it("un día pasado sin asistencia queda vacío (no se supone nada)", () => {
-    const weeks = employeeCalendar({ ...base, restDays: [4] }); // jueves
-    expect(weeks[0][3]).toMatchObject({ date: "2026-10-01", status: null, planned: false });
-    expect(weeks[1][3]).toMatchObject({ date: "2026-10-08", status: "REST", planned: true });
+  it("lo ganado cada fecha: pago + propina + producción", () => {
+    const byDate = moneyByDate([work("2026-09-30", 60_000, 15_000), prod("2026-09-30", 50_000), work("2026-10-01", 60_000, 0)]);
+    expect(byDate.get("2026-09-30")).toEqual({ pay: 60_000, tip: 15_000, production: 50_000, total: 125_000 });
+    expect(byDate.get("2026-10-01")).toEqual({ pay: 60_000, tip: 0, production: 0, total: 60_000 });
+    expect(byDate.has("2026-10-02")).toBe(false);
+  });
+});
+
+describe("últimas semanas", () => {
+  it("la semana y las anteriores, sin las de antes del ingreso", () => {
+    expect(recentWeeks(week, 3, null)).toEqual([
+      week,
+      { from: "2026-09-21", to: "2026-09-27" },
+      { from: "2026-09-14", to: "2026-09-20" },
+    ]);
+    // Ingresó el 23 de septiembre: la semana del 14 al 20 ya no cuenta
+    expect(recentWeeks(week, 8, "2026-09-23")).toHaveLength(2);
+  });
+
+  it("días, faltas y cómo va el pago de cada semana (igual que Pagos)", () => {
+    const weeks = recentWeeks(week, 3, null);
+    const entries = [work("2026-09-22", 60_000, 10_000), work("2026-09-23", 60_000, 10_000), work("2026-09-30", 60_000, 5_000)];
+    const paid: PaymentRecord = {
+      id: "p",
+      employeeId: "e",
+      from: "2026-09-21",
+      to: "2026-09-27",
+      amount: 140_000,
+      paidAt: "2026-09-28T15:00:00.000Z",
+      note: null,
+    };
+    const marks = [
+      { date: "2026-09-22", status: "WORKED" as const },
+      { date: "2026-09-23", status: "WORKED" as const },
+      { date: "2026-09-24", status: "ABSENT" as const },
+      { date: "2026-09-30", status: "WORKED" as const },
+    ];
+    expect(weekSummaries(weeks, entries, [paid], marks)).toEqual([
+      { week, worked: 1, absent: 0, total: 65_000, paid: 0, pending: 65_000, status: "pending" },
+      { week: weeks[1], worked: 2, absent: 1, total: 140_000, paid: 140_000, pending: 0, status: "paid" },
+      { week: weeks[2], worked: 0, absent: 0, total: 0, paid: 0, pending: 0, status: "none" },
+    ]);
   });
 });

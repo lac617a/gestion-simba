@@ -5,10 +5,9 @@ import { CalendarDaysIcon, UserPenIcon } from "lucide-react";
 import { updateEmployee } from "@/app/actions/employees";
 import { Badge } from "@/components/ui/badge";
 import { ViewTabs } from "@/components/view-tabs";
-import { today } from "@/lib/config";
 import { db } from "@/lib/db";
 import { verifyAdmin } from "@/lib/dal";
-import { dateToISO, formatShortDate, monthOf } from "@/lib/dates";
+import { dateToISO, formatShortDate } from "@/lib/dates";
 import { formatRestDays } from "@/lib/employees";
 import { getPositionOptions } from "@/lib/job-positions-data";
 import { employeeProfileHref, loadEmployeeProfile, type EmployeeProfileView } from "@/lib/search-params";
@@ -27,14 +26,14 @@ export async function generateMetadata({ params }: PageProps<"/gestion/empleados
   return { title: `${employee?.name ?? "Empleado"} · Gestión Simba` };
 }
 
-/** Ficha del empleado: su historial del mes (asistencia, lo ganado y los pagos) y sus datos. */
+/** Ficha del empleado: su historial por semana de pago (asistencia, lo ganado y los pagos) y sus datos. */
 export default async function EmployeePage({ params, searchParams }: PageProps<"/gestion/empleados/[id]">) {
   await verifyAdmin();
   const { id } = await params;
-  const [employee, { ver, mes }] = await Promise.all([getEmployee(id), loadEmployeeProfile(searchParams)]);
+  const [employee, { ver, semana }] = await Promise.all([getEmployee(id), loadEmployeeProfile(searchParams)]);
   if (!employee) notFound();
 
-  const tabHref = (view: EmployeeProfileView) => employeeProfileHref(`/gestion/empleados/${id}`, { ver: view, mes });
+  const tabHref = (view: EmployeeProfileView) => employeeProfileHref(`/gestion/empleados/${id}`, { ver: view, semana });
   const details = [
     employee.jobPosition?.name,
     employee.restDays.length ? `Descansa: ${formatRestDays(employee.restDays)}` : "Sin descanso fijo",
@@ -61,7 +60,7 @@ export default async function EmployeePage({ params, searchParams }: PageProps<"
       />
 
       {ver === "historial" ? (
-        <EmployeeHistory employee={employee} month={mes ?? monthOf(today())} />
+        <EmployeeHistory employee={employee} date={semana} />
       ) : (
         <EmployeeData employee={employee} />
       )}

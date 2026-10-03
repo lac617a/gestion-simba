@@ -18,18 +18,22 @@ import { Stat, UnclosedWarning } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_CHIP_CLASS, STATUS_LABEL } from "@/lib/attendance";
 import { APP_TIMEZONE, CURRENCY, today } from "@/lib/config";
-import { addMonths, formatDateRange, formatDayMonth, formatDayShort, formatMonth, monthOf, type ISOMonth } from "@/lib/dates";
-import type { CalendarDay } from "@/lib/employee-history";
-import { getEmployeeMonth } from "@/lib/employee-history-data";
+import { dateToISO, formatDateRange, formatDayMonth, formatDayMonthShort, weekdayOf, type ISODate } from "@/lib/dates";
+import { recentWeeks, type DayMoney, type EmployeeDay, type WeekSummary } from "@/lib/employee-history";
+import { getEmployeeWeek, getEmployeeWeeks } from "@/lib/employee-history-data";
 import { WEEKDAYS_SHORT } from "@/lib/employees";
 import { formatMoney } from "@/lib/money";
-import { entryTotal } from "@/lib/payroll";
+import { payDateOf } from "@/lib/payday";
+import { shiftPeriod, weekRange, type Period } from "@/lib/periods";
 import { dayHref, employeeProfileHref, periodHref } from "@/lib/search-params";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const money = (v: number) => formatMoney(v, CURRENCY);
 const paidAtFormat = new Intl.DateTimeFormat("es-CO", { timeZone: APP_TIMEZONE, day: "numeric", month: "short" });
+
+/** Cuántas semanas se resumen abajo: la que se mira y las anteriores. */
+const RECENT_WEEKS = 8;
 
 const STATUS_ICON: Record<AttendanceStatus, LucideIcon> = {
   WORKED: CheckIcon,
@@ -40,84 +44,96 @@ const STATUS_ICON: Record<AttendanceStatus, LucideIcon> = {
   PENDING: CircleDashedIcon,
 };
 
-const SHIFT_TEXT: Record<WorkShift, string> = { MORNING: "turno de la mañana", EVENING: "turno de la noche", BOTH: "doble turno" };
+const SHIFT_TEXT: Record<WorkShift, string> = { MORNING: "mañana", EVENING: "noche", BOTH: "doble turno" };
 
-/** Lo que dice un día, para lectores de pantalla y al pasar el mouse. */
-function dayLabel(d: CalendarDay, todayIso: string) {
-  const what = d.beforeHire
-    ? "todavía no trabajaba aquí"
-    : d.closedDay
-      ? "restaurante cerrado"
-      : d.status === "PENDING"
-        ? "sin marcar"
-        : d.status
-          ? `${STATUS_LABEL[d.status]}${d.planned ? " (previsto)" : ""}`
-          : d.date > todayIso
-            ? null
-            : "sin registro";
-  return [formatDayMonth(d.date), what, d.shift && SHIFT_TEXT[d.shift], d.production && "producción"]
-    .filter(Boolean)
-    .join(" · ");
-}
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** Ficha → Historial: el mes en calendario, lo ganado, lo pagado y los pagos. */
+/**
+ * Ficha → Historial, por semana de pago (la misma de Pagos, ej. lunes a domingo):
+ * lo ganado, pagado y por pagar; cada día con lo marcado y lo ganado; y las
+ * últimas semanas con su estado de pago.
+ */
 export async function EmployeeHistory({
   employee,
-  month,
+  date,
 }: {
   employee: { id: string; hireDate: Date | null; restDays: number[] };
-  month: ISOMonth;
+  /** Un día de la semana que se mira; null = la semana actual */
+  date: ISODate | null;
 }) {
   const settings = await getSettings();
-  const { period, weeks, counts, pay, unclosedDays } = await getEmployeeMonth(employee, month, settings.payWeekStart);
   const todayIso = today();
-  const current = monthOf(todayIso);
-  const monthHref = (m: ISOMonth) => employeeProfileHref(`/gestion/empleados/${employee.id}`, { mes: m === current ? null : m });
-  const weekdays = Array.from({ length: 7 }, (_, i) => WEEKDAYS_SHORT[(settings.payWeekStart + i) % 7]);
-  const workedHint = [
-    counts.doubleShifts > 0 && `${counts.doubleShifts} con doble turno`,
-    counts.production > 0 && `${counts.production} de producción`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const current = weekRange(todayIso, settings.payWeekStart);
+  const week = date ? weekRange(date, settings.payWeekStart) : current;
+  const hireDate = employee.hireDate && dateToISO(employee.hireDate);
+  const [data, recent] = await Promise.all([
+    getEmployeeWeek(employee, week),
+    getEmployeeWeeks(employee, recentWeeks(week, RECENT_WEEKS, hireDate)),
+  ]);
+  const weekHref = (w: Period) =>
+    employeeProfileHref(`/gestion/empleados/${employee.id}`, { semana: w.from === current.from ? null : w.from });
+  const { counts, pay } = data;
+  // Conteos de la semana (los que son 0 no se muestran, salvo trabajó y faltas)
+  const tally: { label: string; value: string; tone?: "danger" | "warning" }[] = [
+    {
+      label: "Trabajó",
+      value:
+        plural(counts.worked, "día", "días") +
+        (counts.doubleShifts > 0 ? ` (${plural(counts.doubleShifts, "doble", "dobles")})` : ""),
+    },
+    { label: "Faltas", value: String(counts.absent), tone: counts.absent > 0 ? "danger" : undefined },
+    ...(counts.rest > 0 ? [{ label: "Descansos", value: String(counts.rest) }] : []),
+    ...(counts.extraRest > 0 ? [{ label: "Permisos", value: String(counts.extraRest) }] : []),
+    ...(counts.leave > 0 ? [{ label: "Vacaciones", value: String(counts.leave) }] : []),
+    ...(counts.production > 0 ? [{ label: "Producción", value: String(counts.production) }] : []),
+    ...(counts.unmarked > 0 ? [{ label: "Sin marcar", value: String(counts.unmarked), tone: "warning" as const }] : []),
+  ];
 
   return (
     <div className="grid gap-5">
-      {/* ---------- Mes ---------- */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon-lg"
-          aria-label="Mes anterior"
-          render={<Link href={monthHref(addMonths(month, -1))} />}
-          nativeButton={false}
-        >
-          <PendingIcon>
-            <ChevronLeftIcon />
-          </PendingIcon>
-        </Button>
-        <p className="min-w-0 flex-1 text-center font-medium first-letter:uppercase sm:w-44 sm:flex-none">{formatMonth(month)}</p>
-        <Button
-          variant="outline"
-          size="icon-lg"
-          aria-label="Mes siguiente"
-          render={<Link href={monthHref(addMonths(month, 1))} />}
-          nativeButton={false}
-        >
-          <PendingIcon>
-            <ChevronRightIcon />
-          </PendingIcon>
-        </Button>
-        {month !== current && (
-          <Button variant="ghost" size="lg" render={<Link href={monthHref(current)} />} nativeButton={false}>
-            <PendingText>Este mes</PendingText>
+      {/* ---------- Semana ---------- */}
+      <div className="grid gap-1.5">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon-lg"
+            aria-label="Semana anterior"
+            render={<Link href={weekHref(shiftPeriod(week, -1))} />}
+            nativeButton={false}
+          >
+            <PendingIcon>
+              <ChevronLeftIcon />
+            </PendingIcon>
           </Button>
-        )}
+          <p className="min-w-0 flex-1 text-center font-medium sm:flex-none sm:px-2">{formatDateRange(week.from, week.to)}</p>
+          <Button
+            variant="outline"
+            size="icon-lg"
+            aria-label="Semana siguiente"
+            render={<Link href={weekHref(shiftPeriod(week, 1))} />}
+            nativeButton={false}
+          >
+            <PendingIcon>
+              <ChevronRightIcon />
+            </PendingIcon>
+          </Button>
+          {week.from !== current.from && (
+            <Button variant="ghost" size="lg" render={<Link href={weekHref(current)} />} nativeButton={false}>
+              <PendingText>Esta semana</PendingText>
+            </Button>
+          )}
+        </div>
+        <PayStatus
+          status={!pay || pay.total === 0 ? "none" : pay.status}
+          payDate={payDateOf(week, settings.payDay)}
+          todayIso={todayIso}
+          lastPaidAt={data.payments.map((p) => p.paidAt).sort().at(-1) ?? null}
+        />
       </div>
 
-      {/* ---------- Totales ---------- */}
+      {/* ---------- Totales de la semana ---------- */}
       <dl className="grid grid-cols-3 gap-2">
-        <Stat label="Ganado" value={money(pay?.total ?? 0)} hint="pago + propinas + producción" strong />
+        <Stat label="Ganado" value={money(pay?.total ?? 0)} strong />
         <Stat label="Pagado" value={money(pay?.paid ?? 0)} />
         <Stat label="Por pagar" value={money(pay?.pending ?? 0)} />
       </dl>
@@ -127,91 +143,51 @@ export async function EmployeeHistory({
           {pay.productionDays > 0 && ` · Producción ${money(pay.production)}`}
         </p>
       )}
-      <UnclosedWarning days={unclosedDays} what="lo de esos días se suma cuando se cierren." />
-
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Trabajó" value={`${counts.worked} ${counts.worked === 1 ? "día" : "días"}`} hint={workedHint || undefined} />
-        <Stat label="Faltas" value={String(counts.absent)} />
-        <Stat
-          label="Descansos"
-          value={String(counts.rest + counts.extraRest)}
-          hint={counts.extraRest > 0 ? `${counts.extraRest} ${counts.extraRest === 1 ? "permiso" : "permisos"}` : undefined}
-        />
-        <Stat label="Vacaciones / incap." value={String(counts.leave)} />
-      </dl>
-      {counts.unmarked > 0 && (
-        <p className="-mt-2 text-sm text-amber-800">
-          {counts.unmarked === 1 ? "1 día quedó sin marcar" : `${counts.unmarked} días quedaron sin marcar`} en la asistencia.
-        </p>
-      )}
-
-      {/* ---------- Calendario ---------- */}
-      <section className="grid gap-3" aria-label={`Asistencia de ${formatMonth(month)}`}>
-        <div className="grid max-w-md grid-cols-7 gap-1 text-center">
-          {weekdays.map((w) => (
-            <div key={w} className="pb-1 text-xs text-muted-foreground">
-              {w}
-            </div>
-          ))}
-          {weeks.flat().map((d, i) => (d ? <DayCell key={d.date} day={d} todayIso={todayIso} /> : <div key={`hueco-${i}`} />))}
-        </div>
-        <Legend />
-      </section>
+      <UnclosedWarning days={data.unclosedDays} what="lo de esos días se suma cuando se cierren." />
 
       {/* ---------- Día por día ---------- */}
-      {pay && pay.entries.length > 0 && (
-        <details className="group rounded-lg border">
-          <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
-            <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
-            Lo ganado día por día
-          </summary>
-          <div className="overflow-x-auto px-4 pb-3">
-            <table className="w-full text-sm tabular-nums">
-              <thead className="text-muted-foreground">
-                <tr>
-                  <th className="py-1.5 text-left font-normal">Fecha</th>
-                  <th className="py-1.5 text-right font-normal">Pago</th>
-                  <th className="py-1.5 text-right font-normal">Propina</th>
-                  <th className="py-1.5 text-right font-normal">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {pay.entries.map((x) => (
-                  <tr key={`${x.kind ?? "work"}-${x.date}`}>
-                    <td className="py-1.5 whitespace-nowrap">
-                      {formatDayShort(x.date)}
-                      {x.kind === "production" && " · Producción"}
-                    </td>
-                    <td className="py-1.5 text-right">{money(x.kind === "production" ? (x.production ?? 0) : x.dailyPay)}</td>
-                    <td className="py-1.5 text-right">{x.kind === "production" ? "—" : money(x.tip)}</td>
-                    <td className="py-1.5 text-right font-medium">{money(entryTotal(x))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </details>
-      )}
+      <section className="grid gap-2" aria-label={`Días del ${formatDateRange(week.from, week.to)}`}>
+        <ul className="flex flex-wrap gap-1.5 text-xs">
+          {tally.map((t) => (
+            <li
+              key={t.label}
+              className={cn(
+                "rounded-full bg-muted px-2.5 py-1",
+                t.tone === "danger" && "bg-red-50 text-red-800",
+                t.tone === "warning" && "bg-amber-50 text-amber-900"
+              )}
+            >
+              <span className={cn(!t.tone && "text-muted-foreground")}>{t.label}</span>{" "}
+              <span className="font-medium tabular-nums">{t.value}</span>
+            </li>
+          ))}
+        </ul>
+        <ul className="divide-y rounded-lg border">
+          {data.days.map((d) => (
+            <DayRow key={d.date} day={d} earned={data.money.get(d.date) ?? null} todayIso={todayIso} />
+          ))}
+        </ul>
+      </section>
 
-      {/* ---------- Pagos ---------- */}
+      {/* ---------- Pagos de la semana ---------- */}
       <section className="grid gap-2">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-medium">Pagos</h2>
           <Link
-            href={periodHref("/gestion/pagos", { desde: period.from, hasta: period.to })}
+            href={periodHref("/gestion/pagos", { desde: week.from, hasta: week.to })}
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             Ver en Pagos
           </Link>
         </div>
-        {pay && pay.payments.length > 0 ? (
+        {data.payments.length > 0 ? (
           <ul className="divide-y rounded-lg border">
-            {pay.payments.map((p) => (
+            {data.payments.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <div className="min-w-0">
-                  <div className="font-medium">{formatDateRange(p.from, p.to)}</div>
+                  <div className="font-medium">Pagado el {paidAtFormat.format(new Date(p.paidAt))}</div>
                   <div className="text-muted-foreground">
-                    Pagado el {paidAtFormat.format(new Date(p.paidAt))}
+                    {formatDateRange(p.from, p.to)}
                     {p.note && ` · ${p.note}`}
                   </div>
                 </div>
@@ -220,84 +196,159 @@ export async function EmployeeHistory({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">Ningún pago registrado para los días de este mes.</p>
+          <p className="text-sm text-muted-foreground">Esta semana todavía no tiene pagos registrados.</p>
         )}
       </section>
+
+      {/* ---------- Últimas semanas ---------- */}
+      {recent.length > 1 && (
+        <section className="grid gap-2">
+          <h2 className="font-medium">Últimas semanas</h2>
+          <ul className="divide-y rounded-lg border">
+            {recent.map((s) => (
+              <li key={s.week.from}>
+                <Link
+                  href={weekHref(s.week)}
+                  aria-current={s.week.from === week.from ? "true" : undefined}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted/50",
+                    s.week.from === week.from && "bg-muted/60"
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium">{formatDateRange(s.week.from, s.week.to)}</div>
+                    <div className="text-xs text-muted-foreground tabular-nums">
+                      {plural(s.worked, "día", "días")}
+                      {s.absent > 0 && <span className="text-red-700"> · {plural(s.absent, "falta", "faltas")}</span>}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium tabular-nums">{money(s.total)}</div>
+                    <WeekPay summary={s} payDate={payDateOf(s.week, settings.payDay)} todayIso={todayIso} />
+                  </div>
+                  <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
 
-function DayCell({ day: d, todayIso }: { day: CalendarDay; todayIso: string }) {
-  const Icon = d.closedDay ? DoorClosedIcon : d.status ? STATUS_ICON[d.status] : null;
-  const label = dayLabel(d, todayIso);
-  const className = cn(
-    "relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg border text-xs tabular-nums",
-    d.status && STATUS_CHIP_CLASS[d.status],
-    d.planned && "border-dashed bg-transparent",
-    d.closedDay && "border-dashed bg-muted/50 text-muted-foreground",
-    !d.status && !d.closedDay && "text-muted-foreground",
-    d.beforeHire && "border-transparent opacity-50",
-    d.today && "ring-2 ring-primary ring-offset-1 ring-offset-background"
-  );
-  const content = (
-    <>
-      <span className={cn("font-medium", d.today && "font-bold")}>{Number(d.date.slice(8))}</span>
-      {Icon ? <Icon aria-hidden className="size-3.5" /> : <span className="size-3.5" />}
-      {d.production && <ChefHatIcon aria-hidden className="absolute top-0.5 right-0.5 size-3 text-orange-600" />}
-      {d.shift === "BOTH" && <span className="absolute right-1 bottom-0.5 text-[10px] font-semibold">×2</span>}
-    </>
-  );
-  if (d.beforeHire) {
+/** Debajo de la semana: si ya se pagó, cuándo se paga o desde cuándo se debe. */
+function PayStatus({
+  status,
+  payDate,
+  todayIso,
+  lastPaidAt,
+}: {
+  status: WeekSummary["status"];
+  payDate: ISODate;
+  todayIso: ISODate;
+  lastPaidAt: string | null;
+}) {
+  if (status === "none") {
+    return payDate > todayIso ? (
+      <p className="text-center text-sm text-muted-foreground sm:text-left">Se paga el {formatDayMonth(payDate)}</p>
+    ) : null;
+  }
+  if (status === "paid") {
     return (
-      <div className={className} title={label} aria-label={label}>
-        {content}
-      </div>
+      <p className="text-center text-sm text-emerald-700 sm:text-left">
+        Pagada{lastPaidAt && ` el ${paidAtFormat.format(new Date(lastPaidAt))}`}
+      </p>
     );
   }
-  // Sin precarga: abrir la asistencia de un día lo crea en la BD.
+  if (payDate > todayIso) {
+    return <p className="text-center text-sm text-muted-foreground sm:text-left">Se paga el {formatDayMonth(payDate)}</p>;
+  }
   return (
-    <Link
-      href={dayHref("/gestion/asistencia", { fecha: d.date })}
-      prefetch={false}
-      title={label}
-      aria-label={label}
-      className={cn(className, "transition-colors hover:border-foreground/40")}
-    >
-      {content}
-    </Link>
+    <p className="text-center text-sm text-amber-800 sm:text-left">
+      {status === "partial" ? "Falta pagar una parte" : "Por pagar"} desde el {formatDayMonth(payDate)}
+    </p>
   );
 }
 
-const LEGEND: { icon: LucideIcon; label: string; className: string }[] = [
-  { icon: CheckIcon, label: "Trabajó", className: STATUS_CHIP_CLASS.WORKED },
-  { icon: XIcon, label: "Falta", className: STATUS_CHIP_CLASS.ABSENT },
-  { icon: MoonIcon, label: "Descanso", className: STATUS_CHIP_CLASS.REST },
-  { icon: CoffeeIcon, label: "Permiso", className: STATUS_CHIP_CLASS.EXTRA_REST },
-  { icon: PalmtreeIcon, label: "Vacaciones", className: STATUS_CHIP_CLASS.LEAVE },
-  { icon: CircleDashedIcon, label: "Sin marcar", className: STATUS_CHIP_CLASS.PENDING },
-  { icon: DoorClosedIcon, label: "Cerrado", className: "border-dashed bg-muted/50 text-muted-foreground" },
-];
+/** Estado de pago corto para la lista de semanas. */
+function WeekPay({ summary: s, payDate, todayIso }: { summary: WeekSummary; payDate: ISODate; todayIso: ISODate }) {
+  if (s.status === "none") return null;
+  if (s.status === "paid") return <div className="text-xs text-emerald-700">Pagada</div>;
+  if (payDate > todayIso) return <div className="text-xs text-muted-foreground">Se paga el {formatDayMonthShort(payDate)}</div>;
+  return <div className="text-xs text-amber-800 tabular-nums">Falta {money(s.pending)}</div>;
+}
 
-function Legend() {
+/** Lo que dice el chip de un día. */
+function dayStatus(d: EmployeeDay, todayIso: ISODate): { text: string; className: string; icon: LucideIcon | null } | null {
+  if (d.beforeHire) return { text: "Aún no ingresaba", className: "border-transparent text-muted-foreground", icon: null };
+  if (d.closedDay) return { text: "Restaurante cerrado", className: "border-dashed bg-muted/50 text-muted-foreground", icon: DoorClosedIcon };
+  if (d.status) {
+    const label = d.status === "PENDING" ? "Sin marcar" : STATUS_LABEL[d.status];
+    const shift = d.status === "WORKED" && d.shift ? ` · ${SHIFT_TEXT[d.shift]}` : "";
+    return {
+      text: `${label}${shift}${d.planned ? " (previsto)" : ""}`,
+      className: cn(STATUS_CHIP_CLASS[d.status], d.planned && "border-dashed bg-transparent"),
+      icon: STATUS_ICON[d.status],
+    };
+  }
+  return d.date > todayIso ? null : { text: "Sin registro", className: "border-dashed text-muted-foreground", icon: null };
+}
+
+/** Un día de la semana: qué pasó y lo ganado. Abre la asistencia de ese día. */
+function DayRow({ day: d, earned, todayIso }: { day: EmployeeDay; earned: DayMoney | null; todayIso: ISODate }) {
+  const status = dayStatus(d, todayIso);
+  const detail = earned
+    ? [
+        earned.pay > 0 && `Pago ${money(earned.pay)}`,
+        earned.tip > 0 && `Propina ${money(earned.tip)}`,
+        earned.production > 0 && `Producción ${money(earned.production)}`,
+      ].filter(Boolean)
+    : [];
+  const unclosed = d.status === "WORKED" && !d.dayClosed;
+  const content = (
+    <>
+      <div className="w-16 shrink-0">
+        <div className={cn("text-sm font-medium", d.today && "text-primary")}>{WEEKDAYS_SHORT[weekdayOf(d.date)]}</div>
+        <div className="text-xs whitespace-nowrap text-muted-foreground">{formatDayMonthShort(d.date)}</div>
+      </div>
+      <div className="grid min-w-0 flex-1 gap-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {status && (
+            <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs", status.className)}>
+              {status.icon && <status.icon aria-hidden className="size-3" />}
+              {status.text}
+            </span>
+          )}
+          {d.production && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs text-orange-900">
+              <ChefHatIcon aria-hidden className="size-3" />
+              Producción
+            </span>
+          )}
+          {d.today && <span className="text-xs font-medium text-primary">Hoy</span>}
+        </div>
+        {detail.length > 0 && <p className="text-xs text-muted-foreground tabular-nums">{detail.join(" · ")}</p>}
+        {unclosed && <p className="text-xs text-amber-800">Sin cerrar: el pago y la propina se suman al cerrar el día.</p>}
+      </div>
+      <div className="shrink-0 text-right text-sm font-medium tabular-nums">{earned && earned.total > 0 && money(earned.total)}</div>
+    </>
+  );
+  const className = cn("flex items-start gap-3 px-4 py-3", d.today && "bg-muted/40");
+
+  if (d.beforeHire) {
+    return <li className={cn(className, "opacity-60")}>{content}</li>;
+  }
   return (
-    <ul className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground" aria-label="Qué significa cada día">
-      {LEGEND.map(({ icon: Icon, label, className }) => (
-        <li key={label} className="flex items-center gap-1.5">
-          <span className={cn("grid size-5 place-items-center rounded border", className)}>
-            <Icon aria-hidden className="size-3" />
-          </span>
-          {label}
-        </li>
-      ))}
-      <li className="flex items-center gap-1.5">
-        <ChefHatIcon aria-hidden className="size-3.5 text-orange-600" /> Producción
-      </li>
-      <li className="flex items-center gap-1.5">
-        <span className="text-[10px] font-semibold text-foreground">×2</span> Doble turno
-      </li>
-      <li className="flex items-center gap-1.5">
-        <span className="size-5 rounded border border-dashed" /> Previsto (descanso o día libre que viene)
-      </li>
-    </ul>
+    <li>
+      {/* Sin precarga: abrir la asistencia de un día lo crea en la BD. */}
+      <Link
+        href={dayHref("/gestion/asistencia", { fecha: d.date })}
+        prefetch={false}
+        className={cn(className, "transition-colors hover:bg-muted/50")}
+      >
+        {content}
+      </Link>
+    </li>
   );
 }

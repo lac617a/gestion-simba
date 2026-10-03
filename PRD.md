@@ -56,7 +56,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Eliminar = **baja lógica** (`activo = false`). El empleado deja de aparecer en la asistencia diaria, pero su historial de asistencias y propinas se conserva. Se puede reactivar.
 - Listado agrupado por puesto (en orden alfabético, como Asistencia), con búsqueda por nombre (sin importar tildes) y chips por puesto con su número de empleados. Cada empleado muestra **cómo está hoy** (Trabaja hoy, Descansa hoy, Permiso / Vacaciones hasta el…, Faltó hoy, Sin marcar hoy; con los colores de Asistencia), su descanso fijo y lo que lleva del **mes** (días trabajados y faltas en rojo). Cada grupo dice cuántos trabajan hoy. Los **dados de baja** van al final, plegados (se abren solos si la búsqueda encuentra a alguno).
 - **Ficha del empleado** (al tocarlo en la lista), con su puesto, descanso fijo y fecha de ingreso, y dos pestañas:
-  - **Historial** (por defecto), mes por mes (‹ ›, "Este mes"): lo **ganado** (pago del día + propinas + producción), **pagado** y **por pagar** del mes (lo mismo que cuenta Pagos), días trabajados (con dobles turnos y producción), faltas, descansos/permisos y vacaciones; **calendario** del mes con lo marcado cada día (ícono y color por estado, producción, doble turno, días cerrados, sin marcar) y, en los días que vienen, lo previsto (descanso fijo y días libres asignados). Cada fila del calendario es una semana de pago y cada día abre su asistencia. Además, lo ganado día por día y los pagos registrados.
+  - **Historial** (por defecto), por **semana de pago** (la misma de Pagos, ej. lunes a domingo; ‹ ›, "Esta semana"): cuándo se paga o si ya se pagó; lo **ganado** (pago del día + propinas + producción), **pagado** y **por pagar** de la semana (lo mismo que cuenta Pagos); conteos de la semana (días trabajados con dobles, faltas, descansos, permisos, vacaciones, producción, sin marcar) y **los 7 días**, cada uno con lo marcado (estado, turno, producción, día cerrado, sin cerrar) o lo previsto (descanso fijo, días libres asignados), con su pago, propina y producción; cada día abre su asistencia. Abajo, los pagos de la semana y las **últimas 8 semanas** con días, faltas, lo ganado y si están pagadas o cuánto falta.
   - **Datos**: editar, días libres asignados y dar de baja / reactivar.
 
 ### RF-2 · Asistencia diaria
@@ -431,6 +431,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F24 ✅ | Pantallas de carga (esqueletos) en cada sección, pantalla de error con Reintentar y "No encontrado" (requisitos no funcionales). |
 | F25 ✅ | Ficha del empleado: historial del mes (calendario, lo ganado, pagado / por pagar, pagos) y sus datos (RF-1). |
 | F26 ✅ | Lista de empleados por puesto: chips con conteos, cómo está hoy cada uno, su mes y dados de baja plegados (RF-1). |
+| F27 ✅ | Ficha del empleado por semana de pago: los 7 días con lo ganado, estado del pago y últimas semanas (RF-1). |
 
 ## 11. Preguntas abiertas
 
