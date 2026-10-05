@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatMonthName, monthOf } from "./dates";
 import { dayCounts, employeeDays, moneyByDate, recentWeeks, weekSummaries, type DayInput } from "./employee-history";
 import type { PayEntry, PaymentRecord } from "./payroll";
-import { monthPeriod } from "./periods";
 
 // Semana de pago de lunes a domingo que cruza de septiembre a octubre de 2026
 const week = { from: "2026-09-28", to: "2026-10-04" };
@@ -26,14 +24,6 @@ const prod = (date: string, production: number): PayEntry => ({
   tip: 0,
   production,
   kind: "production",
-});
-
-describe("meses (lista de empleados)", () => {
-  it("mes de una fecha, su rango y su nombre", () => {
-    expect(monthOf("2026-10-03")).toBe("2026-10");
-    expect(monthPeriod("2026-02")).toEqual({ from: "2026-02-01", to: "2026-02-28" });
-    expect(formatMonthName("2026-10")).toBe("octubre");
-  });
 });
 
 describe("semana del empleado", () => {

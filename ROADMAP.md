@@ -41,7 +41,8 @@ _Última actualización: 2026-10-03_
 | F24 · Pantallas de carga, de error y "no encontrado" | ✅ en producción | `ce06f0d` |
 | F25 · Ficha del empleado con su historial | ✅ en producción | `82321f1` |
 | F26 · Lista de empleados por puesto, con hoy y el mes | ✅ en producción | `d26e3bb` |
-| F27 · Ficha del empleado por semana de pago | ✅ sin publicar | commit «F27: ficha del empleado por semana de pago» |
+| F27 · Ficha del empleado por semana de pago | ✅ en producción | `a71311f` |
+| Lista de empleados: semana pasada y esta semana (en vez del mes) | ✅ sin publicar | commit «Empleados: días de la semana de pago en la lista» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -78,6 +79,11 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## Lista de empleados por semana de pago (2026-10-05) ✅
+
+- El usuario vio "Octubre: 4 días" en una empleada que trabajó del lunes 28 de septiembre al domingo 4 de octubre: el mes partía la semana. Cada fila ahora dice "Semana pasada: 7 días · Esta semana: 0 días" (faltas en rojo), con las fechas de las dos semanas arriba de la lista.
+- `weekCounts` en employee-list.ts (con prueba); `getEmployeeList` usa `weekRange(today, payWeekStart)` y la anterior. Se quitaron las utilidades de mes que ya nadie usaba (`monthOf`, `monthPeriod`, `formatMonthName`, `ISOMonth`).
 
 ## F27 · Ficha del empleado por semana de pago (2026-10-03) ✅
 

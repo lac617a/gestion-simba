@@ -7,8 +7,8 @@ import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { searchKey, STATUS_CHIP_CLASS } from "@/lib/attendance";
 import { verifyAdmin } from "@/lib/dal";
-import { formatDayMonthShort, formatMonthName, monthOf } from "@/lib/dates";
-import { groupByPosition, NO_POSITION, positionSlug, todayLabel } from "@/lib/employee-list";
+import { formatDateRange, formatDayMonthShort } from "@/lib/dates";
+import { groupByPosition, NO_POSITION, positionSlug, todayLabel, type WeekCount } from "@/lib/employee-list";
 import { getEmployeeList, type EmployeeListRow } from "@/lib/employee-list-data";
 import { formatRestDays } from "@/lib/employees";
 import { employeesHref, loadEmployees } from "@/lib/search-params";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Empleados · Gestión Simba" };
 
-/** Empleados agrupados por puesto, con cómo está hoy cada uno y su mes; los dados de baja, plegados al final. */
+/** Empleados agrupados por puesto, con cómo está hoy cada uno y su semana; los dados de baja, plegados al final. */
 export default async function EmployeesPage({ searchParams }: PageProps<"/gestion/empleados">) {
   await verifyAdmin();
   const [params, list] = await Promise.all([loadEmployees(searchParams), getEmployeeList()]);
@@ -37,7 +37,6 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
   const groups = groupByPosition(active.filter(inPosition));
   const inactive = matches.filter((r) => !r.active && inPosition(r));
   const href = (p: string | null) => employeesHref("/gestion/empleados", { q, puesto: p });
-  const monthName = formatMonthName(monthOf(list.today));
 
   return (
     <div className="grid gap-5">
@@ -72,6 +71,13 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
         )}
       </div>
 
+      {groups.length > 0 && (
+        <p className="-mb-2 text-xs text-muted-foreground">
+          Días trabajados de la semana pasada ({formatDateRange(list.weeks.previous.from, list.weeks.previous.to)}) y de esta
+          semana ({formatDateRange(list.weeks.current.from, list.weeks.current.to)}).
+        </p>
+      )}
+
       {list.rows.length === 0 ? (
         <Empty>
           Todavía no hay empleados.{" "}
@@ -101,7 +107,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
                 </h2>
                 <ul className="divide-y rounded-lg border">
                   {people.map((r) => (
-                    <EmployeeRow key={r.id} row={r} monthName={monthName} />
+                    <EmployeeRow key={r.id} row={r} />
                   ))}
                 </ul>
               </section>
@@ -156,8 +162,23 @@ function FilterChip({ href, active, label, count }: { href: string; active: bool
   );
 }
 
-/** Un empleado activo: cómo está hoy, su descanso fijo y lo que lleva del mes. */
-function EmployeeRow({ row: r, monthName }: { row: EmployeeListRow; monthName: string }) {
+/** "7 días" y, si hubo, "· 1 falta" en rojo. */
+function Days({ count }: { count: WeekCount }) {
+  return (
+    <>
+      {count.worked} {count.worked === 1 ? "día" : "días"}
+      {count.absent > 0 && (
+        <span className="text-red-700">
+          {" "}
+          · {count.absent} {count.absent === 1 ? "falta" : "faltas"}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** Un empleado activo: cómo está hoy, su descanso fijo y sus días de la semana pasada y de esta. */
+function EmployeeRow({ row: r }: { row: EmployeeListRow }) {
   const label = r.today && todayLabel(r.today, formatDayMonthShort);
   return (
     <li>
@@ -179,14 +200,9 @@ function EmployeeRow({ row: r, monthName }: { row: EmployeeListRow; monthName: s
               {r.restDays.length ? `Descansa ${formatRestDays(r.restDays).toLowerCase()}` : "Sin descanso fijo"}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground tabular-nums first-letter:uppercase">
-            {monthName}: {r.month.worked} {r.month.worked === 1 ? "día" : "días"}
-            {r.month.absent > 0 && (
-              <span className="text-red-700">
-                {" "}
-                · {r.month.absent} {r.month.absent === 1 ? "falta" : "faltas"}
-              </span>
-            )}
+          <p className="text-xs text-muted-foreground tabular-nums">
+            Semana pasada: <Days count={r.weeks.previous} /> <span aria-hidden>·</span> Esta semana:{" "}
+            <Days count={r.weeks.current} />
           </p>
         </div>
         <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />

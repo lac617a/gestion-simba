@@ -25,12 +25,6 @@ export function addDays(iso: ISODate, days: number): ISODate {
   return dateToISO(d);
 }
 
-/** Mes "YYYY-MM". */
-export type ISOMonth = string;
-
-/** Mes de una fecha. */
-export const monthOf = (iso: ISODate): ISOMonth => iso.slice(0, 7);
-
 /** 0 = domingo ... 6 = sábado */
 export function weekdayOf(iso: ISODate) {
   return isoToDate(iso).getUTCDay();
@@ -114,13 +108,6 @@ const dayMonthFormat = new Intl.DateTimeFormat("es-CO", {
 /** "sábado, 3 de octubre" (sin año; para mensajes) */
 export function formatDayMonth(iso: ISODate) {
   return dayMonthFormat.format(isoToDate(iso));
-}
-
-const monthNameFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", month: "long" });
-
-/** "octubre" */
-export function formatMonthName(month: ISOMonth) {
-  return monthNameFormat.format(isoToDate(`${month}-01`));
 }
 
 const dayMonthShortFormat = new Intl.DateTimeFormat("es-CO", { timeZone: "UTC", day: "numeric", month: "short" });

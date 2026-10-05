@@ -1,9 +1,10 @@
 import "server-only";
 import { today } from "@/lib/config";
 import { db } from "@/lib/db";
-import { dateToISO, isoToDate, monthOf, type ISODate } from "@/lib/dates";
-import { todayStatus, type TodayStatus } from "@/lib/employee-list";
-import { monthPeriod } from "@/lib/periods";
+import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
+import { todayStatus, weekCounts, type TodayStatus, type WeekCount } from "@/lib/employee-list";
+import { shiftPeriod, weekRange, type Period } from "@/lib/periods";
+import { getSettings } from "@/lib/settings";
 
 export type EmployeeListRow = {
   id: string;
@@ -13,20 +14,29 @@ export type EmployeeListRow = {
   restDays: number[];
   /** Cómo está hoy (solo activos) */
   today: TodayStatus | null;
-  /** Días trabajados y faltas marcados en lo que va del mes */
-  month: { worked: number; absent: number };
+  /** Días trabajados y faltas de la semana de pago pasada y de la actual */
+  weeks: { previous: WeekCount; current: WeekCount };
 };
 
+const NO_DAYS: WeekCount = { worked: 0, absent: 0 };
+
 /**
- * Todos los empleados (activos y dados de baja) con cómo están hoy y su mes
- * hasta hoy. La búsqueda y el filtro por puesto se aplican en la página.
+ * Todos los empleados (activos y dados de baja) con cómo están hoy y sus días
+ * de la semana de pago pasada y de la actual (el pago es por semana). La
+ * búsqueda y el filtro por puesto se aplican en la página.
  */
-export async function getEmployeeList(): Promise<{ today: ISODate; closedToday: boolean; rows: EmployeeListRow[] }> {
+export async function getEmployeeList(): Promise<{
+  today: ISODate;
+  closedToday: boolean;
+  weeks: { previous: Period; current: Period };
+  rows: EmployeeListRow[];
+}> {
   const t = today();
   const day = isoToDate(t);
-  const month = monthPeriod(monthOf(t));
+  const current = weekRange(t, (await getSettings()).payWeekStart);
+  const previous = shiftPeriod(current, -1);
 
-  const [employees, workDay, override, timeOff, counts] = await Promise.all([
+  const [employees, workDay, override, timeOff, marks] = await Promise.all([
     db.employee.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true, active: true, restDays: true, hireDate: true, jobPosition: { select: { name: true } } },
@@ -37,21 +47,25 @@ export async function getEmployeeList(): Promise<{ today: ISODate; closedToday: 
       where: { startDate: { lte: day }, endDate: { gte: day } },
       select: { employeeId: true, type: true, startDate: true, endDate: true },
     }),
-    db.attendance.groupBy({
-      by: ["employeeId", "status"],
-      where: { status: { in: ["WORKED", "ABSENT"] }, workDay: { date: { gte: isoToDate(month.from), lte: isoToDate(month.to) } } },
-      _count: { _all: true },
+    db.attendance.findMany({
+      where: {
+        status: { in: ["WORKED", "ABSENT"] },
+        workDay: { date: { gte: isoToDate(previous.from), lte: isoToDate(current.to) } },
+      },
+      select: { employeeId: true, status: true, workDay: { select: { date: true } } },
     }),
   ]);
 
   const closedToday = override?.open === false;
   const marked = new Map(workDay?.attendances.map((a) => [a.employeeId, a.status]));
-  const countOf = (employeeId: string, status: "WORKED" | "ABSENT") =>
-    counts.find((c) => c.employeeId === employeeId && c.status === status)?._count._all ?? 0;
+  const byDate = marks.map((m) => ({ employeeId: m.employeeId, status: m.status, date: dateToISO(m.workDay.date) }));
+  const previousCounts = weekCounts(byDate, previous);
+  const currentCounts = weekCounts(byDate, current);
 
   return {
     today: t,
     closedToday,
+    weeks: { previous, current },
     rows: employees.map((e) => ({
       id: e.id,
       name: e.name,
@@ -70,7 +84,7 @@ export async function getEmployeeList(): Promise<{ today: ISODate; closedToday: 
             closedToday,
           })
         : null,
-      month: { worked: countOf(e.id, "WORKED"), absent: countOf(e.id, "ABSENT") },
+      weeks: { previous: previousCounts.get(e.id) ?? NO_DAYS, current: currentCounts.get(e.id) ?? NO_DAYS },
     })),
   };
 }

@@ -51,6 +51,22 @@ export function todayLabel(s: TodayStatus, formatDate: (iso: ISODate) => string)
   }
 }
 
+export type WeekCount = { worked: number; absent: number };
+
+/** Días trabajados y faltas de cada empleado en una semana de pago. */
+export function weekCounts(
+  marks: { employeeId: string; date: ISODate; status: AttendanceStatus }[],
+  week: { from: ISODate; to: ISODate }
+): Map<string, WeekCount> {
+  const counts = new Map<string, WeekCount>();
+  for (const m of marks) {
+    if (m.date < week.from || m.date > week.to || (m.status !== "WORKED" && m.status !== "ABSENT")) continue;
+    const c = counts.get(m.employeeId) ?? { worked: 0, absent: 0 };
+    counts.set(m.employeeId, m.status === "WORKED" ? { ...c, worked: c.worked + 1 } : { ...c, absent: c.absent + 1 });
+  }
+  return counts;
+}
+
 export const NO_POSITION = "Sin puesto";
 
 /** Puesto para la dirección: "Jefe de mesa" → "jefe-de-mesa". */

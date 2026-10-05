@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupByPosition, positionSlug, todayLabel, todayStatus } from "./employee-list";
+import { groupByPosition, positionSlug, todayLabel, todayStatus, weekCounts } from "./employee-list";
 
 const base = {
   today: "2026-10-03", // sábado
@@ -46,6 +46,24 @@ describe("cómo está hoy", () => {
     expect(todayLabel({ kind: "status", status: "EXTRA_REST", until: null }, fmt)).toBe("Permiso hoy");
     expect(todayLabel({ kind: "not-hired", from: "2026-10-10" }, fmt)).toBe("Ingresa el 10-10");
     expect(todayLabel({ kind: "closed" }, fmt)).toBeNull();
+  });
+});
+
+describe("semana de pago", () => {
+  it("días trabajados y faltas de cada empleado, solo dentro de la semana", () => {
+    // Trabajó del lunes 28 de septiembre al domingo 4 de octubre
+    const week = { from: "2026-09-28", to: "2026-10-04" };
+    const days = ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"];
+    const marks = [
+      ...days.map((date) => ({ employeeId: "daniela", date, status: "WORKED" as const })),
+      { employeeId: "daniela", date: "2026-10-05", status: "WORKED" as const }, // ya es la semana siguiente
+      { employeeId: "bruno", date: "2026-09-30", status: "ABSENT" as const },
+      { employeeId: "bruno", date: "2026-10-01", status: "REST" as const }, // no cuenta
+    ];
+    const counts = weekCounts(marks, week);
+    expect(counts.get("daniela")).toEqual({ worked: 7, absent: 0 });
+    expect(counts.get("bruno")).toEqual({ worked: 0, absent: 1 });
+    expect(counts.has("ana")).toBe(false);
   });
 });
 
