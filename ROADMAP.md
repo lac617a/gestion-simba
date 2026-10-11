@@ -2,7 +2,7 @@
 
 Dónde vamos y qué sigue. Los requisitos completos están en [PRD.md](PRD.md).
 
-_Última actualización: 2026-10-03_
+_Última actualización: 2026-10-11_
 
 ## Estado
 
@@ -42,7 +42,8 @@ _Última actualización: 2026-10-03_
 | F25 · Ficha del empleado con su historial | ✅ en producción | `82321f1` |
 | F26 · Lista de empleados por puesto, con hoy y el mes | ✅ en producción | `d26e3bb` |
 | F27 · Ficha del empleado por semana de pago | ✅ en producción | `a71311f` |
-| Lista de empleados: semana pasada y esta semana (en vez del mes) | ✅ sin publicar | commit «Empleados: días de la semana de pago en la lista» |
+| Lista de empleados: semana pasada y esta semana (en vez del mes) | ✅ en producción | `181e9bc` |
+| F28 · Lunes festivos: semana hasta el lunes y pago el martes | ✅ sin publicar (tiene migración) | commit «F28: lunes festivos en la semana de pago» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -79,6 +80,16 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F28 · Lunes festivos en la semana de pago (2026-10-11) ✅
+
+- Pedido del usuario: cuando el lunes es festivo en Colombia, la semana termina ese lunes (no el domingo) y se paga el martes; la siguiente va de martes a domingo. Configurable por festivo, encendido por defecto, solo lunes.
+- `src/lib/holidays.ts` vuelve (se había quitado en `f0f553c`): festivos de Colombia por año, `holidayOn`, `isMondayHoliday`, `mondayHolidays(desde, hasta)`.
+- `src/lib/payday.ts` es ahora el calendario de pago: `PayCalendar` (`payCalendar(settings)`), `payWeekOf(date)`, `shiftPayWeek`, `isPayWeek`, `weekHolidays` (qué festivo movió cada borde), `payDateOf(week)` y `payDue(today)`. Un lunes festivo que abría semana se suma a la anterior; el pago que cae en lunes festivo pasa al martes. **Regla: nadie calcula la semana de pago con `weekRange` + `shiftPeriod`; siempre con estas funciones.**
+- `AppSettings.payHolidaysOff` (`String[]`, fechas "YYYY-MM-DD" de los festivos apagados). Migración `lunes_festivos` (solo agrega una columna con valor por defecto). `getPayCalendar()` en settings.ts; acción `setHolidayWeek(date, extend)`.
+- Pantallas: Configuración → "Lunes festivos" (`holiday-weeks.tsx` + interruptor `holiday-week-switch.tsx`, próximos 12 meses); `PayWeekNote` (aviso de semana movida por festivo) en Pagos, Hoy y la ficha; `PeriodNav` ahora es asíncrono y sus flechas usan `adjacentPeriod` (semana de pago vecina); ficha, lista de empleados, Hoy y los atajos de periodo usan el calendario de pago.
+- Probado en e2e con hoy = domingo 11 de octubre: semana 5–12 y pago el martes 13 en todas las pantallas; la siguiente 13–18; al apagar el festivo, semana 5–11 y pago el lunes 12.
+- **Para publicar:** aplicar la migración `lunes_festivos` en Neon antes del push. El primer festivo que aplica es el lunes 12 de octubre de 2026.
 
 ## Lista de empleados por semana de pago (2026-10-05) ✅
 

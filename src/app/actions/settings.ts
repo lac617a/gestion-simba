@@ -5,8 +5,11 @@ import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import type { ActionResult } from "@/app/actions/attendance";
 import { parseAccountForm, parseSettingsForm, type AccountFieldErrors } from "@/lib/account";
+import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifyAdmin, verifyUser } from "@/lib/dal";
+import { isISODate } from "@/lib/dates";
 import { db } from "@/lib/db";
+import { isMondayHoliday } from "@/lib/holidays";
 import { createSession } from "@/lib/session";
 
 export type AccountState =
@@ -76,4 +79,26 @@ export async function updateSettings(_prev: SettingsState, formData: FormData): 
   await db.appSettings.upsert({ where: { id: 1 }, update: parsed.data, create: { id: 1, ...parsed.data } });
   revalidatePath("/", "layout"); // afecta Hoy, Asistencia, Pagos y Reportes
   return { success: "Ajustes guardados." };
+}
+
+/**
+ * Un lunes festivo: alargar la semana de pago hasta ese lunes y pagar el martes
+ * (lo normal, `extend`), o dejar esa semana como cualquier otra.
+ */
+export async function setHolidayWeek(date: string, extend: boolean): Promise<ActionResult> {
+  await verifyAdmin();
+  if (!isISODate(date) || !isMondayHoliday(date)) return { ok: false, error: "Ese día no es un lunes festivo." };
+
+  const row = await db.appSettings.findUnique({ where: { id: 1 }, select: { payHolidaysOff: true } });
+  const off = new Set(row?.payHolidaysOff);
+  if (extend) off.delete(date);
+  else off.add(date);
+  const payHolidaysOff = [...off].sort();
+  await db.appSettings.upsert({
+    where: { id: 1 },
+    update: { payHolidaysOff },
+    create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, payHolidaysOff },
+  });
+  revalidatePath("/", "layout"); // cambia la semana en Hoy, Pagos, Reportes y Empleados
+  return { ok: true };
 }

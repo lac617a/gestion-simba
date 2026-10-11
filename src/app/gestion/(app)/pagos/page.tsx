@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
+import { PayWeekNote } from "@/components/pay-week-note";
 import { PeriodNav } from "@/components/period-nav";
 import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { APP_TIMEZONE, CURRENCY } from "@/lib/config";
@@ -38,6 +39,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
       </div>
 
       <PeriodNav baseHref="/gestion/pagos" period={period} presets={await periodPresets()} />
+      <PayWeekNote week={period} />
 
       <UnclosedWarning days={unclosedDays} what="sus pagos y propinas todavía no cuentan." />
 

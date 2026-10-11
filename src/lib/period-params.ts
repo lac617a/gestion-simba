@@ -1,8 +1,9 @@
 import "server-only";
 import { today } from "@/lib/config";
 import { addDays, daysBetween, isISODate } from "@/lib/dates";
-import { fortnightRange, monthRange, weekRange, type Period } from "@/lib/periods";
-import { getSettings } from "@/lib/settings";
+import { isPayWeek, payWeekOf, shiftPayWeek } from "@/lib/payday";
+import { fortnightRange, monthRange, shiftPeriod, type Period } from "@/lib/periods";
+import { getPayCalendar } from "@/lib/settings";
 
 const MAX_RANGE_DAYS = 366;
 
@@ -12,16 +13,25 @@ export async function periodFromParams(desde: unknown, hasta: unknown): Promise<
     const [from, to] = desde <= hasta ? [desde, hasta] : [hasta, desde];
     return { from, to: daysBetween(from, to) > MAX_RANGE_DAYS ? addDays(from, MAX_RANGE_DAYS) : to };
   }
-  return weekRange(today(), (await getSettings()).payWeekStart);
+  return payWeekOf(today(), await getPayCalendar());
 }
 
 /** Atajos del selector de periodo. El primero es el periodo por defecto. */
 export async function periodPresets() {
   const t = today();
-  const { payWeekStart } = await getSettings();
   return [
-    { label: "Semana", period: weekRange(t, payWeekStart) },
+    { label: "Semana", period: payWeekOf(t, await getPayCalendar()) },
     { label: "Quincena", period: fortnightRange(t) },
     { label: "Mes", period: monthRange(t) },
   ];
+}
+
+/**
+ * Periodo anterior (-1) o siguiente (+1) para las flechas del selector. Una
+ * semana de pago salta a la semana de pago vecina (con lunes festivo pueden
+ * durar 8 o 6 días); lo demás, como siempre.
+ */
+export async function adjacentPeriod(period: Period, dir: 1 | -1): Promise<Period> {
+  const cal = await getPayCalendar();
+  return isPayWeek(period, cal) ? shiftPayWeek(period, dir, cal) : shiftPeriod(period, dir);
 }

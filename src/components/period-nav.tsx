@@ -3,7 +3,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { PendingIcon, PendingText } from "@/components/link-pending";
 import { Button } from "@/components/ui/button";
 import { formatDateRange } from "@/lib/dates";
-import { shiftPeriod, type Period } from "@/lib/periods";
+import { adjacentPeriod } from "@/lib/period-params";
+import type { Period } from "@/lib/periods";
 import { periodHref } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 import { PeriodRangeForm } from "./period-range-form";
@@ -18,8 +19,9 @@ type Props = {
 const same = (a: Period, b: Period) => a.from === b.from && a.to === b.to;
 
 /** Selector de periodo por la dirección (?desde&hasta): flechas, atajos y rango libre. */
-export function PeriodNav({ baseHref, period, presets }: Props) {
+export async function PeriodNav({ baseHref, period, presets }: Props) {
   const href = (p: Period) => periodHref(baseHref, { desde: p.from, hasta: p.to });
+  const [previous, next] = await Promise.all([adjacentPeriod(period, -1), adjacentPeriod(period, 1)]);
 
   return (
     <div className="grid gap-3">
@@ -28,7 +30,7 @@ export function PeriodNav({ baseHref, period, presets }: Props) {
           variant="outline"
           size="icon-lg"
           aria-label="Periodo anterior"
-          render={<Link href={href(shiftPeriod(period, -1))} />}
+          render={<Link href={href(previous)} />}
           nativeButton={false}
         >
           <PendingIcon>
@@ -42,7 +44,7 @@ export function PeriodNav({ baseHref, period, presets }: Props) {
           variant="outline"
           size="icon-lg"
           aria-label="Periodo siguiente"
-          render={<Link href={href(shiftPeriod(period, 1))} />}
+          render={<Link href={href(next)} />}
           nativeButton={false}
         >
           <PendingIcon>

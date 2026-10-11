@@ -2,7 +2,8 @@ import type { AttendanceStatus, WorkShift } from "@/generated/prisma/enums";
 import { initialStatus, type TimeOffRange } from "@/lib/attendance";
 import { addDays, type ISODate } from "@/lib/dates";
 import { applyPayments, entryTotal, summarizePayroll, type PayEntry, type PaymentRecord } from "@/lib/payroll";
-import { shiftPeriod, type Period } from "@/lib/periods";
+import { shiftPayWeek, type PayCalendar } from "@/lib/payday";
+import type { Period } from "@/lib/periods";
 
 /** Un día del empleado en su ficha (Historial por semana de pago). */
 export type EmployeeDay = {
@@ -110,10 +111,10 @@ export function moneyByDate(entries: PayEntry[]): Map<ISODate, DayMoney> {
   return byDate;
 }
 
-/** `week` y las `count - 1` anteriores (de la más reciente hacia atrás), sin las que terminan antes del ingreso. */
-export function recentWeeks(week: Period, count: number, hireDate: ISODate | null): Period[] {
+/** `week` y las `count - 1` semanas de pago anteriores (de la más reciente hacia atrás), sin las que terminan antes del ingreso. */
+export function recentWeeks(week: Period, count: number, hireDate: ISODate | null, cal: PayCalendar): Period[] {
   const weeks: Period[] = [];
-  for (let w = week, i = 0; i < count && (!hireDate || w.to >= hireDate); w = shiftPeriod(w, -1), i++) weeks.push(w);
+  for (let w = week, i = 0; i < count && (!hireDate || w.to >= hireDate); w = shiftPayWeek(w, -1, cal), i++) weeks.push(w);
   return weeks;
 }
 

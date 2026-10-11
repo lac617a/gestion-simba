@@ -9,6 +9,7 @@ import { getJobPositions } from "@/lib/job-positions-data";
 import { getSettings } from "@/lib/settings";
 import { displayName, ROLE_LABEL, ROLES } from "@/lib/users";
 import { AccountForm } from "./account-form";
+import { HolidayWeeks } from "./holiday-weeks";
 import { JobPositionsForm } from "./job-positions-form";
 import { ProductionPayForm } from "./production-pay-form";
 import { LogoutEverywhereButton } from "./logout-everywhere";
@@ -109,6 +110,19 @@ export default async function SettingsPage() {
           <Info label="Fin del día de trabajo" value={`${String(DAY_CUTOFF_HOUR).padStart(2, "0")}:00`} />
           <p className="text-xs text-muted-foreground">Estos tres se cambian en las variables de entorno de Vercel.</p>
         </dl>
+      </Section>
+
+      <Section
+        title="Lunes festivos"
+        description="Cuando el lunes es festivo, la semana de pago termina ese lunes y se paga el martes; la siguiente va de martes a domingo. Apaga un festivo si esa vez quieres la semana normal."
+      >
+        <HolidayWeeks settings={settings} />
+        {(settings.payWeekStart !== 1 || settings.payDay !== 1) && (
+          <p className="text-xs text-muted-foreground">
+            Esta regla está pensada para la semana de lunes a domingo con pago el lunes. Con otra semana de pago, el festivo
+            solo corre al martes el pago que caía ese lunes.
+          </p>
+        )}
       </Section>
     </div>
   );

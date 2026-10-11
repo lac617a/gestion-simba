@@ -47,6 +47,9 @@ model AppSettings {
   openingHours        String[] @default([])
   /// Día en que se paga la semana que terminó (0 = domingo … 6 = sábado)
   payDay              Int      @default(1)
+  /// Lunes festivos ("YYYY-MM-DD") en los que se quiere la semana de pago normal. Los demás
+  /// lunes festivos alargan la semana hasta ese lunes y corren el pago al martes.
+  payHolidaysOff      String[] @default([])
   /// WhatsApp del restaurante: a donde la página pública manda reservas y pedidos
   whatsapp            String   @default("3012168273")
   /// Calificación y total de opiniones en Google, escritos a mano (página pública)

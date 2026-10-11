@@ -3,8 +3,9 @@ import { today } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate, type ISODate } from "@/lib/dates";
 import { todayStatus, weekCounts, type TodayStatus, type WeekCount } from "@/lib/employee-list";
-import { shiftPeriod, weekRange, type Period } from "@/lib/periods";
-import { getSettings } from "@/lib/settings";
+import { payWeekOf, shiftPayWeek } from "@/lib/payday";
+import type { Period } from "@/lib/periods";
+import { getPayCalendar } from "@/lib/settings";
 
 export type EmployeeListRow = {
   id: string;
@@ -33,8 +34,9 @@ export async function getEmployeeList(): Promise<{
 }> {
   const t = today();
   const day = isoToDate(t);
-  const current = weekRange(t, (await getSettings()).payWeekStart);
-  const previous = shiftPeriod(current, -1);
+  const cal = await getPayCalendar();
+  const current = payWeekOf(t, cal);
+  const previous = shiftPayWeek(current, -1, cal);
 
   const [employees, workDay, override, timeOff, marks] = await Promise.all([
     db.employee.findMany({

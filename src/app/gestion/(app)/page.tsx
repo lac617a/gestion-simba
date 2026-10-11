@@ -11,6 +11,7 @@ import {
   SunIcon,
   WalletIcon,
 } from "lucide-react";
+import { PayWeekNote } from "@/components/pay-week-note";
 import { Stat } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { CURRENCY, today } from "@/lib/config";
@@ -19,9 +20,8 @@ import { formatDateRange, formatDayShort, formatLongDate, weekdayOf } from "@/li
 import { WEEKDAYS } from "@/lib/employees";
 import { formatHours, hoursFor } from "@/lib/hours";
 import { formatMoney } from "@/lib/money";
-import { payDue, type PayDue } from "@/lib/payday";
+import { payCalendar, payDue, payWeekOf, type PayDue } from "@/lib/payday";
 import { getPayroll } from "@/lib/payroll-data";
-import { weekRange } from "@/lib/periods";
 import { getReports } from "@/lib/reports-data";
 import { getReservationsOn } from "@/lib/reservations-data";
 import { scheduleLabel } from "@/lib/schedule";
@@ -39,8 +39,9 @@ export default async function TodayPage() {
   await verifyAdmin();
   const date = today();
   const settings = await getSettings();
-  const week = weekRange(date, settings.payWeekStart);
-  const due = payDue(date, settings.payWeekStart, settings.payDay);
+  const cal = payCalendar(settings);
+  const week = payWeekOf(date, cal);
+  const due = payDue(date, cal);
   const [view, payroll, duePayroll, reports, reservations] = await Promise.all([
     getDayView(date),
     getPayroll(week),
@@ -182,6 +183,7 @@ export default async function TodayPage() {
           <h2 className="text-lg font-semibold">Esta semana</h2>
           <span className="text-sm text-muted-foreground">{formatDateRange(week.from, week.to)}</span>
         </div>
+        <PayWeekNote week={week} />
         <dl className="grid grid-cols-2 gap-2">
           <Stat
             label="Venta acumulada"

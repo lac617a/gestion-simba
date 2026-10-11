@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { dayCounts, employeeDays, moneyByDate, recentWeeks, weekSummaries, type DayInput } from "./employee-history";
+import { payCalendar } from "./payday";
 import type { PayEntry, PaymentRecord } from "./payroll";
 
 // Semana de pago de lunes a domingo que cruza de septiembre a octubre de 2026
 const week = { from: "2026-09-28", to: "2026-10-04" };
+const cal = payCalendar({ payWeekStart: 1, payDay: 1, payHolidaysOff: [] });
 
 const base: DayInput = {
   today: "2026-10-03",
@@ -84,17 +86,25 @@ describe("semana del empleado", () => {
 
 describe("últimas semanas", () => {
   it("la semana y las anteriores, sin las de antes del ingreso", () => {
-    expect(recentWeeks(week, 3, null)).toEqual([
+    expect(recentWeeks(week, 3, null, cal)).toEqual([
       week,
       { from: "2026-09-21", to: "2026-09-27" },
       { from: "2026-09-14", to: "2026-09-20" },
     ]);
     // Ingresó el 23 de septiembre: la semana del 14 al 20 ya no cuenta
-    expect(recentWeeks(week, 8, "2026-09-23")).toHaveLength(2);
+    expect(recentWeeks(week, 8, "2026-09-23", cal)).toHaveLength(2);
+  });
+
+  it("con un lunes festivo (12 de octubre) las semanas son la corta, la larga y la normal", () => {
+    expect(recentWeeks({ from: "2026-10-13", to: "2026-10-18" }, 3, null, cal)).toEqual([
+      { from: "2026-10-13", to: "2026-10-18" },
+      { from: "2026-10-05", to: "2026-10-12" },
+      week,
+    ]);
   });
 
   it("días, faltas y cómo va el pago de cada semana (igual que Pagos)", () => {
-    const weeks = recentWeeks(week, 3, null);
+    const weeks = recentWeeks(week, 3, null, cal);
     const entries = [work("2026-09-22", 60_000, 10_000), work("2026-09-23", 60_000, 10_000), work("2026-09-30", 60_000, 5_000)];
     const paid: PaymentRecord = {
       id: "p",

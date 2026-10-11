@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { AttendanceStatus, WorkShift } from "@/generated/prisma/enums";
 import { PendingIcon, PendingText } from "@/components/link-pending";
+import { PayWeekNote } from "@/components/pay-week-note";
 import { Stat, UnclosedWarning } from "@/components/report-bits";
 import { Button } from "@/components/ui/button";
 import { STATUS_CHIP_CLASS, STATUS_LABEL } from "@/lib/attendance";
@@ -23,8 +24,8 @@ import { recentWeeks, type DayMoney, type EmployeeDay, type WeekSummary } from "
 import { getEmployeeWeek, getEmployeeWeeks } from "@/lib/employee-history-data";
 import { WEEKDAYS_SHORT } from "@/lib/employees";
 import { formatMoney } from "@/lib/money";
-import { payDateOf } from "@/lib/payday";
-import { shiftPeriod, weekRange, type Period } from "@/lib/periods";
+import { payCalendar, payDateOf, payWeekOf, shiftPayWeek } from "@/lib/payday";
+import type { Period } from "@/lib/periods";
 import { dayHref, employeeProfileHref, periodHref } from "@/lib/search-params";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -63,12 +64,13 @@ export async function EmployeeHistory({
 }) {
   const settings = await getSettings();
   const todayIso = today();
-  const current = weekRange(todayIso, settings.payWeekStart);
-  const week = date ? weekRange(date, settings.payWeekStart) : current;
+  const cal = payCalendar(settings);
+  const current = payWeekOf(todayIso, cal);
+  const week = date ? payWeekOf(date, cal) : current;
   const hireDate = employee.hireDate && dateToISO(employee.hireDate);
   const [data, recent] = await Promise.all([
     getEmployeeWeek(employee, week),
-    getEmployeeWeeks(employee, recentWeeks(week, RECENT_WEEKS, hireDate)),
+    getEmployeeWeeks(employee, recentWeeks(week, RECENT_WEEKS, hireDate, cal)),
   ]);
   const weekHref = (w: Period) =>
     employeeProfileHref(`/gestion/empleados/${employee.id}`, { semana: w.from === current.from ? null : w.from });
@@ -98,7 +100,7 @@ export async function EmployeeHistory({
             variant="outline"
             size="icon-lg"
             aria-label="Semana anterior"
-            render={<Link href={weekHref(shiftPeriod(week, -1))} />}
+            render={<Link href={weekHref(shiftPayWeek(week, -1, cal))} />}
             nativeButton={false}
           >
             <PendingIcon>
@@ -110,7 +112,7 @@ export async function EmployeeHistory({
             variant="outline"
             size="icon-lg"
             aria-label="Semana siguiente"
-            render={<Link href={weekHref(shiftPeriod(week, 1))} />}
+            render={<Link href={weekHref(shiftPayWeek(week, 1, cal))} />}
             nativeButton={false}
           >
             <PendingIcon>
@@ -125,11 +127,13 @@ export async function EmployeeHistory({
         </div>
         <PayStatus
           status={!pay || pay.total === 0 ? "none" : pay.status}
-          payDate={payDateOf(week, settings.payDay)}
+          payDate={payDateOf(week, cal)}
           todayIso={todayIso}
           lastPaidAt={data.payments.map((p) => p.paidAt).sort().at(-1) ?? null}
         />
       </div>
+
+      <PayWeekNote week={week} />
 
       {/* ---------- Totales de la semana ---------- */}
       <dl className="grid grid-cols-3 gap-2">
@@ -224,7 +228,7 @@ export async function EmployeeHistory({
                   </div>
                   <div className="text-right">
                     <div className="font-medium tabular-nums">{money(s.total)}</div>
-                    <WeekPay summary={s} payDate={payDateOf(s.week, settings.payDay)} todayIso={todayIso} />
+                    <WeekPay summary={s} payDate={payDateOf(s.week, cal)} todayIso={todayIso} />
                   </div>
                   <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
                 </Link>

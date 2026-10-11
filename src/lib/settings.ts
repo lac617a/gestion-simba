@@ -13,10 +13,13 @@ import {
 } from "@/lib/config";
 import { db } from "@/lib/db";
 import { fromDecimal } from "@/lib/money";
+import { payCalendar } from "@/lib/payday";
 
 export type AppSettings = {
   payWeekStart: number;
   payDay: number;
+  /** Lunes festivos ("YYYY-MM-DD") en los que se pidió la semana de pago normal (sin alargarla) */
+  payHolidaysOff: string[];
   /** 7 textos "HH:MM-HH:MM" (0 = domingo … 6 = sábado); "" = sin horario. Un 8.º valor viejo (festivos) se ignora. */
   openingHours: string[];
   /** WhatsApp del restaurante (página pública) */
@@ -43,6 +46,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
     ? {
         payWeekStart: row.payWeekStart,
         payDay: row.payDay,
+        payHolidaysOff: row.payHolidaysOff,
         openingHours: row.openingHours,
         whatsapp: row.whatsapp,
         googleRating: row.googleRating,
@@ -56,6 +60,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
         payDay: DEFAULT_PAY_DAY,
+        payHolidaysOff: [],
         openingHours: [],
         whatsapp: DEFAULT_WHATSAPP,
         googleRating: 4.6,
@@ -67,3 +72,8 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         calendarEmail: DEFAULT_CALENDAR_EMAIL,
       };
 });
+
+/** Semana de pago y día de pago, con los lunes festivos que la alargan (ver payday.ts). */
+export async function getPayCalendar() {
+  return payCalendar(await getSettings());
+}

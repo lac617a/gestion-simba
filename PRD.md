@@ -185,7 +185,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Exportar a CSV.
 
 ### RF-9 · Apertura diaria
-- El restaurante **abre de lunes a domingo** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni **festivos**: un festivo es un día normal con el horario de su día de la semana.
+- El restaurante **abre de lunes a domingo** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni **festivos** para abrir o cerrar: un festivo es un día normal con el horario de su día de la semana. (Los lunes festivos sí cambian la semana de pago: RF-26.)
 - **Cierre puntual:** en Asistencia, "Marcar como día cerrado" (ej. 25 de diciembre) y "Abrir este día" para deshacerlo. Cerrar un día borra su asistencia sin cerrar; un día ya cerrado con venta hay que reabrirlo primero. Un día marcado como cerrado no tiene asistencia y Pagos/Reportes no lo cuentan como "día sin cerrar".
 - **Hoy** indica el horario del día.
 
@@ -217,6 +217,14 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
   - Hoy muestra la tarjeta **"Hoy es día de pago"** con lo que falta pagar de la semana que terminó, cuántos empleados y un botón **Ir a pagar** (abre esa semana en Pagos). Si pasa el día y sigue sin pagar: **"Pago pendiente desde…"**. Desaparece cuando todo queda marcado como pagado.
   - Si esa semana tiene días sin cerrar, avisa que el total puede cambiar.
   - Entregar el dinero es responsabilidad de los dueños; el sistema calcula, recuerda y registra.
+
+### RF-26 · Lunes festivos: semana hasta el lunes y pago el martes
+- Cuando el **lunes es festivo en Colombia**, la semana de pago no termina el domingo sino **ese lunes** (lunes a lunes, 8 días) y se **paga el martes**. La semana siguiente queda **corta**: de martes a domingo, y se paga el lunes de siempre. Ej.: lunes 12 de octubre de 2026 festivo → semana del 5 al 12, pago el martes 13; la siguiente, del 13 al 18, pago el lunes 19.
+- La app **calcula sola** los festivos de Colombia (fechas fijas, los trasladados al lunes y los que dependen de la Pascua). Solo cuentan los que caen en **lunes**; un festivo en otro día no cambia nada.
+- **Configurable por festivo** (Configuración → Lunes festivos): lista de los lunes festivos del próximo año con un interruptor cada uno, **encendido por defecto**. Apagado, esa semana es la normal (termina el domingo y se paga el lunes). Cada fila dice qué semana queda y cuándo se paga.
+- Aplica a todo lo que va por semana de pago: **Pagos** (la "Semana" y las flechas ‹ ›), **Reportes**, **Hoy** ("Esta semana" y el aviso del día de pago, que pasa al martes), la **ficha** del empleado y "Semana pasada / Esta semana" de la lista. Pagos, Hoy y la ficha muestran un aviso cuando la semana que se mira fue cambiada por un festivo.
+- Solo cambia el corte de la semana y el día de pago; lo que gana cada empleado por día y las propinas no cambian. Los pagos ya registrados siguen valiendo: cubren las fechas que cubrían.
+- Con otra semana de pago (que no empiece el lunes) el festivo solo corre al martes el pago que caía ese lunes.
 
 ### RF-14 · Reservas
 - Pantalla **Reservas** en el menú. Cada reserva tiene: **fecha y hora**, **cantidad de personas**, **a nombre de** (quien reserva), **teléfono** (opcional), **ocasión** (opcional: Cumpleaños, Aniversario, Grado, Despedida, Reunión de trabajo, Pedida de mano u "Otra" con texto libre), **persona de la ocasión** (ej. el cumpleañero; solo si hay ocasión) y **observación**.
@@ -432,6 +440,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F25 ✅ | Ficha del empleado: historial del mes (calendario, lo ganado, pagado / por pagar, pagos) y sus datos (RF-1). |
 | F26 ✅ | Lista de empleados por puesto: chips con conteos, cómo está hoy cada uno, su mes y dados de baja plegados (RF-1). |
 | F27 ✅ | Ficha del empleado por semana de pago: los 7 días con lo ganado, estado del pago y últimas semanas (RF-1). |
+| F28 ✅ | Lunes festivos: la semana de pago termina ese lunes y se paga el martes, configurable por festivo (RF-26). |
 
 ## 11. Preguntas abiertas
 
