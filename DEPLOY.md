@@ -130,7 +130,10 @@ En la dirección de Vercel, desde la PC y desde el celular:
 ## 6. Después: cómo se actualiza
 
 - Cada `git push` a `main` → Vercel publica la nueva versión sola en 1–3 minutos.
-- Si un cambio trae **migraciones nuevas** (carpeta `prisma/migrations`), **antes** del push aplica la migración a Neon con la **URL_DIRECTA**, igual que en el paso 3.1.
+- **Migraciones automáticas (recomendado):** en Vercel → **Settings → Environment Variables** agrega `DIRECT_URL` con la **URL_DIRECTA** de Neon (la de pooling desactivado), solo para *Production*. Desde entonces cada publicación aplica primero las migraciones pendientes y después compila (`scripts/vercel-build.mjs`). Si una migración falla, esa versión no se publica y sigue la anterior.
+- **Sin `DIRECT_URL`** todo sigue como antes: si un cambio trae **migraciones nuevas** (carpeta `prisma/migrations`), **antes** del push aplícalas a Neon con la URL_DIRECTA, igual que en el paso 3.1. El build lo recuerda con un aviso.
+- Las migraciones deben servirle también a la versión que ya está publicada (agregar tablas o columnas con valor por defecto): entre que se aplican y sale la versión nueva, la anterior sigue atendiendo.
+- **Revisión automática:** cada push corre en GitHub (pestaña **Actions** del repositorio) el lint, las pruebas, todas las migraciones desde cero y el build (`.github/workflows/ci.yml`). No frena la publicación de Vercel; si falla, GitHub avisa por correo.
 - Respaldos: Neon guarda historial para restaurar la BD a un momento anterior (ver *Branches / Restore* en su panel; los días de historial dependen del plan).
 
 ---

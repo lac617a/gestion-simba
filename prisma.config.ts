@@ -8,7 +8,9 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // DIRECT_URL (conexión directa, sin pooler) solo existe en Vercel: la usa el
+    // build para aplicar migraciones. En local y a mano se usa DATABASE_URL.
+    url: process.env.DIRECT_URL || env("DATABASE_URL"),
     shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL || undefined,
   },
 });
