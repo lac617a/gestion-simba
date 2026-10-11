@@ -65,6 +65,11 @@ model AppSettings {
   reminderEmail       String   @default("simbaparrilla1@gmail.com")
   /// A dónde llegan las invitaciones de calendario de cada reserva (Google Calendar); "" = sin calendario
   calendarEmail       String   @default("simbaparrilla1@gmail.com")
+  /// A dónde llega cada mañana el respaldo de todos los datos (adjunto); "" = sin respaldo por correo.
+  /// Trae pagos y ventas: debe ser un correo que solo vean los dueños.
+  backupEmail         String   @default("")
+  /// Cuándo salió el último respaldo por correo
+  lastBackupAt        DateTime?
   updatedAt           DateTime @updatedAt
 }
 

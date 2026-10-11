@@ -134,7 +134,7 @@ En la dirección de Vercel, desde la PC y desde el celular:
 - **Sin `DIRECT_URL`** todo sigue como antes: si un cambio trae **migraciones nuevas** (carpeta `prisma/migrations`), **antes** del push aplícalas a Neon con la URL_DIRECTA, igual que en el paso 3.1. El build lo recuerda con un aviso.
 - Las migraciones deben servirle también a la versión que ya está publicada (agregar tablas o columnas con valor por defecto): entre que se aplican y sale la versión nueva, la anterior sigue atendiendo.
 - **Revisión automática:** cada push corre en GitHub (pestaña **Actions** del repositorio) el lint, las pruebas, todas las migraciones desde cero y el build (`.github/workflows/ci.yml`). No frena la publicación de Vercel; si falla, GitHub avisa por correo.
-- Respaldos: Neon guarda historial para restaurar la BD a un momento anterior (ver *Branches / Restore* en su panel; los días de historial dependen del plan).
+- Respaldos: ver la sección 10. Además Neon guarda historial para restaurar la BD a un momento anterior (ver *Branches / Restore* en su panel; los días de historial dependen del plan).
 
 ---
 
@@ -170,6 +170,44 @@ La app instalada en los celulares de los empleados: si abre la página pública 
 5. En Resend → **Emails** se ven los programados (*Scheduled*), enviados y cancelados.
 
 **Google Calendar:** con la misma clave de Resend, cada reserva llega como invitación al correo de **Configuración → Restaurante → Google Calendar de reservas** (inicial: simbaparrilla1@gmail.com). En Google Calendar de esa cuenta: **Configuración → Eventos de Gmail / Agregar invitaciones a mi calendario → "De todos"**. Para avisos en el celular, en ese calendario pon una notificación predeterminada (ej. 1 hora antes).
+
+---
+
+## 10. Respaldos y cómo restaurar
+
+**Qué hay**
+
+- En **Configuración → Respaldos** escribe el **correo de respaldos** (uno que solo vean los dueños: el archivo trae pagos y ventas). Cada mañana, con la revisión diaria de las 7:00 a. m., llega ahí un correo con el archivo `respaldo-simba-AAAA-MM-DD.json.gz` adjunto. Necesita `RESEND_API_KEY` y `CRON_SECRET` (sección 9).
+- En la misma pantalla: **Descargar respaldo** (lo baja al instante) y **Enviar ahora al correo** (para comprobar que llega).
+- El archivo trae todas las tablas con todas sus filas. **No trae las contraseñas** de los usuarios.
+
+**Cómo restaurar** (desde tu PC, con el proyecto y un respaldo descargado)
+
+1. Decide dónde: la misma base de Neon o una nueva (en Neon, *Create project* o una rama nueva). Pon su **URL_DIRECTA** en `DATABASE_URL` de tu `.env` local. No la pegues en el chat.
+2. En `.env` deja también `ADMIN_EMAIL` (el correo de un administrador que exista en el respaldo) y `ADMIN_PASSWORD` (la contraseña nueva con la que vas a entrar).
+3. Crea las tablas si la base es nueva:
+
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+4. Mira qué se va a cargar (no cambia nada):
+
+   ```bash
+   npm run db:restore -- respaldo-simba-2026-10-12.json.gz
+   ```
+
+5. Restaura. **Borra todo lo que haya en esa base** y carga el respaldo (si algo falla a la mitad, la base queda como estaba):
+
+   ```bash
+   npm run db:restore -- respaldo-simba-2026-10-12.json.gz --yes
+   ```
+
+6. Entra con `ADMIN_EMAIL` y `ADMIN_PASSWORD`, y en **Usuarios** ponles contraseña nueva a los demás.
+7. Si restauraste en una base nueva, cambia `DATABASE_URL` (y `DIRECT_URL`) en Vercel por las de esa base y vuelve a publicar.
+8. Devuelve tu `.env` local a la base local.
+
+Un respaldo viejo se puede cargar en una versión más nueva de la app: las columnas que no existían toman su valor por defecto.
 
 ---
 

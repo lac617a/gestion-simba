@@ -43,8 +43,8 @@ export type EmailInput = {
   scheduledAt?: Date;
   /** Evita duplicados si la misma petición se repite (Resend lo recuerda 24 horas) */
   idempotencyKey?: string;
-  /** Archivos adjuntos (ej. la invitación .ics); el contenido es texto */
-  attachments?: { filename: string; content: string; contentType: string }[];
+  /** Archivos adjuntos: texto (ej. la invitación .ics) o binario (ej. el respaldo comprimido) */
+  attachments?: { filename: string; content: string | Uint8Array; contentType: string }[];
 };
 
 /** Manda o programa un correo. Devuelve el id de Resend. */
@@ -61,7 +61,7 @@ export async function sendEmail({ to, subject, html, text, scheduledAt, idempote
       ...(attachments && {
         attachments: attachments.map((a) => ({
           filename: a.filename,
-          content: Buffer.from(a.content, "utf8").toString("base64"),
+          content: (typeof a.content === "string" ? Buffer.from(a.content, "utf8") : Buffer.from(a.content)).toString("base64"),
           content_type: a.contentType,
         })),
       }),

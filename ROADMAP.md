@@ -44,10 +44,20 @@ _Última actualización: 2026-10-11_
 | F27 · Ficha del empleado por semana de pago | ✅ en producción | `a71311f` |
 | Lista de empleados: semana pasada y esta semana (en vez del mes) | ✅ en producción | `181e9bc` |
 | F28 · Lunes festivos: semana hasta el lunes y pago el martes | ✅ en producción | `d7f4fd5` |
-| T3 · Migraciones automáticas al publicar | ✅ sin publicar (falta `DIRECT_URL` en Vercel) | commit «T3: migraciones automáticas al publicar» |
-| T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | commit «T4: lint, pruebas y build en cada push» |
+| T3 · Migraciones automáticas al publicar | ✅ sin publicar (falta `DIRECT_URL` en Vercel) | `3bfe14d` |
+| T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | `06cf55d` |
+| F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | commit «F29: respaldos de la base» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
+
+## Versiones
+
+Cada cambio sube `"version"` en `package.json`, en el mismo commit (pedido del usuario, 2026-10-11): función nueva (F…) → el número del medio (0.2.0 → 0.3.0); arreglo, ajuste o tarea técnica (T…) → el último (0.3.0 → 0.3.1). Se sube con `npm version X.Y.Z --no-git-tag-version` para que `package-lock.json` quede igual.
+
+| Versión | Qué trae |
+|---|---|
+| 0.1.0 | Todo hasta F28 (lunes festivos) |
+| 0.2.0 | T3 migraciones automáticas al publicar · T4 revisión en cada push · F29 respaldos |
 
 **Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
@@ -82,6 +92,17 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F29 · Respaldos de la base (2026-10-11) ✅ · v0.2.0
+
+- El repositorio de GitHub es **público**: un respaldo como artefacto de GitHub Actions quedaría descargable por cualquiera, así que el respaldo vive en la app (correo + descarga), sin secretos nuevos.
+- `src/lib/backup.ts` (puro, con pruebas): formato (`Backup`, versión 1), `loadOrder` (orden de carga según las llaves foráneas), `scrubRows` / `restoreRows` (las contraseñas no viajan; al restaurar quedan con un valor que no abre sesión), `parseBackup`.
+- `src/lib/backup-data.ts`: `exportDatabase()` lee los nombres de las tablas y las llaves foráneas del catálogo de Postgres (una tabla nueva entra sola) y todas las filas en **una sola consulta** (`json_build_object` + `json_agg`: foto coherente). Se omiten `_prisma_migrations` y `LoginThrottle`. `backupFile()` → `.json.gz`. `sendBackupEmail({ force })`: adjunto por Resend al `backupEmail`, una vez por día (`lastBackupAt`), nunca lanza.
+- `AppSettings.backupEmail` (`""` por defecto) y `lastBackupAt`. Migración `respaldos` (solo agrega). `sendEmail` ahora acepta adjuntos binarios.
+- La revisión diaria (`/api/cron/recordatorios`) también manda el respaldo. Ruta `GET /gestion/configuracion/respaldo` (solo administradores) para descargarlo. Configuración → Respaldos (`backup-settings.tsx`): correo, último envío, Descargar y Enviar ahora (`saveBackupEmail`, `sendBackupNow`).
+- `scripts/restore-backup.ts` (`npm run db:restore -- archivo [--yes]`): sin `--yes` solo muestra; con `--yes` hace `TRUNCATE` de todo y carga con `json_populate_recordset` en una transacción, insertando solo las columnas que venían en el respaldo (un respaldo viejo toma los valores por defecto de las columnas nuevas). Pone la contraseña de `ADMIN_EMAIL` con `ADMIN_PASSWORD`.
+- Probado: respaldo de la base e2e (16 tablas, 471 filas) restaurado en una base vacía → las 16 tablas idénticas por conteo y suma de comprobación; respaldo "viejo" sin columnas nuevas; archivo que no es respaldo; correo con adjunto contra un Resend falso; una vez por día.
+- **Pendiente del usuario:** escribir el correo de respaldos en Configuración. Guía de restauración: DEPLOY.md §10.
 
 ## T4 · Revisión automática en cada push (2026-10-11) ✅
 
@@ -372,7 +393,6 @@ Guía paso a paso: **[DEPLOY.md](DEPLOY.md)** (GitHub → Neon → Vercel). Resu
 **Funciones**
 - Editar el menú (platos y precios) desde la administración; hoy está en `src/lib/menu.ts`.
 - Reservas: límite de personas por hora / aviso de cupo lleno.
-- Botón "Descargar respaldo" en Configuración (exportar todos los datos).
 - Logo en mayor resolución o vector para que el ícono de 512 px quede nítido (falta el archivo).
 - Más fotos para la página y siluetas de los personajes en archivo original (faltan los archivos).
 - **Resumen diario por correo** al cerrar el día (Resend): venta, gastos, propinas, quién trabajó y reservas atendidas, para los dueños. *(propuesta 7, 2026-10-01; pospuesta)*

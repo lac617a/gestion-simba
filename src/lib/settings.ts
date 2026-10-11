@@ -37,6 +37,10 @@ export type AppSettings = {
   reminderEmail: string;
   /** Correo al que se mandan las reservas como invitación de calendario; "" = sin calendario */
   calendarEmail: string;
+  /** Correo que recibe cada mañana el respaldo de todos los datos; "" = sin respaldo por correo */
+  backupEmail: string;
+  /** Cuándo salió el último respaldo por correo */
+  lastBackupAt: Date | null;
 };
 
 /** Ajustes del restaurante (Configuración). Sin fila guardada, los del .env. Una consulta por petición. */
@@ -56,6 +60,8 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         productionPay: fromDecimal(row.productionPay, CURRENCY.decimals)!,
         reminderEmail: row.reminderEmail,
         calendarEmail: row.calendarEmail,
+        backupEmail: row.backupEmail,
+        lastBackupAt: row.lastBackupAt,
       }
     : {
         payWeekStart: DEFAULT_PAY_WEEK_START,
@@ -70,6 +76,8 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         productionPay: DEFAULT_PRODUCTION_PAY * 10 ** CURRENCY.decimals,
         reminderEmail: DEFAULT_REMINDER_EMAIL,
         calendarEmail: DEFAULT_CALENDAR_EMAIL,
+        backupEmail: "",
+        lastBackupAt: null,
       };
 });
 

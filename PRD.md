@@ -218,6 +218,13 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
   - Si esa semana tiene días sin cerrar, avisa que el total puede cambiar.
   - Entregar el dinero es responsabilidad de los dueños; el sistema calcula, recuerda y registra.
 
+### RF-27 · Respaldos
+- **Respaldo diario por correo:** en Configuración → Respaldos se escribe el correo de respaldos (vacío = sin respaldo por correo; debe ser uno que solo vean los dueños). Cada mañana llega un correo con un archivo adjunto que trae todas las tablas con todas sus filas. Una vez por día.
+- **Descargar respaldo** en cualquier momento y **Enviar ahora al correo** para comprobar que llega. La pantalla dice cuándo salió el último.
+- El respaldo **no incluye las contraseñas** de los usuarios (ni cifradas): al restaurar se ponen nuevas.
+- **Restaurar** es un comando (`npm run db:restore`, DEPLOY.md §10): primero muestra qué cargaría; con `--yes` reemplaza todo lo que haya en la base de destino, todo o nada. Un respaldo viejo sirve en una versión más nueva.
+- Solo administradores pueden descargarlo o enviarlo.
+
 ### RF-26 · Lunes festivos: semana hasta el lunes y pago el martes
 - Cuando el **lunes es festivo en Colombia**, la semana de pago no termina el domingo sino **ese lunes** (lunes a lunes, 8 días) y se **paga el martes**. La semana siguiente queda **corta**: de martes a domingo, y se paga el lunes de siempre. Ej.: lunes 12 de octubre de 2026 festivo → semana del 5 al 12, pago el martes 13; la siguiente, del 13 al 18, pago el lunes 19.
 - La app **calcula sola** los festivos de Colombia (fechas fijas, los trasladados al lunes y los que dependen de la Pascua). Solo cuentan los que caen en **lunes**; un festivo en otro día no cambia nada.
@@ -441,6 +448,9 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F26 ✅ | Lista de empleados por puesto: chips con conteos, cómo está hoy cada uno, su mes y dados de baja plegados (RF-1). |
 | F27 ✅ | Ficha del empleado por semana de pago: los 7 días con lo ganado, estado del pago y últimas semanas (RF-1). |
 | F28 ✅ | Lunes festivos: la semana de pago termina ese lunes y se paga el martes, configurable por festivo (RF-26). |
+| T3 ✅ | Migraciones automáticas al publicar (con `DIRECT_URL` en Vercel). |
+| T4 ✅ | Lint, pruebas, migraciones desde cero y build en cada push (GitHub Actions). |
+| F29 ✅ | Respaldos: correo diario con el archivo, descarga manual y comando para restaurar (RF-27). |
 
 ## 11. Preguntas abiertas
 

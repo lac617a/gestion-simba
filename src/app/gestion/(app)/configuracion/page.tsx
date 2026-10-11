@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { APP_TIMEZONE, CURRENCY, DAY_CUTOFF_HOUR } from "@/lib/config";
 import { verifyUser } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { formatMoment } from "@/components/history-timeline";
 import { getJobPositions } from "@/lib/job-positions-data";
+import { emailConfigured } from "@/lib/resend";
 import { getSettings } from "@/lib/settings";
 import { displayName, ROLE_LABEL, ROLES } from "@/lib/users";
 import { AccountForm } from "./account-form";
+import { BackupSettings } from "./backup-settings";
 import { HolidayWeeks } from "./holiday-weeks";
 import { JobPositionsForm } from "./job-positions-form";
 import { ProductionPayForm } from "./production-pay-form";
@@ -110,6 +113,17 @@ export default async function SettingsPage() {
           <Info label="Fin del día de trabajo" value={`${String(DAY_CUTOFF_HOUR).padStart(2, "0")}:00`} />
           <p className="text-xs text-muted-foreground">Estos tres se cambian en las variables de entorno de Vercel.</p>
         </dl>
+      </Section>
+
+      <Section
+        title="Respaldos"
+        description="Una copia de todos los datos, por si algo se daña. Llega cada mañana por correo y también se puede bajar cuando quieras. Las contraseñas de los usuarios no van en el respaldo."
+      >
+        <BackupSettings
+          email={settings.backupEmail}
+          lastSent={settings.lastBackupAt && formatMoment(settings.lastBackupAt)}
+          canEmail={emailConfigured()}
+        />
       </Section>
 
       <Section

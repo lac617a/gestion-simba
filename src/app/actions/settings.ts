@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import type { ActionResult } from "@/app/actions/attendance";
 import { parseAccountForm, parseSettingsForm, type AccountFieldErrors } from "@/lib/account";
+import { sendBackupEmail } from "@/lib/backup-data";
 import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifyAdmin, verifyUser } from "@/lib/dal";
 import { isISODate } from "@/lib/dates";
@@ -100,5 +101,33 @@ export async function setHolidayWeek(date: string, extend: boolean): Promise<Act
     create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, payHolidaysOff },
   });
   revalidatePath("/", "layout"); // cambia la semana en Hoy, Pagos, Reportes y Empleados
+  return { ok: true };
+}
+
+export type BackupEmailState = { error?: string; success?: string } | undefined;
+
+/** Correo que recibe el respaldo diario; vacío = sin respaldo por correo. */
+export async function saveBackupEmail(_prev: BackupEmailState, formData: FormData): Promise<BackupEmailState> {
+  await verifyAdmin();
+  const backupEmail = String(formData.get("backupEmail") ?? "")
+    .trim()
+    .toLowerCase();
+  if (backupEmail && !z.email().safeParse(backupEmail).success) return { error: "Ese correo no es válido." };
+
+  await db.appSettings.upsert({
+    where: { id: 1 },
+    update: { backupEmail },
+    create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, backupEmail },
+  });
+  revalidatePath("/gestion/configuracion", "layout");
+  return { success: backupEmail ? "Correo de respaldos guardado." : "Respaldo por correo desactivado." };
+}
+
+/** "Enviar ahora": manda el respaldo al correo configurado aunque ya haya salido el de hoy. */
+export async function sendBackupNow(): Promise<ActionResult> {
+  await verifyAdmin();
+  const result = await sendBackupEmail({ force: true });
+  if (!result.enviado) return { ok: false, error: `No se pudo enviar: ${result.motivo}.` };
+  revalidatePath("/gestion/configuracion", "layout");
   return { ok: true };
 }
