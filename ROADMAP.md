@@ -43,7 +43,9 @@ _Última actualización: 2026-10-11_
 | F26 · Lista de empleados por puesto, con hoy y el mes | ✅ en producción | `d26e3bb` |
 | F27 · Ficha del empleado por semana de pago | ✅ en producción | `a71311f` |
 | Lista de empleados: semana pasada y esta semana (en vez del mes) | ✅ en producción | `181e9bc` |
-| F28 · Lunes festivos: semana hasta el lunes y pago el martes | ✅ sin publicar (tiene migración) | commit «F28: lunes festivos en la semana de pago» |
+| F28 · Lunes festivos: semana hasta el lunes y pago el martes | ✅ en producción | `d7f4fd5` |
+| T3 · Migraciones automáticas al publicar | ✅ sin publicar (falta `DIRECT_URL` en Vercel) | commit «T3: migraciones automáticas al publicar» |
+| T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | commit «T4: lint, pruebas y build en cada push» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -80,6 +82,19 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## T4 · Revisión automática en cada push (2026-10-11) ✅
+
+- `.github/workflows/ci.yml`: en cada push a `main` y en pull requests corre `npm ci`, lint, pruebas, `prisma migrate deploy` sobre un Postgres vacío (comprueba que todas las migraciones aplican desde cero) y `next build`. Node 22, sin secretos, no toca la base real.
+- No frena la publicación (Vercel publica por su cuenta): avisa por correo si algo falla. Para que frene habría que publicar desde el mismo flujo o pasar a pull requests.
+- No se pudo ejecutar en GitHub desde aquí (sin sesión de `gh`): se simularon los mismos pasos en una copia limpia. Revisar el primer resultado en la pestaña Actions.
+
+## T3 · Migraciones automáticas al publicar (2026-10-11) ✅
+
+- `vercel.json` → `buildCommand: node scripts/vercel-build.mjs`: en producción corre `prisma migrate deploy` y después `next build`. Si la migración falla, el build falla y sigue publicada la versión anterior. En vistas previas no migra.
+- Usa `DIRECT_URL` (conexión directa de Neon; la app usa la de pooler). `prisma.config.ts` toma `DIRECT_URL` si existe y si no `DATABASE_URL`. **Sin `DIRECT_URL` no migra y avisa**: sigue el paso manual de siempre.
+- Probado en local: sin pendientes compila; con la base inalcanzable sale con error y no compila.
+- **Pendiente del usuario:** agregar `DIRECT_URL` en Vercel (Production) con la URL directa de Neon (DEPLOY.md §6).
 
 ## F28 · Lunes festivos en la semana de pago (2026-10-11) ✅
 

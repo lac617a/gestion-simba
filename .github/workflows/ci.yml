@@ -1,0 +1,65 @@
+name: CI
+
+# En cada push a main (y en cada pull request): lint, pruebas, todas las
+# migraciones aplicadas desde cero y el build de producción.
+# No publica nada (de eso se encarga Vercel) ni toca la base de datos real: usa
+# una vacía que vive solo durante el trabajo. Si algo falla, GitHub avisa por correo.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    name: Lint, pruebas y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: simba
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Base de datos vacía de este trabajo, no la real
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/simba
+      SESSION_SECRET: solo-para-ci
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Migraciones desde cero
+        run: npx prisma migrate deploy
+
+      - name: Build de producción
+        run: npm run build
