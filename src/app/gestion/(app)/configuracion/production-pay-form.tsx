@@ -17,7 +17,7 @@ export function ProductionPayForm({ amount, currency }: { amount: number; curren
   }, [state]);
 
   return (
-    <form action={action} className="grid gap-2 border-t pt-4">
+    <form action={action} className="grid gap-2">
       <Label htmlFor="productionPay">Producción: pago por asistir</Label>
       <div className="flex flex-wrap items-center gap-2">
         <div className="w-40">

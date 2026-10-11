@@ -100,9 +100,9 @@ export const SettingsSchema = z.object({
   calendarEmail: z.union([z.literal(""), z.email({ error: "Correo del calendario inválido" })]),
 });
 
-export function parseSettingsForm(formData: FormData) {
+function readSettingsForm(formData: FormData) {
   const get = (k: string) => String(formData.get(k) ?? "");
-  return SettingsSchema.safeParse({
+  return {
     payWeekStart: formData.get("payWeekStart"),
     payDay: formData.get("payDay"),
     whatsapp: get("whatsapp"),
@@ -111,5 +111,34 @@ export function parseSettingsForm(formData: FormData) {
     doubleShiftWeekdays: formData.getAll("doubleShiftWeekdays"),
     shiftHours: [0, 1].map((i) => ({ open: get(`shiftOpen${i}`), close: get(`shiftClose${i}`) })),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),
-  });
+  };
+}
+
+/** Todos los ajustes a la vez. */
+export function parseSettingsForm(formData: FormData) {
+  return SettingsSchema.safeParse(readSettingsForm(formData));
+}
+
+/**
+ * Cada pantalla de Configuración guarda solo su grupo de ajustes: el formulario
+ * trae esos campos y los demás no se tocan.
+ */
+export const SETTINGS_GROUPS = {
+  restaurante: { whatsapp: true },
+  horario: { openingHours: true },
+  turnos: { doubleShiftWeekdays: true, shiftHours: true },
+  "semana-de-pago": { payWeekStart: true, payDay: true },
+  reservas: { reminderEmail: true, calendarEmail: true },
+} as const satisfies Record<string, Partial<Record<keyof z.input<typeof SettingsSchema>, true>>>;
+
+export type SettingsGroup = keyof typeof SETTINGS_GROUPS;
+
+export const isSettingsGroup = (value: unknown): value is SettingsGroup =>
+  typeof value === "string" && Object.hasOwn(SETTINGS_GROUPS, value);
+
+/** Los ajustes de un grupo, validados; lo demás del formulario se ignora. */
+export function parseSettingsGroup(formData: FormData, group: SettingsGroup) {
+  return SettingsSchema.partial().safeParse(
+    Object.fromEntries(Object.entries(readSettingsForm(formData)).filter(([field]) => field in SETTINGS_GROUPS[group]))
+  );
 }

@@ -107,7 +107,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 
 ### RF-19 · Producción (preparación)
 - Uno o dos días a la semana (cualquier día) algunos empleados ayudan a preparar todo. Pantalla **Producción** (menú "Más"), pestaña **Jornadas**: las jornadas con fecha, nota, quién asistió, excedentes y total (pestaña **Historial**: RF-25).
-- Cada asistente cobra un **pago fijo** (Configuración → Puestos y pago diario → "Producción: pago por asistir"; inicial **$50.000**) más un **excedente** opcional por persona.
+- Cada asistente cobra un **pago fijo** (Configuración → Puestos y pago diario → Producción; inicial **$50.000**) más un **excedente** opcional por persona.
 - El pago fijo se guarda en cada asistente al registrarlo: si luego cambia en Configuración, las jornadas pasadas no cambian (al editar una jornada, los que ya estaban conservan el suyo).
 - Una jornada por fecha. Se puede editar (fecha, nota, asistentes, excedentes) y eliminar.
 - Se **suma al pago semanal** en Pagos (total del periodo, por empleado "+ producción", detalle y CSV con columna Producción); si se registra después de marcar pagada la semana, la diferencia queda por pagar.
@@ -126,13 +126,13 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Roles: **Administrador** (todo) y **Reservas** (solo Reservas: ver, anotar, editar, cancelar, eliminar, marcar Llegó/No vino y confirmar por WhatsApp).
 - La contraseña inicial la escribe el administrador y se la comparte a la persona; ella la cambia en **Mi cuenta**. Al editar, el administrador puede poner una contraseña nueva (se cierra la sesión de esa persona en todos lados).
 - **Desactivar / activar** un usuario: el desactivado no puede entrar y su sesión se cierra de inmediato; no se borra (queda en el historial, ej. "Registrada por"). Al entrar con la contraseña correcta se le dice que está desactivado.
-- Un administrador no puede cambiar su propio rol ni desactivarse (así siempre queda al menos uno). Sobre sí mismo solo cambia el nombre ahí; su correo y contraseña, en Configuración → Cuenta.
+- Un administrador no puede cambiar su propio rol ni desactivarse (así siempre queda al menos uno). Sobre sí mismo solo cambia el nombre ahí; su correo y contraseña, en Configuración → Mi cuenta.
 - Un usuario de Reservas ve solo **Reservas** en el menú y **Mi cuenta** (correo, contraseña, cerrar otras sesiones); cualquier otra dirección de la administración lo lleva a Reservas. Al entrar va directo a Reservas.
 - Cada reserva guarda **quién la registró** ("Registrada por … el …" al editarla).
 - El rol se comprueba en el servidor en cada página, acción y descarga (no solo se oculta el menú); un cambio de rol aplica de inmediato.
 
 ### RF-22 · Recordatorio de reservas por correo
-- **1 hora antes** de cada reserva **confirmada** llega un correo (Resend, remitente del dominio `profiya.com`) al **correo de recordatorios** de Configuración → Restaurante (inicial: simbaparrilla1@gmail.com; vacío = sin recordatorios).
+- **1 hora antes** de cada reserva **confirmada** llega un correo (Resend, remitente del dominio `profiya.com`) al **correo de recordatorios** de Configuración → Reservas (inicial: simbaparrilla1@gmail.com; vacío = sin recordatorios).
 - El correo trae hora, fecha, a nombre de, personas, teléfono, ocasión, observación, quién la registró y un botón **Ver la reserva**.
 - Se programa en Resend al guardar la reserva. Al editarla se cancela el programado y se programa otro con los datos nuevos; al cancelarla, marcar Llegó/No vino o eliminarla, se cancela; al volver a confirmarla, se programa otra vez. Si falta menos de 1 hora, sale de inmediato; si ya empezó, no se manda.
 - Resend programa hasta 30 días adelante: una **revisión diaria** (Vercel Cron, 7:00 a. m.) programa las que faltan (más lejanas, anteriores a esta función o con fallo de Resend). Un fallo de Resend nunca impide guardar la reserva.
@@ -140,7 +140,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - Si se cambia el correo en Configuración, los ya programados siguen yendo al anterior; las reservas nuevas o editadas usan el nuevo.
 
 ### RF-23 · Reservas en Google Calendar
-- Cada reserva llega como **invitación de calendario** (correo con `invite.ics`, por Resend) al **Google Calendar de reservas** de Configuración → Restaurante (inicial: simbaparrilla1@gmail.com; vacío = desactivado). Con "Agregar invitaciones a mi calendario: De todos" en Google Calendar, el evento se agrega solo.
+- Cada reserva llega como **invitación de calendario** (correo con `invite.ics`, por Resend) al **Google Calendar de reservas** de Configuración → Reservas (inicial: simbaparrilla1@gmail.com; vacío = desactivado). Con "Agregar invitaciones a mi calendario: De todos" en Google Calendar, el evento se agrega solo.
 - Evento de 2 horas: "Reserva: Nombre (N personas)", con teléfono, ocasión, observación, quién la registró y el enlace a la reserva; lugar: el restaurante. No marca el calendario como ocupado.
 - Cada reserva es **un solo evento** (UID fijo): al editar algo que se ve (fecha, hora, datos) llega una actualización con versión mayor; al **cancelarla o eliminarla** se quita; al volver a confirmarla vuelve. Marcar Llegó/No vino no manda nada.
 - La revisión diaria (RF-22) también manda al calendario las reservas de hoy en adelante que no estén (anteriores a esta función o con fallo). Las pasadas no se llenan.
@@ -148,7 +148,7 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 - En la reserva se ve "En el Google Calendar de …".
 
 ### RF-18 · Doble turno (uso interno de empleados)
-- En **Configuración → Doble turno** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
+- En **Configuración → Horarios y turnos** se marcan los días con dos turnos (por defecto **sábado y domingo**) y el horario de cada uno (por defecto **mañana 11:00 a. m.–4:00 p. m.** y **tarde 5:30–11:30 p. m.**). Un día se marca con doble turno al abrirse; en Asistencia se puede activar o quitar a mano ese día.
 - En esos días, a cada empleado que **Trabajó** se le indica el turno: **Mañana**, **Tarde** o **Ambos**. Es obligatorio para cerrar.
 - **Cierre del turno de la mañana** (al terminar la mañana): se anotan sus propinas y se reparten en partes iguales entre quienes hicieron la mañana (Mañana o Ambos). Desde ahí queda fijo quién hizo la mañana (nadie entra ni sale de ese turno) hasta que se reabra el turno.
 - **Cierre del día** (en la noche): venta y gastos totales del día, propinas de la tarde (repartidas entre Tarde y Ambos) y el pago de cada empleado. Si no se cerró la mañana, sus propinas se anotan aquí mismo.
@@ -190,10 +190,15 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - **Hoy** indica el horario del día.
 
 ### RF-10 · Configuración y seguridad
-- Pantalla **Configuración** (ícono de engranaje arriba):
-  - **Cuenta:** cambiar correo y/o contraseña; siempre pide la contraseña actual. Contraseña nueva: mínimo 10 caracteres, con letras y números, distinta de la actual.
-  - **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
-  - **Restaurante:** WhatsApp, día de inicio de la semana de pago, día de pago y horario de atención (RF-13). Se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial.
+- Pantalla **Configuración** (ícono de engranaje arriba), **separada por secciones**, cada una en su propia pantalla (`/gestion/configuracion/<sección>`). En computador hay un **menú lateral** con la sección abierta resaltada; en el celular, la entrada es la **lista de secciones** (con descripción) y cada sección tiene el enlace para volver. Cada formulario guarda solo lo suyo. Abajo del menú se ve la **versión** de la app.
+  - **Mi cuenta** (todos los usuarios): cambiar correo y/o contraseña; siempre pide la contraseña actual. Contraseña nueva: mínimo 10 caracteres, con letras y números, distinta de la actual. **Sesiones:** cambiar la contraseña o pulsar "Cerrar sesión en los demás dispositivos" invalida las sesiones de otros equipos (versión de sesión en el usuario).
+  - **Restaurante:** WhatsApp, accesos a la página pública y a Reseñas, y los datos fijos (zona horaria, moneda, fin del día).
+  - **Horarios y turnos:** horario de atención (RF-13) y doble turno (RF-18).
+  - **Puestos y pago diario:** puestos (RF-7) y pago de producción (RF-19).
+  - **Semana de pago:** día de inicio de la semana, día de pago (RF-13) y lunes festivos (RF-26).
+  - **Reservas:** correo de recordatorios (RF-22) y Google Calendar (RF-23).
+  - **Respaldos** (RF-27). **Usuarios** enlaza a sus pantallas (RF-21).
+  - Los ajustes se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial. Los usuarios de reservas solo ven "Mi cuenta".
 - **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
 
 ### RF-11 · Pagos realizados
@@ -228,7 +233,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 ### RF-26 · Lunes festivos: semana hasta el lunes y pago el martes
 - Cuando el **lunes es festivo en Colombia**, la semana de pago no termina el domingo sino **ese lunes** (lunes a lunes, 8 días) y se **paga el martes**. La semana siguiente queda **corta**: de martes a domingo, y se paga el lunes de siempre. Ej.: lunes 12 de octubre de 2026 festivo → semana del 5 al 12, pago el martes 13; la siguiente, del 13 al 18, pago el lunes 19.
 - La app **calcula sola** los festivos de Colombia (fechas fijas, los trasladados al lunes y los que dependen de la Pascua). Solo cuentan los que caen en **lunes**; un festivo en otro día no cambia nada.
-- **Configurable por festivo** (Configuración → Lunes festivos): lista de los lunes festivos del próximo año con un interruptor cada uno, **encendido por defecto**. Apagado, esa semana es la normal (termina el domingo y se paga el lunes). Cada fila dice qué semana queda y cuándo se paga.
+- **Configurable por festivo** (Configuración → Semana de pago → Lunes festivos): lista de los lunes festivos del próximo año con un interruptor cada uno, **encendido por defecto**. Apagado, esa semana es la normal (termina el domingo y se paga el lunes). Cada fila dice qué semana queda y cuándo se paga.
 - Aplica a todo lo que va por semana de pago: **Pagos** (la "Semana" y las flechas ‹ ›), **Reportes**, **Hoy** ("Esta semana" y el aviso del día de pago, que pasa al martes), la **ficha** del empleado y "Semana pasada / Esta semana" de la lista. Pagos, Hoy y la ficha muestran un aviso cuando la semana que se mira fue cambiada por un festivo.
 - Solo cambia el corte de la semana y el día de pago; lo que gana cada empleado por día y las propinas no cambian. Los pagos ya registrados siguen valiendo: cubren las fechas que cubrían.
 - Con otra semana de pago (que no empiece el lunes) el festivo solo corre al martes el pago que caía ese lunes.
@@ -268,7 +273,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 
 ### RF-17 · Reseñas en la página pública
 - Sección **"Lo que dicen nuestros clientes"** (antes de Reservar): calificación general y total de opiniones de Google, tarjetas con estrellas, texto, nombre abreviado y fecha relativa ("hace 8 meses"), y botones **"Déjanos tu reseña"** (abre el formulario de Google) y **"Ver todas en Google"**.
-- **Sin API de Google**: las reseñas se copian a mano. En **/gestion/resenas** (desde Configuración → Página pública) se agregan, editan, ocultan, ordenan y eliminan; también se actualiza la calificación y el total.
+- **Sin API de Google**: las reseñas se copian a mano. En **/gestion/resenas** (desde Configuración → Restaurante → Página pública) se agregan, editan, ocultan, ordenan y eliminan; también se actualiza la calificación y el total.
 - Arranca con 8 reseñas copiadas de Google el 2026-09-26 (4,6 ★ · 243 opiniones).
 
 ## 5. Reglas de negocio
@@ -451,6 +456,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | T3 ✅ | Migraciones automáticas al publicar (con `DIRECT_URL` en Vercel). |
 | T4 ✅ | Lint, pruebas, migraciones desde cero y build en cada push (GitHub Actions). |
 | F29 ✅ | Respaldos: correo diario con el archivo, descarga manual y comando para restaurar (RF-27). |
+| F30 ✅ | Configuración por secciones con menú lateral (lista en el celular) y versión visible (RF-10). |
 
 ## 11. Preguntas abiertas
 

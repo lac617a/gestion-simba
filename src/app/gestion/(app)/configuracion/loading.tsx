@@ -1,12 +1,15 @@
-import { HeaderSkeleton, LoadingPage } from "@/components/page-skeletons";
+import { LoadingPage } from "@/components/page-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/** Configuración: secciones con sus campos. */
+/** Una sección de Configuración: título, descripción y sus bloques (el menú lateral ya está). */
 export default function Loading() {
   return (
     <LoadingPage className="max-w-2xl gap-6">
-      <HeaderSkeleton title="w-48" />
-      {[2, 3, 2].map((fields, i) => (
+      <div className="grid gap-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-full max-w-sm" />
+      </div>
+      {[3, 2].map((fields, i) => (
         <div key={i} className="grid gap-4 rounded-lg border p-4">
           <div className="grid gap-2">
             <Skeleton className="h-5 w-40" />

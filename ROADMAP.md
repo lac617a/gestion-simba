@@ -46,7 +46,8 @@ _Última actualización: 2026-10-11_
 | F28 · Lunes festivos: semana hasta el lunes y pago el martes | ✅ en producción | `d7f4fd5` |
 | T3 · Migraciones automáticas al publicar | ✅ sin publicar (falta `DIRECT_URL` en Vercel) | `3bfe14d` |
 | T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | `06cf55d` |
-| F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | commit «F29: respaldos de la base» |
+| F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | `a54dcc0` |
+| F30 · Configuración por secciones con menú lateral (v0.3.0) | ✅ sin publicar | commit «F30: Configuración por secciones» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -58,6 +59,7 @@ Cada cambio sube `"version"` en `package.json`, en el mismo commit (pedido del u
 |---|---|
 | 0.1.0 | Todo hasta F28 (lunes festivos) |
 | 0.2.0 | T3 migraciones automáticas al publicar · T4 revisión en cada push · F29 respaldos |
+| 0.3.0 | F30 Configuración por secciones con menú lateral; la versión se ve en Configuración |
 
 **Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
@@ -93,13 +95,22 @@ npm test                                    # pruebas unitarias
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
 
+## F30 · Configuración por secciones (2026-10-11) ✅ · v0.3.0
+
+- Pedido del usuario: Configuración era una sola pantalla muy cargada. Ahora cada sección es una pantalla: `cuenta`, `restaurante`, `horarios`, `puestos`, `semana-de-pago`, `reservas`, `respaldos` (lista en `configuracion/sections.ts`); Usuarios se enlaza a `/gestion/usuarios`.
+- `configuracion/layout.tsx`: menú lateral en computador (`SettingsNav variant="sidebar"`, resalta la sección con `usePathname`) dentro de un `Suspense`, para que el layout no espere a la BD y la sección muestre su esqueleto al instante. En el celular el menú se oculta: `page.tsx` es la lista de secciones (`variant="list"`) y cada sección trae "‹ Configuración" (`SettingsPage` en `settings-ui.tsx`). En computador `/gestion/configuracion` muestra "Mi cuenta". Los usuarios de reservas solo tienen "Mi cuenta" (sin menú); las demás secciones usan `verifyAdmin`.
+- El formulario grande se partió (`settings-forms.tsx`): WhatsApp, horario, doble turno, semana de pago y correos de reservas, cada uno con su botón Guardar. `updateSettings(group, …)` guarda solo ese grupo (`SETTINGS_GROUPS` y `parseSettingsGroup` en account.ts, con pruebas); antes un solo botón guardaba todo.
+- La descarga del respaldo pasó a `/gestion/configuracion/respaldos/descargar`.
+- `src/lib/version.ts` (`APP_VERSION` desde package.json): se muestra bajo el menú ("Gestión Simba · versión 0.3.0").
+- Sin migración. Probado en e2e: las 7 secciones desde el menú, guardar un grupo sin tocar los demás, lista en celular y que un usuario de reservas no reciba datos de las secciones de administrador.
+
 ## F29 · Respaldos de la base (2026-10-11) ✅ · v0.2.0
 
 - El repositorio de GitHub es **público**: un respaldo como artefacto de GitHub Actions quedaría descargable por cualquiera, así que el respaldo vive en la app (correo + descarga), sin secretos nuevos.
 - `src/lib/backup.ts` (puro, con pruebas): formato (`Backup`, versión 1), `loadOrder` (orden de carga según las llaves foráneas), `scrubRows` / `restoreRows` (las contraseñas no viajan; al restaurar quedan con un valor que no abre sesión), `parseBackup`.
 - `src/lib/backup-data.ts`: `exportDatabase()` lee los nombres de las tablas y las llaves foráneas del catálogo de Postgres (una tabla nueva entra sola) y todas las filas en **una sola consulta** (`json_build_object` + `json_agg`: foto coherente). Se omiten `_prisma_migrations` y `LoginThrottle`. `backupFile()` → `.json.gz`. `sendBackupEmail({ force })`: adjunto por Resend al `backupEmail`, una vez por día (`lastBackupAt`), nunca lanza.
 - `AppSettings.backupEmail` (`""` por defecto) y `lastBackupAt`. Migración `respaldos` (solo agrega). `sendEmail` ahora acepta adjuntos binarios.
-- La revisión diaria (`/api/cron/recordatorios`) también manda el respaldo. Ruta `GET /gestion/configuracion/respaldo` (solo administradores) para descargarlo. Configuración → Respaldos (`backup-settings.tsx`): correo, último envío, Descargar y Enviar ahora (`saveBackupEmail`, `sendBackupNow`).
+- La revisión diaria (`/api/cron/recordatorios`) también manda el respaldo. Ruta `GET /gestion/configuracion/respaldos/descargar` (solo administradores) para descargarlo. Configuración → Respaldos (`backup-settings.tsx`): correo, último envío, Descargar y Enviar ahora (`saveBackupEmail`, `sendBackupNow`).
 - `scripts/restore-backup.ts` (`npm run db:restore -- archivo [--yes]`): sin `--yes` solo muestra; con `--yes` hace `TRUNCATE` de todo y carga con `json_populate_recordset` en una transacción, insertando solo las columnas que venían en el respaldo (un respaldo viejo toma los valores por defecto de las columnas nuevas). Pone la contraseña de `ADMIN_EMAIL` con `ADMIN_PASSWORD`.
 - Probado: respaldo de la base e2e (16 tablas, 471 filas) restaurado en una base vacía → las 16 tablas idénticas por conteo y suma de comprobación; respaldo "viejo" sin columnas nuevas; archivo que no es respaldo; correo con adjunto contra un Resend falso; una vez por día.
 - **Pendiente del usuario:** escribir el correo de respaldos en Configuración. Guía de restauración: DEPLOY.md §10.

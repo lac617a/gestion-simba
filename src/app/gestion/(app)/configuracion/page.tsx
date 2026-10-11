@@ -1,164 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ExternalLinkIcon, StarIcon, UsersIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { APP_TIMEZONE, CURRENCY, DAY_CUTOFF_HOUR } from "@/lib/config";
 import { verifyUser } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { formatMoment } from "@/components/history-timeline";
-import { getJobPositions } from "@/lib/job-positions-data";
-import { emailConfigured } from "@/lib/resend";
-import { getSettings } from "@/lib/settings";
-import { displayName, ROLE_LABEL, ROLES } from "@/lib/users";
-import { AccountForm } from "./account-form";
-import { BackupSettings } from "./backup-settings";
-import { HolidayWeeks } from "./holiday-weeks";
-import { JobPositionsForm } from "./job-positions-form";
-import { ProductionPayForm } from "./production-pay-form";
-import { LogoutEverywhereButton } from "./logout-everywhere";
-import { SettingsForm } from "./settings-form";
+import { APP_VERSION } from "@/lib/version";
+import { AccountSection } from "./account-section";
+import { SettingsNav } from "./settings-nav";
 
 export const metadata: Metadata = { title: "Configuración · Gestión Simba" };
 
-/** Administradores: todo. Usuarios de reservas: solo su cuenta ("Mi cuenta"). */
-export default async function SettingsPage() {
+/**
+ * Entrada de Configuración. Celular: la lista de secciones. Computador: "Mi
+ * cuenta" junto al menú lateral. Los usuarios de reservas solo tienen su cuenta.
+ */
+export default async function SettingsHome() {
   const user = await verifyUser();
-  const account = (
+  if (user.role !== "ADMIN") return <AccountSection user={user} back={false} />;
+
+  return (
     <>
-      <Section
-        title="Cuenta"
-        description={`Entras como ${displayName(user)} (${ROLE_LABEL[user.role]}). Para cambiar el correo o la contraseña siempre se pide la contraseña actual.`}
-      >
-        <AccountForm currentEmail={user.email} />
-      </Section>
-
-      <Section
-        title="Sesiones"
-        description="Si entraste desde un celular o computadora ajenos, o perdiste un dispositivo, cierra la sesión en todos los demás. Este seguirá conectado."
-      >
-        <LogoutEverywhereButton />
-      </Section>
+      <div className="grid gap-4 md:hidden">
+        <h1 className="text-2xl font-semibold">Configuración</h1>
+        <SettingsNav variant="list" />
+        <p className="text-xs text-muted-foreground">Gestión Simba · versión {APP_VERSION}</p>
+      </div>
+      <div className="hidden md:block">
+        <AccountSection user={user} />
+      </div>
     </>
-  );
-
-  if (user.role !== "ADMIN") {
-    return (
-      <div className="grid max-w-xl gap-6">
-        <h1 className="text-2xl font-semibold">Mi cuenta</h1>
-        {account}
-      </div>
-    );
-  }
-
-  const [settings, positions, users] = await Promise.all([
-    getSettings(),
-    getJobPositions(),
-    db.user.groupBy({ by: ["role"], where: { active: true }, _count: true }),
-  ]);
-
-  return (
-    <div className="grid max-w-xl gap-6">
-      <h1 className="text-2xl font-semibold">Configuración</h1>
-
-      <Section
-        title="Puestos y pago diario"
-        description="Los puestos que se eligen al registrar un empleado y lo que se le paga por día trabajado."
-      >
-        <JobPositionsForm positions={positions} currency={CURRENCY} />
-        <ProductionPayForm amount={settings.productionPay} currency={CURRENCY} />
-      </Section>
-
-      <Section
-        title="Usuarios"
-        description="Quiénes entran a la administración: administradores (todo) o usuarios que solo manejan las reservas."
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" render={<Link href="/gestion/usuarios" />} nativeButton={false}>
-            <UsersIcon /> Administrar usuarios
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {users
-              .sort((a, b) => ROLES.indexOf(a.role) - ROLES.indexOf(b.role))
-              .map((g) =>
-                g.role === "ADMIN"
-                  ? `${g._count} ${g._count === 1 ? "administrador" : "administradores"}`
-                  : `${g._count} de reservas`
-              )
-              .join(" · ")}
-          </span>
-        </div>
-      </Section>
-
-      {account}
-
-      <Section title="Página pública" description="Lo que ven los clientes en la página del restaurante.">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" render={<Link href="/gestion/resenas" />} nativeButton={false}>
-            <StarIcon /> Reseñas
-          </Button>
-          <Button variant="ghost" render={<a href="/" target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
-            <ExternalLinkIcon /> Ver la página
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          El WhatsApp y el horario de la página se cambian abajo, en Restaurante.
-        </p>
-      </Section>
-
-      <Section title="Restaurante" description="Afecta la asistencia, los pagos y los reportes.">
-        <SettingsForm settings={settings} />
-        <dl className="grid gap-1 border-t pt-4 text-sm">
-          <Info label="Zona horaria" value={APP_TIMEZONE} />
-          <Info label="Moneda" value={CURRENCY.code} />
-          <Info label="Fin del día de trabajo" value={`${String(DAY_CUTOFF_HOUR).padStart(2, "0")}:00`} />
-          <p className="text-xs text-muted-foreground">Estos tres se cambian en las variables de entorno de Vercel.</p>
-        </dl>
-      </Section>
-
-      <Section
-        title="Respaldos"
-        description="Una copia de todos los datos, por si algo se daña. Llega cada mañana por correo y también se puede bajar cuando quieras. Las contraseñas de los usuarios no van en el respaldo."
-      >
-        <BackupSettings
-          email={settings.backupEmail}
-          lastSent={settings.lastBackupAt && formatMoment(settings.lastBackupAt)}
-          canEmail={emailConfigured()}
-        />
-      </Section>
-
-      <Section
-        title="Lunes festivos"
-        description="Cuando el lunes es festivo, la semana de pago termina ese lunes y se paga el martes; la siguiente va de martes a domingo. Apaga un festivo si esa vez quieres la semana normal."
-      >
-        <HolidayWeeks settings={settings} />
-        {(settings.payWeekStart !== 1 || settings.payDay !== 1) && (
-          <p className="text-xs text-muted-foreground">
-            Esta regla está pensada para la semana de lunes a domingo con pago el lunes. Con otra semana de pago, el festivo
-            solo corre al martes el pago que caía ese lunes.
-          </p>
-        )}
-      </Section>
-    </div>
-  );
-}
-
-function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return (
-    <section className="grid gap-4 rounded-lg border p-4">
-      <div>
-        <h2 className="font-medium">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
-    </div>
   );
 }

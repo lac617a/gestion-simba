@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import type { ActionResult } from "@/app/actions/attendance";
-import { parseAccountForm, parseSettingsForm, type AccountFieldErrors } from "@/lib/account";
+import { isSettingsGroup, parseAccountForm, parseSettingsGroup, type AccountFieldErrors, type SettingsGroup } from "@/lib/account";
 import { sendBackupEmail } from "@/lib/backup-data";
 import { DEFAULT_PAY_WEEK_START } from "@/lib/config";
 import { verifyAdmin, verifyUser } from "@/lib/dal";
@@ -49,7 +49,7 @@ export async function updateAccount(_prev: AccountState, formData: FormData): Pr
   });
   if (changingPassword) await createSession(updated.id, updated.sessionVersion);
 
-  revalidatePath("/gestion/configuracion");
+  revalidatePath("/gestion/configuracion", "layout");
   return {
     success: changingPassword
       ? "Contraseña cambiada. Se cerró la sesión en los demás dispositivos."
@@ -71,15 +71,20 @@ export async function logoutEverywhere(): Promise<ActionResult> {
 
 export type SettingsState = { error?: string; success?: string } | undefined;
 
-/** Guarda inicio de la semana de pago y días de cierre del restaurante. */
-export async function updateSettings(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+/** Guarda un grupo de ajustes del restaurante (cada pantalla de Configuración, el suyo). */
+export async function updateSettings(group: SettingsGroup, _prev: SettingsState, formData: FormData): Promise<SettingsState> {
   await verifyAdmin();
-  const parsed = parseSettingsForm(formData);
+  if (!isSettingsGroup(group)) return { error: "Ajustes desconocidos." };
+  const parsed = parseSettingsGroup(formData, group);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  await db.appSettings.upsert({ where: { id: 1 }, update: parsed.data, create: { id: 1, ...parsed.data } });
+  await db.appSettings.upsert({
+    where: { id: 1 },
+    update: parsed.data,
+    create: { id: 1, payWeekStart: DEFAULT_PAY_WEEK_START, ...parsed.data },
+  });
   revalidatePath("/", "layout"); // afecta Hoy, Asistencia, Pagos y Reportes
-  return { success: "Ajustes guardados." };
+  return { success: "Guardado." };
 }
 
 /**

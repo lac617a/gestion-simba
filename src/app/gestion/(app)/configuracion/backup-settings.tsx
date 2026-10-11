@@ -62,7 +62,7 @@ export function BackupSettings({ email, lastSent, canEmail }: { email: string; l
           {lastSent ? `Último respaldo por correo: ${lastSent}` : "Todavía no se ha enviado ningún respaldo por correo."}
         </p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" render={<a href="/gestion/configuracion/respaldo" download />} nativeButton={false}>
+          <Button variant="outline" render={<a href="/gestion/configuracion/respaldos/descargar" download />} nativeButton={false}>
             <DownloadIcon /> Descargar respaldo
           </Button>
           {email && canEmail && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAccountForm, parseSettingsForm } from "./account";
+import { isSettingsGroup, parseAccountForm, parseSettingsForm, parseSettingsGroup } from "./account";
 import { EMAIL_RULE, IP_RULE, lockedMinutes, registerFailure } from "./throttle";
 
 const MIN = 60_000;
@@ -169,5 +169,36 @@ describe("parseSettingsForm", () => {
     expect(error(row(6, "22:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
     expect(error(row(6, "12:00", "12:00"))).toBe("Sábado: la hora de cierre debe ser después de la de apertura.");
     expect(error(row(6, "12:00", "25:00"))).toBe("Hora inválida");
+  });
+});
+
+describe("ajustes por grupo (cada pantalla de Configuración guarda lo suyo)", () => {
+  it("solo valida y devuelve los campos del grupo", () => {
+    // El formulario de "Semana de pago" no trae WhatsApp, correos ni horarios
+    const fd = new FormData();
+    fd.append("payWeekStart", "1");
+    fd.append("payDay", "2");
+    expect(parseSettingsGroup(fd, "semana-de-pago").data).toEqual({ payWeekStart: 1, payDay: 2 });
+
+    const reservas = parseSettingsGroup(settingsForm({ reminderEmail: " Simba@Gmail.com ", calendarEmail: "" }), "reservas");
+    expect(reservas.data).toEqual({ reminderEmail: "simba@gmail.com", calendarEmail: "" });
+
+    expect(parseSettingsGroup(settingsForm({ whatsapp: "301 216 8273", payDay: "9" }), "restaurante").data).toEqual({
+      whatsapp: "301 216 8273",
+    });
+  });
+
+  it("los errores son los del grupo", () => {
+    expect(parseSettingsGroup(settingsForm({ payDay: "8" }), "semana-de-pago").success).toBe(false);
+    expect(parseSettingsGroup(settingsForm({ whatsapp: "123" }), "restaurante").error?.issues[0].message).toMatch(/WhatsApp/);
+    const turnos = parseSettingsGroup(settingsForm({ shifts: [["11:00", "16:00"], ["15:00", "23:00"]] }), "turnos");
+    expect(turnos.error?.issues[0].message).toMatch(/turno de la tarde/);
+    expect(parseSettingsGroup(settingsForm({ hours: [["09:00", "08:00"]] }), "horario").success).toBe(false);
+  });
+
+  it("reconoce los grupos que existen", () => {
+    expect(isSettingsGroup("reservas")).toBe(true);
+    expect(isSettingsGroup("toString")).toBe(false);
+    expect(isSettingsGroup("otro")).toBe(false);
   });
 });
