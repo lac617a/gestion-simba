@@ -26,7 +26,8 @@ export function UnclosedWarning({ days, what }: { days: number; what: string }) 
   );
 }
 
-export function CsvButton({ href, label = "Exportar CSV" }: { href: string; label?: string }) {
+/** Descarga un archivo del reporte (CSV o PDF). */
+export function ExportButton({ href, label }: { href: string; label: string }) {
   return (
     <Button variant="outline" size="sm" render={<a href={href} download />} nativeButton={false}>
       <DownloadIcon />

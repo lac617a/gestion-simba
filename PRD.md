@@ -182,7 +182,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Por cada empleado: días trabajados, suma de pagos diarios, suma de propinas y **total a pagar** = pagos diarios + propinas.
 - Detalle por día al abrir un empleado (fecha, pago del día, propina).
 - Aviso si en el periodo hay días **sin cerrar** (sus pagos y propinas aún no cuentan).
-- Exportar a CSV.
+- Exportar a CSV (para Excel) o a **PDF** (la misma información en limpio: logo, periodo, avisos, totales y la tabla por empleado con lo pagado y lo que falta; para imprimir o mandar).
 
 ### RF-9 · Apertura diaria
 - El restaurante **abre de lunes a domingo** (decisión del 2026-09-28). Ya no existen días de cierre semanal ni **festivos** para abrir o cerrar: un festivo es un día normal con el horario de su día de la semana. (Los lunes festivos sí cambian la semana de pago: RF-26.)
@@ -458,6 +458,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F29 ✅ | Respaldos: correo diario con el archivo, descarga manual y comando para restaurar (RF-27). |
 | F30 ✅ | Configuración por secciones con menú lateral (lista en el celular) y versión visible (RF-10). |
 | F31 ✅ | Ocasiones de las reservas editables en Configuración, con Primera comunión (RF-14). |
+| F32 ✅ | Pagos: exportar a PDF (RF-8). |
 
 ## 11. Preguntas abiertas
 

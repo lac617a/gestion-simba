@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PeriodNav } from "@/components/period-nav";
-import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
+import { ExportButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { STATUS_LABEL } from "@/lib/attendance";
 import { SalesChart } from "@/components/sales-chart";
 import { CURRENCY, today } from "@/lib/config";
@@ -249,7 +249,7 @@ function Section({ id, title, csv, children }: { id: string; title: string; csv:
     <section id={id} className="grid scroll-mt-20 gap-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <CsvButton href={csv} label="CSV" />
+        <ExportButton href={csv} label="CSV" />
       </div>
       {children}
     </section>

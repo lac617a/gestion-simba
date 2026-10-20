@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 import { PayWeekNote } from "@/components/pay-week-note";
 import { PeriodNav } from "@/components/period-nav";
-import { CsvButton, Stat, UnclosedWarning } from "@/components/report-bits";
+import { ExportButton, Stat, UnclosedWarning } from "@/components/report-bits";
 import { APP_TIMEZONE, CURRENCY } from "@/lib/config";
 import { verifyAdmin } from "@/lib/dal";
 import { formatDateRange, formatDayShort } from "@/lib/dates";
@@ -35,7 +35,10 @@ export default async function PayrollPage({ searchParams }: PageProps<"/gestion/
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Pagos</h1>
-        <CsvButton href={periodHref("/gestion/pagos/csv", { desde: period.from, hasta: period.to })} />
+        <div className="flex gap-2">
+          <ExportButton href={periodHref("/gestion/pagos/pdf", { desde: period.from, hasta: period.to })} label="Exportar PDF" />
+          <ExportButton href={periodHref("/gestion/pagos/csv", { desde: period.from, hasta: period.to })} label="Exportar CSV" />
+        </div>
       </div>
 
       <PeriodNav baseHref="/gestion/pagos" period={period} presets={await periodPresets()} />

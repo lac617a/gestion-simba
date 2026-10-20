@@ -7,26 +7,31 @@ import { getPayCalendar } from "@/lib/settings";
 
 /**
  * Aviso cuando un lunes festivo cambió la semana de pago que se está mirando:
- * termina ese lunes y se paga el martes, o empieza el martes. Nada en semanas normales.
+ * termina ese lunes y se paga el martes, o empieza el martes. null en semanas normales.
  */
-export async function PayWeekNote({ week }: { week: Period }) {
+export async function payWeekNote(week: Period): Promise<string | null> {
   const cal = await getPayCalendar();
   if (!isPayWeek(week, cal)) return null;
   const { startsAfter, endsOn } = weekHolidays(week, cal);
   if (!startsAfter && !endsOn) return null;
 
+  return [
+    startsAfter && `Esta semana empieza el martes: el ${formatDayMonth(startsAfter)} fue festivo y quedó en la semana anterior.`,
+    endsOn &&
+      `El ${formatDayMonth(endsOn)} es festivo (${holidayOn(endsOn)}): la semana termina ese lunes y se paga el ${formatDayMonth(payDateOf(week, cal))}.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export async function PayWeekNote({ week }: { week: Period }) {
+  const note = await payWeekNote(week);
+  if (!note) return null;
+
   return (
     <p className="flex items-start gap-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
       <CalendarClockIcon className="mt-0.5 size-4 shrink-0" />
-      <span>
-        {startsAfter && <>Esta semana empieza el martes: el {formatDayMonth(startsAfter)} fue festivo y quedó en la semana anterior. </>}
-        {endsOn && (
-          <>
-            El {formatDayMonth(endsOn)} es festivo ({holidayOn(endsOn)}): la semana termina ese lunes y se paga el{" "}
-            {formatDayMonth(payDateOf(week, cal))}.
-          </>
-        )}
-      </span>
+      <span>{note}</span>
     </p>
   );
 }

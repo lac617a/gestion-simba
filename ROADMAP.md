@@ -48,7 +48,8 @@ _Última actualización: 2026-10-11_
 | T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | `06cf55d` |
 | F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | `a54dcc0` |
 | F30 · Configuración por secciones con menú lateral (v0.3.0) | ✅ sin publicar | `e1168be` |
-| F31 · Ocasiones de las reservas editables, con Primera comunión (v0.4.0) | ✅ sin publicar (tiene migración) | commit «F31: ocasiones de las reservas» |
+| F31 · Ocasiones de las reservas editables, con Primera comunión (v0.4.0) | ✅ sin publicar (tiene migración) | `d8f1a34` |
+| F32 · Pagos: exportar a PDF (v0.5.0) | ✅ sin publicar | commit «F32: Pagos en PDF» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -62,6 +63,7 @@ Cada cambio sube `"version"` en `package.json`, en el mismo commit (pedido del u
 | 0.2.0 | T3 migraciones automáticas al publicar · T4 revisión en cada push · F29 respaldos |
 | 0.3.0 | F30 Configuración por secciones con menú lateral; la versión se ve en Configuración |
 | 0.4.0 | F31 Ocasiones de las reservas editables en Configuración → Reservas (se agrega Primera comunión) |
+| 0.5.0 | F32 Pagos: botón «Exportar PDF» junto a «Exportar CSV» |
 
 **Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
@@ -96,6 +98,16 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F32 · Pagos en PDF (2026-10-20) ✅ · v0.5.0
+
+- Pedido del usuario: junto a «Exportar CSV», un «Exportar PDF» que se vea limpio (solo estética; nada de comprobantes ni nómina).
+- `@react-pdf/renderer` 4.9.0 (versión fija; Next lo deja fuera del bundle por defecto). Se arma en el servidor con `renderToBuffer`; Helvetica, sin fuentes que cargar.
+- `src/components/pdf/report-pdf.tsx`: base para cualquier reporte en PDF (logo, título, periodo, pie con fecha de generación, versión y "Página N de M"; `PdfStat`, `pdfResponse`). El logo se lee de `public/brand/simba-logo.png`; `outputFileTracingIncludes` en next.config lo sube con las rutas `/gestion/*/pdf`.
+- `/gestion/pagos/pdf?desde&hasta` (`payroll-pdf.tsx`): aviso de festivo (`payWeekNote`, ahora texto reutilizable), días sin cerrar, Total / Pagado / Por pagar y la tabla por empleado (Producción solo si hubo; Por pagar dice «Pagado» o «—»). El encabezado de la tabla se repite si pasa de hoja.
+- `CsvButton` → `ExportButton` (sirve para los dos).
+- Sin migración. Probado en e2e (semana, semana con festivo, periodo de 3 meses con producción, sin sesión → 307) y en modo producción (`start:e2e`), con el logo incluido.
+- Si gusta, el mismo PDF se puede agregar a cada sección de Reportes.
 
 ## F31 · Ocasiones de las reservas (2026-10-20) ✅ · v0.4.0
 
