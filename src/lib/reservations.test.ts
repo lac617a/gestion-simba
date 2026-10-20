@@ -5,6 +5,7 @@ import {
   occasionLabel,
   parseReservationForm,
   outsideHoursWarning,
+  OccasionsSchema,
   splitOccasion,
 } from "./reservations";
 
@@ -57,10 +58,26 @@ describe("formulario de reserva", () => {
 });
 
 describe("ocasión", () => {
-  it("splitOccasion", () => {
-    expect(splitOccasion(null)).toEqual({ choice: "", other: "" });
-    expect(splitOccasion("Aniversario")).toEqual({ choice: "Aniversario", other: "" });
-    expect(splitOccasion("Baby shower")).toEqual({ choice: "Otra", other: "Baby shower" });
+  it("splitOccasion: la de la lista va al selector; otra, al texto libre", () => {
+    const list = ["Aniversario", "Primera comunión"];
+    expect(splitOccasion(null, list)).toEqual({ choice: "", other: "" });
+    expect(splitOccasion("Aniversario", list)).toEqual({ choice: "Aniversario", other: "" });
+    expect(splitOccasion("Primera comunión", list)).toEqual({ choice: "Primera comunión", other: "" });
+    expect(splitOccasion("Baby shower", list)).toEqual({ choice: "Otra", other: "Baby shower" });
+    // La quitaron de la lista: la reserva vieja la conserva como texto libre
+    expect(splitOccasion("Grado", list)).toEqual({ choice: "Otra", other: "Grado" });
+  });
+
+  it("lista de ocasiones de Configuración", () => {
+    expect(OccasionsSchema.parse([" Cumpleaños ", "", "Primera comunión", "  "])).toEqual(["Cumpleaños", "Primera comunión"]);
+    expect(OccasionsSchema.parse([])).toEqual([]);
+    const error = (list: string[]) => OccasionsSchema.safeParse(list).error?.issues[0].message;
+    expect(error(["Grado", "grado"])).toBe("«grado» está repetida.");
+    expect(error(["Primera comunión", "Primera Comunion"])).toBe("«Primera Comunion» está repetida.");
+    expect(error(["Otra"])).toBe("«Otra» ya sale siempre en el selector.");
+    expect(error(["ninguna"])).toBe("«ninguna» ya sale siempre en el selector.");
+    expect(error(["x".repeat(61)])).toBe("Cada ocasión: máximo 60 caracteres");
+    expect(error(Array.from({ length: 31 }, (_, i) => `Ocasión ${i}`))).toBe("Máximo 30 ocasiones.");
   });
 
   it("occasionLabel", () => {

@@ -196,7 +196,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
   - **Horarios y turnos:** horario de atención (RF-13) y doble turno (RF-18).
   - **Puestos y pago diario:** puestos (RF-7) y pago de producción (RF-19).
   - **Semana de pago:** día de inicio de la semana, día de pago (RF-13) y lunes festivos (RF-26).
-  - **Reservas:** correo de recordatorios (RF-22) y Google Calendar (RF-23).
+  - **Reservas:** ocasiones del selector (agregar, renombrar, ordenar y quitar; RF-14), correo de recordatorios (RF-22) y Google Calendar (RF-23).
   - **Respaldos** (RF-27). **Usuarios** enlaza a sus pantallas (RF-21).
   - Los ajustes se guardan en la BD (tabla `AppSettings`); las variables de entorno solo son el valor inicial. Los usuarios de reservas solo ven "Mi cuenta".
 - **Límite de intentos de inicio de sesión:** 5 fallos desde la misma conexión en 15 min, o 20 contra el mismo correo en 1 h → bloqueo de 15 min. Un acceso correcto limpia los contadores. La respuesta no revela si el correo existe.
@@ -239,7 +239,7 @@ Filtro por rango de fechas (semana, quincena, mes o personalizado):
 - Con otra semana de pago (que no empiece el lunes) el festivo solo corre al martes el pago que caía ese lunes.
 
 ### RF-14 · Reservas
-- Pantalla **Reservas** en el menú. Cada reserva tiene: **fecha y hora**, **cantidad de personas**, **a nombre de** (quien reserva), **teléfono** (opcional), **ocasión** (opcional: Cumpleaños, Aniversario, Grado, Despedida, Reunión de trabajo, Pedida de mano u "Otra" con texto libre), **persona de la ocasión** (ej. el cumpleañero; solo si hay ocasión) y **observación**.
+- Pantalla **Reservas** en el menú. Cada reserva tiene: **fecha y hora**, **cantidad de personas**, **a nombre de** (quien reserva), **teléfono** (opcional), **ocasión** (opcional: una de la lista que se maneja en Configuración → Reservas —de entrada Cumpleaños, Aniversario, Grado, Primera comunión, Despedida, Reunión de trabajo y Pedida de mano— u "Otra" con texto libre; cambiar la lista no toca las reservas guardadas), **persona de la ocasión** (ej. el cumpleañero; solo si hay ocasión) y **observación**.
 - Dos pestañas, agrupadas por día con total de reservas y personas (el encabezado del día queda fijo al bajar):
   - **Próximas** (desde hoy), con un resumen arriba: hoy, mañana y los próximos 7 días (reservas y personas, sin canceladas).
   - **Historial**: reservas de un periodo (semana, quincena, mes u otras fechas; por defecto el mes actual) **hasta hoy**, de la más reciente hacia atrás, con resumen: reservas, personas, llegaron (% de las marcadas), no vinieron y canceladas, y aviso de las que siguen **sin marcar** con enlace para verlas.
@@ -457,6 +457,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | T4 ✅ | Lint, pruebas, migraciones desde cero y build en cada push (GitHub Actions). |
 | F29 ✅ | Respaldos: correo diario con el archivo, descarga manual y comando para restaurar (RF-27). |
 | F30 ✅ | Configuración por secciones con menú lateral (lista en el celular) y versión visible (RF-10). |
+| F31 ✅ | Ocasiones de las reservas editables en Configuración, con Primera comunión (RF-14). |
 
 ## 11. Preguntas abiertas
 

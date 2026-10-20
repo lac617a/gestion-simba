@@ -77,8 +77,10 @@ function settingsForm(fields: {
   calendarEmail?: string;
   doubleShift?: string[];
   shifts?: [string, string][];
+  occasions?: string[];
 }) {
   const fd = new FormData();
+  for (const o of fields.occasions ?? ["Cumpleaños", "Primera comunión"]) fd.append("occasions", o);
   for (const d of fields.doubleShift ?? ["0", "6"]) fd.append("doubleShiftWeekdays", d);
   (fields.shifts ?? [["11:00", "16:00"], ["17:30", "23:30"]]).forEach(([open, close], i) => {
     fd.append(`shiftOpen${i}`, open);
@@ -107,6 +109,7 @@ describe("parseSettingsForm", () => {
       calendarEmail: "simbaparrilla1@gmail.com",
       doubleShiftWeekdays: [0, 6],
       shiftHours: ["11:00-16:00", "17:30-23:30"],
+      occasions: ["Cumpleaños", "Primera comunión"],
     });
     expect(parseSettingsForm(settingsForm({ payWeekStart: "0", payDay: "0" })).data).toMatchObject({
       payWeekStart: 0,
@@ -186,6 +189,9 @@ describe("ajustes por grupo (cada pantalla de Configuración guarda lo suyo)", (
     expect(parseSettingsGroup(settingsForm({ whatsapp: "301 216 8273", payDay: "9" }), "restaurante").data).toEqual({
       whatsapp: "301 216 8273",
     });
+
+    const ocasiones = parseSettingsGroup(settingsForm({ occasions: ["Grado", " ", "Bautizo "] }), "ocasiones");
+    expect(ocasiones.data).toEqual({ occasions: ["Grado", "Bautizo"] });
   });
 
   it("los errores son los del grupo", () => {
@@ -194,6 +200,9 @@ describe("ajustes por grupo (cada pantalla de Configuración guarda lo suyo)", (
     const turnos = parseSettingsGroup(settingsForm({ shifts: [["11:00", "16:00"], ["15:00", "23:00"]] }), "turnos");
     expect(turnos.error?.issues[0].message).toMatch(/turno de la tarde/);
     expect(parseSettingsGroup(settingsForm({ hours: [["09:00", "08:00"]] }), "horario").success).toBe(false);
+    expect(parseSettingsGroup(settingsForm({ occasions: ["Grado", "GRADO"] }), "ocasiones").error?.issues[0].message).toMatch(
+      /repetida/
+    );
   });
 
   it("reconoce los grupos que existen", () => {

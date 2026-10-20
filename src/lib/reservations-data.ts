@@ -128,6 +128,7 @@ export async function getReservationFormContext() {
     now: nowLocal(),
     timeZone: APP_TIMEZONE,
     openingHours: settings.openingHours,
+    occasions: settings.occasions,
     /** Días de los botones rápidos marcados como cerrados */
     closedDates: closed.map((c) => dateToISO(c.date)),
   };

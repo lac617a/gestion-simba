@@ -186,6 +186,7 @@ export default async function HomePage() {
               today={date}
               timeZone={APP_TIMEZONE}
               openingHours={settings.openingHours}
+              occasions={settings.occasions}
             />
           ) : (
             <p className="rounded-2xl bg-simba-cream p-6 text-simba-forest">

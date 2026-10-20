@@ -9,7 +9,7 @@ export const SETTINGS_SECTIONS = [
   { slug: "horarios", title: "Horarios y turnos", description: "Horario de atención y días con doble turno." },
   { slug: "puestos", title: "Puestos y pago diario", description: "Los puestos, lo que gana cada uno por día y la producción." },
   { slug: "semana-de-pago", title: "Semana de pago", description: "Cuándo empieza la semana, cuándo se paga y los lunes festivos." },
-  { slug: "reservas", title: "Reservas", description: "Correo de recordatorios y Google Calendar." },
+  { slug: "reservas", title: "Reservas", description: "Ocasiones, correo de recordatorios y Google Calendar." },
   { slug: "respaldos", title: "Respaldos", description: "Copia de los datos: por correo cada mañana o para descargar." },
 ] as const;
 

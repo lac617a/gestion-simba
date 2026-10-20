@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { whatsappNumber } from "@/lib/reservations";
+import { OccasionsSchema, whatsappNumber } from "@/lib/reservations";
 
 export const MIN_PASSWORD = 10;
 
@@ -98,6 +98,7 @@ export const SettingsSchema = z.object({
   // Vacío = sin recordatorios por correo
   reminderEmail: z.union([z.literal(""), z.email({ error: "Correo de recordatorios inválido" })]),
   calendarEmail: z.union([z.literal(""), z.email({ error: "Correo del calendario inválido" })]),
+  occasions: OccasionsSchema,
 });
 
 function readSettingsForm(formData: FormData) {
@@ -111,6 +112,7 @@ function readSettingsForm(formData: FormData) {
     doubleShiftWeekdays: formData.getAll("doubleShiftWeekdays"),
     shiftHours: [0, 1].map((i) => ({ open: get(`shiftOpen${i}`), close: get(`shiftClose${i}`) })),
     openingHours: HOURS_ROWS.map((_, i) => ({ open: get(`open${i}`), close: get(`close${i}`) })),
+    occasions: formData.getAll("occasions").map(String),
   };
 }
 
@@ -129,6 +131,7 @@ export const SETTINGS_GROUPS = {
   turnos: { doubleShiftWeekdays: true, shiftHours: true },
   "semana-de-pago": { payWeekStart: true, payDay: true },
   reservas: { reminderEmail: true, calendarEmail: true },
+  ocasiones: { occasions: true },
 } as const satisfies Record<string, Partial<Record<keyof z.input<typeof SettingsSchema>, true>>>;
 
 export type SettingsGroup = keyof typeof SETTINGS_GROUPS;

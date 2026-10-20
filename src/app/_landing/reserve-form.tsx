@@ -6,7 +6,7 @@ import { localNow, type LocalNow } from "@/lib/dates";
 import { formatTime } from "@/lib/hours";
 import { reservationRequestMessage } from "@/lib/public-site";
 import { hoursOn, isPastSlot, timeSlots } from "@/lib/reservation-slots";
-import { OCCASIONS, OTHER_OCCASION, whatsappHref } from "@/lib/reservations";
+import { OTHER_OCCASION, whatsappHref } from "@/lib/reservations";
 
 const FIELD =
   "h-11 w-full min-w-0 rounded-lg border border-simba-forest/20 bg-white px-3 text-base text-simba-forest outline-none placeholder:text-simba-forest/40 focus-visible:border-simba-rust focus-visible:ring-3 focus-visible:ring-simba-rust/25";
@@ -22,13 +22,15 @@ type Props = {
   timeZone: string;
   /** Horario por día de la semana (Configuración) */
   openingHours: string[];
+  /** Ocasiones del selector (Configuración → Reservas) */
+  occasions: string[];
 };
 
 /**
  * La reserva NO se guarda en el sistema: arma el mensaje y abre el WhatsApp del
  * restaurante; allí la confirman y el empleado la anota en /gestion/reservas.
  */
-export function ReserveForm({ whatsapp, restaurant, today, timeZone, openingHours }: Props) {
+export function ReserveForm({ whatsapp, restaurant, today, timeZone, openingHours, occasions }: Props) {
   const [occasion, setOccasion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState(today);
@@ -149,7 +151,7 @@ export function ReserveForm({ whatsapp, restaurant, today, timeZone, openingHour
             className={FIELD}
           >
             <option value="">Ninguna</option>
-            {OCCASIONS.map((o) => (
+            {occasions.map((o) => (
               <option key={o} value={o}>
                 {o}
               </option>

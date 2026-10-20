@@ -1,11 +1,25 @@
 import * as z from "zod";
 import type { ReservationStatus } from "@/generated/prisma/enums";
+import { searchKey } from "@/lib/attendance";
 import { addDays, formatDayMonth, type ISODate } from "@/lib/dates";
 import { formatHours, formatTime, type OpeningHours } from "@/lib/hours";
 
-/** Ocasiones frecuentes para el selector; "Otra" deja escribir cualquiera. */
-export const OCCASIONS = ["Cumpleaños", "Aniversario", "Grado", "Despedida", "Reunión de trabajo", "Pedida de mano"];
+/**
+ * Ocasiones del selector mientras no se cambien en Configuración → Reservas.
+ * "Ninguna" y "Otra" (texto libre) siempre salen, aparte de la lista.
+ */
+export const DEFAULT_OCCASIONS = [
+  "Cumpleaños",
+  "Aniversario",
+  "Grado",
+  "Primera comunión",
+  "Despedida",
+  "Reunión de trabajo",
+  "Pedida de mano",
+];
 export const OTHER_OCCASION = "Otra";
+export const MAX_OCCASIONS = 30;
+const OCCASION_MAX_LENGTH = 60;
 
 export const RESERVATION_STATUS_LABEL: Record<ReservationStatus, string> = {
   CONFIRMED: "Confirmada",
@@ -47,7 +61,7 @@ export const ReservationSchema = z
       .max(MAX_PARTY_SIZE, { error: `Máximo ${MAX_PARTY_SIZE} personas` }),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Elige la fecha" }),
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: "Elige la hora" }),
-    occasion: optionalText(60),
+    occasion: optionalText(OCCASION_MAX_LENGTH),
     honoree: optionalText(80),
     note: optionalText(500),
   })
@@ -73,11 +87,35 @@ export function parseReservationForm(formData: FormData) {
   });
 }
 
-/** Separa una ocasión guardada en selector + texto libre, para el formulario. */
-export function splitOccasion(occasion: string | null) {
+/**
+ * Separa una ocasión guardada en selector + texto libre, para el formulario. Una que
+ * ya no está en la lista (la quitaron o le cambiaron el nombre) queda como "Otra".
+ */
+export function splitOccasion(occasion: string | null, occasions: string[]) {
   if (!occasion) return { choice: "", other: "" };
-  return OCCASIONS.includes(occasion) ? { choice: occasion, other: "" } : { choice: OTHER_OCCASION, other: occasion };
+  return occasions.includes(occasion) ? { choice: occasion, other: "" } : { choice: OTHER_OCCASION, other: occasion };
 }
+
+/**
+ * La lista de ocasiones de Configuración: sin filas vacías, sin repetidas (sin importar
+ * mayúsculas ni tildes) y sin "Ninguna" ni "Otra", que el selector ya trae.
+ */
+export const OccasionsSchema = z
+  .array(z.string().trim().max(OCCASION_MAX_LENGTH, { error: `Cada ocasión: máximo ${OCCASION_MAX_LENGTH} caracteres` }))
+  .transform((list) => list.filter(Boolean))
+  .superRefine((list, ctx) => {
+    if (list.length > MAX_OCCASIONS) ctx.addIssue({ code: "custom", message: `Máximo ${MAX_OCCASIONS} ocasiones.` });
+    const seen = new Set<string>();
+    for (const o of list) {
+      const key = searchKey(o);
+      if (key === "ninguna" || key === searchKey(OTHER_OCCASION)) {
+        ctx.addIssue({ code: "custom", message: `«${o}» ya sale siempre en el selector.` });
+      } else if (seen.has(key)) {
+        ctx.addIssue({ code: "custom", message: `«${o}» está repetida.` });
+      }
+      seen.add(key);
+    }
+  });
 
 /** "Cumpleaños de Laura", "Aniversario", null */
 export function occasionLabel(occasion: string | null, honoree: string | null) {

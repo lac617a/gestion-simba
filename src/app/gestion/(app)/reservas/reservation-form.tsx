@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { localNow, type ISODate, type LocalNow } from "@/lib/dates";
 import { formatHours, formatTime } from "@/lib/hours";
 import { hoursOn, isPastSlot, quickDateLabel, quickDates, timeSlots } from "@/lib/reservation-slots";
-import { MAX_PARTY_SIZE, OCCASIONS, OTHER_OCCASION, outsideHoursWarning } from "@/lib/reservations";
+import { MAX_PARTY_SIZE, OTHER_OCCASION, outsideHoursWarning } from "@/lib/reservations";
 import type { ReservationFormContext } from "@/lib/reservations-data";
 import { cn } from "@/lib/utils";
 
@@ -288,7 +288,7 @@ function Fields({
             className={`${FIELD_CLASS} h-8`}
           >
             <option value="">Ninguna</option>
-            {OCCASIONS.map((o) => (
+            {context.occasions.map((o) => (
               <option key={o} value={o}>
                 {o}
               </option>

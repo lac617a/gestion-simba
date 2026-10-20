@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { updateSettings, type SettingsState } from "@/app/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import type { SettingsGroup } from "@/lib/account";
 import { WEEKDAYS, WEEKDAYS_SHORT, weekdayPlural } from "@/lib/employees";
 import { parseHours } from "@/lib/hours";
+import { MAX_OCCASIONS } from "@/lib/reservations";
 
 const SELECT_CLASS =
   "h-9 w-full max-w-48 rounded-lg border bg-background px-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -24,6 +26,7 @@ const SAVE: Record<SettingsGroup, (prev: SettingsState, formData: FormData) => P
   turnos: updateSettings.bind(null, "turnos"),
   "semana-de-pago": updateSettings.bind(null, "semana-de-pago"),
   reservas: updateSettings.bind(null, "reservas"),
+  ocasiones: updateSettings.bind(null, "ocasiones"),
 };
 
 /** Formulario de un grupo: guarda, avisa y muestra el error. `resetKey` lo remonta con lo que llega del servidor. */
@@ -101,6 +104,91 @@ export function ReservationEmailsForm({ reminderEmail, calendarEmail }: { remind
         </p>
       </div>
     </GroupForm>
+  );
+}
+
+/** Ocasiones del selector de las reservas: agregar, renombrar, ordenar y quitar. */
+export function OccasionsForm({ occasions }: { occasions: string[] }) {
+  return (
+    <GroupForm group="ocasiones" resetKey={occasions.join("|")}>
+      <OccasionRows initial={occasions} />
+    </GroupForm>
+  );
+}
+
+function OccasionRows({ initial }: { initial: string[] }) {
+  const [rows, setRows] = useState(() => initial.map((name, i) => ({ key: i, name })));
+  const [added, setAdded] = useState<number | null>(null);
+  const set = (key: number, name: string) => setRows((r) => r.map((row) => (row.key === key ? { ...row, name } : row)));
+  const move = (i: number, to: number) =>
+    setRows((r) => {
+      const next = [...r];
+      [next[i], next[to]] = [next[to], next[i]];
+      return next;
+    });
+  const add = () => {
+    const key = Math.max(-1, ...rows.map((r) => r.key)) + 1;
+    setRows((r) => [...r, { key, name: "" }]);
+    setAdded(key);
+  };
+
+  return (
+    <div className="grid gap-3">
+      <ol className="grid gap-2">
+        {rows.map((r, i) => (
+          <li key={r.key} className="flex items-center gap-1">
+            <Input
+              name="occasions"
+              value={r.name}
+              onChange={(e) => set(r.key, e.target.value)}
+              placeholder="Ej. Bautizo"
+              aria-label={`Ocasión ${i + 1}`}
+              maxLength={60}
+              autoFocus={r.key === added}
+              className="mr-1 max-w-72 flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Subir ${r.name || "ocasión"}`}
+              disabled={i === 0}
+              onClick={() => move(i, i - 1)}
+            >
+              <ArrowUpIcon />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Bajar ${r.name || "ocasión"}`}
+              disabled={i === rows.length - 1}
+              onClick={() => move(i, i + 1)}
+            >
+              <ArrowDownIcon />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Quitar ${r.name || "ocasión"}`}
+              onClick={() => setRows((all) => all.filter((x) => x.key !== r.key))}
+            >
+              <Trash2Icon />
+            </Button>
+          </li>
+        ))}
+      </ol>
+      {rows.length < MAX_OCCASIONS && (
+        <Button type="button" variant="outline" size="sm" className="justify-self-start" onClick={add}>
+          <PlusIcon /> Agregar ocasión
+        </Button>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Salen en este orden en el formulario de reservas y en la página pública, entre “Ninguna” y “Otra…” (que deja
+        escribir cualquiera). Cambiar o quitar una no toca las reservas ya guardadas.
+      </p>
+    </div>
   );
 }
 

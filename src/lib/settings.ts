@@ -14,6 +14,7 @@ import {
 import { db } from "@/lib/db";
 import { fromDecimal } from "@/lib/money";
 import { payCalendar } from "@/lib/payday";
+import { DEFAULT_OCCASIONS } from "@/lib/reservations";
 
 export type AppSettings = {
   payWeekStart: number;
@@ -37,6 +38,8 @@ export type AppSettings = {
   reminderEmail: string;
   /** Correo al que se mandan las reservas como invitación de calendario; "" = sin calendario */
   calendarEmail: string;
+  /** Ocasiones del selector de las reservas, en orden (sin "Ninguna" ni "Otra") */
+  occasions: string[];
   /** Correo que recibe cada mañana el respaldo de todos los datos; "" = sin respaldo por correo */
   backupEmail: string;
   /** Cuándo salió el último respaldo por correo */
@@ -60,6 +63,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         productionPay: fromDecimal(row.productionPay, CURRENCY.decimals)!,
         reminderEmail: row.reminderEmail,
         calendarEmail: row.calendarEmail,
+        occasions: row.occasions,
         backupEmail: row.backupEmail,
         lastBackupAt: row.lastBackupAt,
       }
@@ -76,6 +80,7 @@ export const getSettings = cache(async (): Promise<AppSettings> => {
         productionPay: DEFAULT_PRODUCTION_PAY * 10 ** CURRENCY.decimals,
         reminderEmail: DEFAULT_REMINDER_EMAIL,
         calendarEmail: DEFAULT_CALENDAR_EMAIL,
+        occasions: DEFAULT_OCCASIONS,
         backupEmail: "",
         lastBackupAt: null,
       };

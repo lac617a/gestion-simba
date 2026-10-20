@@ -49,7 +49,7 @@ export default async function EditReservationPage({ params }: PageProps<"/gestio
     getReservationLog(id),
   ]);
   if (!r) notFound();
-  const occasion = splitOccasion(r.occasion);
+  const occasion = splitOccasion(r.occasion, context.occasions);
   const reminder = reminderLabel(r, settings.reminderEmail);
 
   return (

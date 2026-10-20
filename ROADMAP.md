@@ -47,7 +47,8 @@ _Última actualización: 2026-10-11_
 | T3 · Migraciones automáticas al publicar | ✅ sin publicar (falta `DIRECT_URL` en Vercel) | `3bfe14d` |
 | T4 · Revisión automática en cada push (GitHub Actions) | ✅ sin publicar | `06cf55d` |
 | F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | `a54dcc0` |
-| F30 · Configuración por secciones con menú lateral (v0.3.0) | ✅ sin publicar | commit «F30: Configuración por secciones» |
+| F30 · Configuración por secciones con menú lateral (v0.3.0) | ✅ sin publicar | `e1168be` |
+| F31 · Ocasiones de las reservas editables, con Primera comunión (v0.4.0) | ✅ sin publicar (tiene migración) | commit «F31: ocasiones de las reservas» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -60,6 +61,7 @@ Cada cambio sube `"version"` en `package.json`, en el mismo commit (pedido del u
 | 0.1.0 | Todo hasta F28 (lunes festivos) |
 | 0.2.0 | T3 migraciones automáticas al publicar · T4 revisión en cada push · F29 respaldos |
 | 0.3.0 | F30 Configuración por secciones con menú lateral; la versión se ve en Configuración |
+| 0.4.0 | F31 Ocasiones de las reservas editables en Configuración → Reservas (se agrega Primera comunión) |
 
 **Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
@@ -94,6 +96,15 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F31 · Ocasiones de las reservas (2026-10-20) ✅ · v0.4.0
+
+- Pedido del usuario: agregar "Primera comunión" al selector de ocasión, mejor si se maneja desde el administrador.
+- `AppSettings.occasions` (migración `ocasiones`): la lista en orden. La migración la crea con las de antes más **Primera comunión** (después de Grado), así que sale apenas se aplica, sin tocar nada.
+- Configuración → Reservas → **Ocasiones**: agregar, cambiar el nombre, subir/bajar y quitar (`OccasionsForm`, grupo `ocasiones` de `updateSettings`). `OccasionsSchema` (reservations.ts, con pruebas) quita filas vacías, no deja repetidas (sin importar mayúsculas ni tildes) ni "Ninguna"/"Otra", máximo 30.
+- La usan el formulario de reservas (`getReservationFormContext().occasions`) y el de la página pública. "Ninguna" y "Otra…" siempre salen.
+- Las reservas guardan el texto de la ocasión: cambiar o quitar una no toca las guardadas; al editar una reserva cuya ocasión ya no está en la lista, sale como "Otra" con su texto (`splitOccasion(occasion, occasions)`).
+- Probado en e2e: agregar, ordenar, quitar y guardar; la lista nueva en Nueva reserva y en la página pública; error de repetida; celular sin desborde.
 
 ## F30 · Configuración por secciones (2026-10-11) ✅ · v0.3.0
 
