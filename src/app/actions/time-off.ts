@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import { initialStatus, parseTimeOffForm, TIME_OFF_LABEL, type TimeOffFieldErrors } from "@/lib/attendance";
-import { verifyAdmin } from "@/lib/dal";
+import { verifyAttendance } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { dateToISO, isoToDate } from "@/lib/dates";
 
@@ -28,7 +28,7 @@ export async function createTimeOff(
   _prev: TimeOffFormState,
   formData: FormData
 ): Promise<TimeOffFormState> {
-  await verifyAdmin();
+  await verifyAttendance();
   const parsed = parseTimeOffForm(formData);
   if (!parsed.success) {
     return { errors: z.flattenError(parsed.error).fieldErrors, values: submittedValues(formData) };
@@ -63,7 +63,7 @@ export async function createTimeOff(
  * estado, se recalcula el estado inicial (descanso fijo, otro día libre o pendiente).
  */
 export async function deleteTimeOff(id: string) {
-  await verifyAdmin();
+  await verifyAttendance();
   const timeOff = await db.timeOff.findUnique({ where: { id } });
   if (!timeOff) return;
 

@@ -13,6 +13,8 @@ enum UserRole {
   ADMIN
   /// Solo reservas (y su propia cuenta)
   RESERVATIONS
+  /// Solo asistencia y días libres de los empleados, sin nada de plata (y su propia cuenta)
+  ATTENDANCE
 }
 
 model User {

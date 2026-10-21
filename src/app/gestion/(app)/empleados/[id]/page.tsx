@@ -6,7 +6,7 @@ import { updateEmployee } from "@/app/actions/employees";
 import { Badge } from "@/components/ui/badge";
 import { ViewTabs } from "@/components/view-tabs";
 import { db } from "@/lib/db";
-import { verifyAdmin } from "@/lib/dal";
+import { isAdmin, verifyAttendance } from "@/lib/dal";
 import { dateToISO, formatShortDate } from "@/lib/dates";
 import { formatRestDays } from "@/lib/employees";
 import { getPositionOptions } from "@/lib/job-positions-data";
@@ -21,14 +21,17 @@ const getEmployee = cache((id: string) =>
 );
 
 export async function generateMetadata({ params }: PageProps<"/gestion/empleados/[id]">): Promise<Metadata> {
-  await verifyAdmin();
+  await verifyAttendance();
   const employee = await getEmployee((await params).id);
   return { title: `${employee?.name ?? "Empleado"} · Gestión Simba` };
 }
 
-/** Ficha del empleado: su historial por semana de pago (asistencia, lo ganado y los pagos) y sus datos. */
+/**
+ * Ficha del empleado: su historial por semana de pago (asistencia, lo ganado y los pagos) y sus datos.
+ * Un usuario de asistencia solo ve sus días libres (el historial trae plata).
+ */
 export default async function EmployeePage({ params, searchParams }: PageProps<"/gestion/empleados/[id]">) {
-  await verifyAdmin();
+  const admin = isAdmin(await verifyAttendance());
   const { id } = await params;
   const [employee, { ver, semana }] = await Promise.all([getEmployee(id), loadEmployeeProfile(searchParams)]);
   if (!employee) notFound();
@@ -50,19 +53,22 @@ export default async function EmployeePage({ params, searchParams }: PageProps<"
         <p className="text-sm text-muted-foreground">{details.join(" · ")}</p>
       </div>
 
-      <ViewTabs
-        label="Qué ver"
-        current={ver}
-        tabs={[
-          { key: "historial", label: "Historial", icon: CalendarDaysIcon, href: tabHref("historial") },
-          { key: "datos", label: "Datos", icon: UserPenIcon, href: tabHref("datos") },
-        ]}
-      />
-
-      {ver === "historial" ? (
-        <EmployeeHistory employee={employee} date={semana} />
+      {admin ? (
+        <>
+          <ViewTabs
+            label="Qué ver"
+            current={ver}
+            tabs={[
+              { key: "historial", label: "Historial", icon: CalendarDaysIcon, href: tabHref("historial") },
+              { key: "datos", label: "Datos", icon: UserPenIcon, href: tabHref("datos") },
+            ]}
+          />
+          {ver === "historial" ? <EmployeeHistory employee={employee} date={semana} /> : <EmployeeData employee={employee} />}
+        </>
+      ) : employee.active ? (
+        <TimeOffSection employeeId={employee.id} />
       ) : (
-        <EmployeeData employee={employee} />
+        <p className="text-sm text-muted-foreground">Está dado de baja: no aparece en la asistencia.</p>
       )}
     </div>
   );

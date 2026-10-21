@@ -35,8 +35,11 @@ const SECONDARY: NavLink[] = [
   { href: "/gestion/empleados", label: "Empleados", icon: UsersIcon },
 ];
 
-/** Usuarios de reservas: solo su sección. */
-const RESERVATIONS_ONLY: NavLink[] = [PRIMARY[2]];
+/** Usuarios que no son administradores: solo sus secciones. */
+const LIMITED: Record<Exclude<UserRole, "ADMIN">, NavLink[]> = {
+  RESERVATIONS: [PRIMARY[2]],
+  ATTENDANCE: [PRIMARY[1], SECONDARY[3]],
+};
 
 function useIsActive() {
   const pathname = usePathname();
@@ -88,7 +91,7 @@ export function NavLinks({ role }: { role: UserRole }) {
   if (role !== "ADMIN") {
     return (
       <nav className="flex items-center gap-1 text-sm">
-        {RESERVATIONS_ONLY.map((link) => (
+        {LIMITED[role].map((link) => (
           <Link
             key={link.href}
             href={link.href}

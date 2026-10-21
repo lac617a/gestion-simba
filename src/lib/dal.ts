@@ -38,6 +38,18 @@ export async function verifyAdmin() {
   return user;
 }
 
+/**
+ * Asistencia y días libres: administradores y usuarios de asistencia. Los de
+ * asistencia no ven plata: cada pantalla quita ventas, propinas y pagos (ver `isAdmin`).
+ */
+export async function verifyAttendance() {
+  const user = await verifyUser();
+  if (user.role !== "ADMIN" && user.role !== "ATTENDANCE") redirect(homeFor(user.role));
+  return user;
+}
+
+export const isAdmin = (user: SessionUser) => user.role === "ADMIN";
+
 /** Reservas: administradores y usuarios de reservas. */
 export async function verifyReservations() {
   const user = await verifyUser();

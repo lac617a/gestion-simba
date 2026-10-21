@@ -2,21 +2,24 @@ import * as z from "zod";
 import type { UserRole } from "@/generated/prisma/enums";
 import { passwordIssue } from "@/lib/account";
 
-export const ROLES = ["ADMIN", "RESERVATIONS"] as const satisfies readonly UserRole[];
+export const ROLES = ["ADMIN", "RESERVATIONS", "ATTENDANCE"] as const satisfies readonly UserRole[];
 
 export const ROLE_LABEL: Record<UserRole, string> = {
   ADMIN: "Administrador",
   RESERVATIONS: "Reservas",
+  ATTENDANCE: "Asistencia",
 };
 
 export const ROLE_DESCRIPTION: Record<UserRole, string> = {
   ADMIN: "Todo: asistencia, cierres, pagos, reportes, empleados, reservas y configuración.",
   RESERVATIONS: "Solo reservas: verlas, anotarlas, editarlas, marcar si llegaron y confirmar por WhatsApp.",
+  ATTENDANCE:
+    "Solo asistencia: marcar quién trabajó, turnos, cerrar o abrir un día y asignar días libres. No ve ventas, propinas ni pagos, ni cierra el día.",
 };
 
 /** Pantalla de inicio de cada rol (a donde va al entrar). */
 export function homeFor(role: UserRole) {
-  return role === "ADMIN" ? "/gestion" : "/gestion/reservas";
+  return { ADMIN: "/gestion", RESERVATIONS: "/gestion/reservas", ATTENDANCE: "/gestion/asistencia" }[role];
 }
 
 /** Nombre para mostrar: el admin inicial no tiene nombre, se usa su correo. */

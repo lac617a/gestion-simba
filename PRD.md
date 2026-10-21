@@ -123,11 +123,15 @@ Los empleados **no** tienen acceso al sistema en el MVP.
 
 ### RF-21 · Usuarios y roles
 - **Configuración → Usuarios** (`/gestion/usuarios`, solo administradores): lista, crear y editar usuarios con **nombre**, **correo**, **rol** y contraseña.
-- Roles: **Administrador** (todo) y **Reservas** (solo Reservas: ver, anotar, editar, cancelar, eliminar, marcar Llegó/No vino y confirmar por WhatsApp).
+- Roles: **Administrador** (todo), **Reservas** (solo Reservas: ver, anotar, editar, cancelar, eliminar, marcar Llegó/No vino y confirmar por WhatsApp) y **Asistencia** (solo asistencia, sin nada de plata; ver abajo).
 - La contraseña inicial la escribe el administrador y se la comparte a la persona; ella la cambia en **Mi cuenta**. Al editar, el administrador puede poner una contraseña nueva (se cierra la sesión de esa persona en todos lados).
 - **Desactivar / activar** un usuario: el desactivado no puede entrar y su sesión se cierra de inmediato; no se borra (queda en el historial, ej. "Registrada por"). Al entrar con la contraseña correcta se le dice que está desactivado.
 - Un administrador no puede cambiar su propio rol ni desactivarse (así siempre queda al menos uno). Sobre sí mismo solo cambia el nombre ahí; su correo y contraseña, en Configuración → Mi cuenta.
 - Un usuario de Reservas ve solo **Reservas** en el menú y **Mi cuenta** (correo, contraseña, cerrar otras sesiones); cualquier otra dirección de la administración lo lleva a Reservas. Al entrar va directo a Reservas.
+- Un usuario de **Asistencia** ve en el menú **Asistencia** y **Empleados**, más **Mi cuenta**; al entrar va directo a Asistencia y cualquier otra dirección lo lleva ahí.
+  - Puede: marcar la asistencia (estados, turnos, notas, "marcar pendientes como Trabajó"), poner o quitar el doble turno, marcar un día como cerrado o abrirlo, y asignar o quitar días libres (descanso extra / vacaciones) desde la ficha del empleado.
+  - No puede: cerrar ni reabrir el día ni el turno de la mañana (venta, gastos, propinas y pago del día son del administrador), ni crear, editar o dar de baja empleados, ni Producción.
+  - No ve plata: la asistencia le llega sin el cierre ni las tarifas (ni siquiera ocultas); un día cerrado lo ve de solo lectura con el aviso de que lo cerró el administrador; la ficha del empleado solo muestra sus días libres (el historial trae pagos).
 - Cada reserva guarda **quién la registró** ("Registrada por … el …" al editarla).
 - El rol se comprueba en el servidor en cada página, acción y descarga (no solo se oculta el menú); un cambio de rol aplica de inmediato.
 
@@ -459,6 +463,7 @@ Estado detallado, siguiente tarea y cómo retomar: ver [ROADMAP.md](ROADMAP.md).
 | F30 ✅ | Configuración por secciones con menú lateral (lista en el celular) y versión visible (RF-10). |
 | F31 ✅ | Ocasiones de las reservas editables en Configuración, con Primera comunión (RF-14). |
 | F32 ✅ | Pagos: exportar a PDF (RF-8). |
+| F33 ✅ | Rol Asistencia: marcar asistencia y días libres sin ver plata (RF-21). |
 
 ## 11. Preguntas abiertas
 

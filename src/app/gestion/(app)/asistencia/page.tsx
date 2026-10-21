@@ -3,12 +3,12 @@ import Link from "next/link";
 import { CalendarClockIcon } from "lucide-react";
 import { closeDay, closeMorningShift, reopenDay, reopenMorningShift } from "@/app/actions/closing";
 import { APP_TIMEZONE, CURRENCY, today } from "@/lib/config";
-import { verifyAdmin } from "@/lib/dal";
+import { isAdmin, verifyAttendance } from "@/lib/dal";
 import { formatLongDate } from "@/lib/dates";
 import { formatHours, hoursFor, parseHours } from "@/lib/hours";
 import { loadDay } from "@/lib/search-params";
 import { getSettings } from "@/lib/settings";
-import { getDayView } from "@/lib/workdays";
+import { getDayView, type DayView } from "@/lib/workdays";
 import { AttendanceList } from "./attendance-list";
 import { ClosedSummary } from "./closed-summary";
 import { DateNav } from "./date-nav";
@@ -23,12 +23,24 @@ const closedAtFormat = new Intl.DateTimeFormat("es-CO", {
   timeStyle: "short",
 });
 
+/**
+ * Lo que ve un usuario de asistencia: la misma lista sin plata. El cierre (venta,
+ * gastos, propinas y pago del día) es del administrador y no llega a su navegador.
+ */
+const withoutMoney = (view: DayView): DayView => ({
+  ...view,
+  closing: null,
+  rows: view.rows.map((r) => ({ ...r, dailyPay: null, payRate: null })),
+});
+
 export default async function AttendancePage({ searchParams }: PageProps<"/gestion/asistencia">) {
-  await verifyAdmin();
+  const user = await verifyAttendance();
+  const admin = isAdmin(user);
   const { fecha } = await loadDay(searchParams);
   const todayIso = today();
   const date = fecha ?? todayIso;
-  const [view, settings] = await Promise.all([getDayView(date), getSettings()]);
+  const [fullView, settings] = await Promise.all([getDayView(date), getSettings()]);
+  const view = admin ? fullView : withoutMoney(fullView);
   const hours = hoursFor(view.schedule, settings.openingHours);
   const shifts = settings.shiftHours.map(parseHours);
   const shiftLabels = shifts[0] && shifts[1] ? ([formatHours(shifts[0]), formatHours(shifts[1])] as [string, string]) : null;
@@ -63,6 +75,12 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
         </div>
       )}
 
+      {view.mode === "closed" && !admin && (
+        <p className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+          El administrador ya cerró este día: la asistencia quedó guardada así. Para corregirla, pídele que lo reabra.
+        </p>
+      )}
+
       {view.mode === "closed" && view.closing && (
         <ClosedSummary
           closing={view.closing}
@@ -77,9 +95,11 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
       {view.mode === "dayoff" ? null : view.rows.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           No hay empleados activos para esta fecha.{" "}
-          <Link href="/gestion/empleados/nuevo" className="text-foreground underline underline-offset-4">
-            Registrar empleado
-          </Link>
+          {admin && (
+            <Link href="/gestion/empleados/nuevo" className="text-foreground underline underline-offset-4">
+              Registrar empleado
+            </Link>
+          )}
         </div>
       ) : (
         <AttendanceList
@@ -90,7 +110,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/gesti
           doubleShift={view.doubleShift}
           morningClosed={morningClosed}
           closing={
-            view.mode === "open"
+            admin && view.mode === "open"
               ? {
                   action: closeDay.bind(null, date),
                   morningAction: closeMorningShift.bind(null, date),

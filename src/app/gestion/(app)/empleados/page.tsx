@@ -6,7 +6,7 @@ import { PendingText } from "@/components/link-pending";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { searchKey, STATUS_CHIP_CLASS } from "@/lib/attendance";
-import { verifyAdmin } from "@/lib/dal";
+import { isAdmin, verifyAttendance } from "@/lib/dal";
 import { formatDateRange, formatDayMonthShort } from "@/lib/dates";
 import { groupByPosition, NO_POSITION, positionSlug, todayLabel, type WeekCount } from "@/lib/employee-list";
 import { getEmployeeList, type EmployeeListRow } from "@/lib/employee-list-data";
@@ -18,7 +18,8 @@ export const metadata: Metadata = { title: "Empleados · Gestión Simba" };
 
 /** Empleados agrupados por puesto, con cómo está hoy cada uno y su semana; los dados de baja, plegados al final. */
 export default async function EmployeesPage({ searchParams }: PageProps<"/gestion/empleados">) {
-  await verifyAdmin();
+  // Los usuarios de asistencia la ven (sin plata) para asignar días libres, pero no registran empleados.
+  const admin = isAdmin(await verifyAttendance());
   const [params, list] = await Promise.all([loadEmployees(searchParams), getEmployeeList()]);
   const q = params.q.trim();
   const key = searchKey(q);
@@ -50,10 +51,12 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
             {list.closedToday && " · hoy el restaurante no abre"}
           </p>
         </div>
-        <Button render={<Link href="/gestion/empleados/nuevo" />} nativeButton={false} size="lg">
-          <PlusIcon />
-          Nuevo
-        </Button>
+        {admin && (
+          <Button render={<Link href="/gestion/empleados/nuevo" />} nativeButton={false} size="lg">
+            <PlusIcon />
+            Nuevo
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-3">
@@ -81,9 +84,11 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/gestio
       {list.rows.length === 0 ? (
         <Empty>
           Todavía no hay empleados.{" "}
-          <Link href="/gestion/empleados/nuevo" className="text-foreground underline underline-offset-4">
-            Registrar el primero
-          </Link>
+          {admin && (
+            <Link href="/gestion/empleados/nuevo" className="text-foreground underline underline-offset-4">
+              Registrar el primero
+            </Link>
+          )}
         </Empty>
       ) : groups.length === 0 ? (
         <Empty>

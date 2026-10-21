@@ -46,6 +46,10 @@ describe("roles", () => {
   it("cada rol entra a su pantalla", () => {
     expect(homeFor("ADMIN")).toBe("/gestion");
     expect(homeFor("RESERVATIONS")).toBe("/gestion/reservas");
+    expect(homeFor("ATTENDANCE")).toBe("/gestion/asistencia");
+    expect(parseUserForm(form({ ...base, role: "ATTENDANCE", password: "clave12345", confirmPassword: "clave12345" }), "new").data?.role).toBe(
+      "ATTENDANCE"
+    );
   });
 
   it("sin nombre se muestra el correo", () => {

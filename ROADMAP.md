@@ -49,7 +49,8 @@ _Última actualización: 2026-10-11_
 | F29 · Respaldos: correo diario, descarga y restauración (v0.2.0) | ✅ sin publicar (tiene migración) | `a54dcc0` |
 | F30 · Configuración por secciones con menú lateral (v0.3.0) | ✅ sin publicar | `e1168be` |
 | F31 · Ocasiones de las reservas editables, con Primera comunión (v0.4.0) | ✅ sin publicar (tiene migración) | `d8f1a34` |
-| F32 · Pagos: exportar a PDF (v0.5.0) | ✅ sin publicar | commit «F32: Pagos en PDF» |
+| F32 · Pagos: exportar a PDF (v0.5.0) | ✅ sin publicar | `fb4d5bd` |
+| F33 · Rol Asistencia, sin ver plata (v0.6.0) | ✅ sin publicar (tiene migración) | commit «F33: rol Asistencia» |
 
 Regla de trabajo: **un commit por feature** en `main`, y las pruebas en navegador se hacen con `npm run dev:e2e` (BD aparte), nunca sobre los datos reales.
 
@@ -64,6 +65,7 @@ Cada cambio sube `"version"` en `package.json`, en el mismo commit (pedido del u
 | 0.3.0 | F30 Configuración por secciones con menú lateral; la versión se ve en Configuración |
 | 0.4.0 | F31 Ocasiones de las reservas editables en Configuración → Reservas (se agrega Primera comunión) |
 | 0.5.0 | F32 Pagos: botón «Exportar PDF» junto a «Exportar CSV» |
+| 0.6.0 | F33 Rol de usuario «Asistencia»: marca asistencia y días libres sin ver ventas, propinas ni pagos |
 
 **Producción:** cada `git push` a `main` publica en Vercel. Si hay migraciones nuevas, aplicarlas **antes** en Neon con la URL directa (ver [DEPLOY.md](DEPLOY.md) §6).
 
@@ -98,6 +100,16 @@ npm test                                    # pruebas unitarias
 - Pantallas: `/reservas` (Próximas/Anteriores, búsqueda, agrupadas por día), `/reservas/nueva` (acepta `?fecha=`), `/reservas/[id]` (editar, cancelar, eliminar). Sección "Reservas de hoy" en Hoy. Menú con 6 entradas (barra inferior a 10 px).
 - Lógica en `src/lib/reservations.ts` (validación, ocasión "Otra", aviso fuera de horario, totales sin canceladas) y consultas en `src/lib/reservations-data.ts`. `FlashToast` pasó a `src/components`.
 - Ideas que quedaron fuera: límite de cupo por hora.
+
+## F33 · Rol Asistencia (2026-10-21) ✅ · v0.6.0
+
+- Pedido del usuario: otro usuario solo para la asistencia, sin ver nada de pagos. Decisiones: el cierre del día lo hace solo el administrador; sí asigna días libres; sí cambia el doble turno y marca días cerrados; Producción no.
+- `UserRole.ATTENDANCE` (migración `rol_asistencia`). `verifyAttendance()` (admin o asistencia) e `isAdmin(user)` en dal.ts; `homeFor` lo manda a `/gestion/asistencia`.
+- Acciones abiertas a asistencia: `actions/attendance.ts` (todas), `setDayClosed`, `createTimeOff` / `deleteTimeOff`. Siguen solo para admin: `closeDay`, `reopenDay`, `closeMorningShift`, `reopenMorningShift`, empleados, producción y todo lo demás.
+- Asistencia: para este rol la vista pasa por `withoutMoney` (sin `closing`, sin `dailyPay` / `payRate`), así los montos no viajan al navegador; sin paneles de cierre; día cerrado = lista de solo lectura con aviso. Sin enlace "Registrar empleado".
+- Empleados: la lista (no tiene plata) sin «Nuevo»; la ficha solo con "Días libres asignados" (sin Historial ni Datos).
+- Menú: Asistencia y Empleados (`LIMITED` en nav-links.tsx).
+- Probado en e2e con un usuario de prueba `asistencia@prueba.local` (sesión generada, sin contraseña): Hoy, Pagos, PDF/CSV, Reportes, Producción, Reservas, Usuarios, Configuración y Nuevo empleado lo devuelven a Asistencia; en Asistencia no llega ningún monto (el admin sí los recibe); marcó asistencia y vio la ficha con días libres; menú en celular sin desborde.
 
 ## F32 · Pagos en PDF (2026-10-20) ✅ · v0.5.0
 
